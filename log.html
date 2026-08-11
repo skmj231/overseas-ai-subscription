@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>해외AI구독관리 — 결제창 변경 관측 기록</title>
+<meta name="description" content="해외 SaaS 결제창은 계속 바뀝니다. 언제 무엇이 깨졌고 며칠 만에 고쳤는지를 날짜와 함께 공개 기록합니다.">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--ink:#111315;--dim:rgba(0,0,0,.6);--faint:rgba(0,0,0,.4);
+        --o:#FF7A1A;--m:#7BE8C8;--sf:#F4F5F7;--tint:#FFEFE2;--line:#E8EAEE}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
+    color:var(--ink);line-height:1.72;word-break:keep-all;background:#fff;
+    max-width:860px;margin:0 auto;padding:60px 24px 100px;font-size:16px;-webkit-font-smoothing:antialiased}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:2.4px;color:var(--faint)}
+  h1{font-size:34px;font-weight:800;letter-spacing:-1.3px;margin:12px 0 12px;line-height:1.2}
+  .deck{font-size:17px;color:var(--dim);margin-bottom:28px}
+  .lead{background:var(--o);border-radius:18px;padding:22px 24px;margin-bottom:34px}
+  .lead p{font-size:16.5px;font-weight:700;color:var(--ink);margin:0;line-height:1.6}
+  .stat{display:flex;gap:8px;margin:0 0 36px;flex-wrap:wrap}
+  .st{background:var(--sf);border-radius:14px;padding:16px 18px;flex:1;min-width:130px}
+  .st .n{font-size:24px;font-weight:800;letter-spacing:-1px;line-height:1.15}
+  .st .l{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.45}
+  h2{font-size:19px;font-weight:800;letter-spacing:-.4px;margin:38px 0 10px}
+  p{margin-bottom:13px;color:var(--dim)}
+  b{color:var(--ink);font-weight:700}
+  code{background:var(--sf);padding:2px 6px;border-radius:5px;font-size:13.5px}
+  table{width:100%;border-collapse:collapse;margin:14px 0 24px;font-size:14px}
+  th{text-align:left;font-weight:800;padding:10px 11px;background:var(--sf);font-size:12px;vertical-align:bottom}
+  td{padding:12px 11px;color:var(--dim);vertical-align:top;line-height:1.6}
+  tr+tr td{border-top:1px solid var(--line)}
+  td.k{font-weight:800;color:var(--ink);white-space:nowrap}
+  .tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.4px;
+    padding:3px 8px;border-radius:6px;white-space:nowrap}
+  .tag.v{background:var(--tint);color:#8A4200}
+  .tag.s{background:var(--sf);color:var(--dim)}
+  .box{background:var(--sf);border-radius:16px;padding:20px 22px;margin:20px 0}
+  .box p:last-child{margin-bottom:0}
+  a{color:#0570DE}
+  footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:13.5px}
+</style>
+</head>
+<body>
+  <div class="eyebrow">해외AI 구독관리</div>
+  <h1>결제창 변경 관측 기록</h1>
+  <p class="deck">해외 SaaS의 결제창은 예고 없이 바뀝니다. 바뀌면 이 도구는 조용히 틀린 값을 말하기 시작합니다.
+    그래서 <b>언제 무엇이 깨졌고 며칠 만에 고쳤는지</b>를 날짜와 함께 남깁니다.</p>
+
+  <div class="lead">
+    <p>이 확장은 하루면 다시 만들 수 있습니다. 만들 수 없는 것은 <b>다음 달에 무엇이 바뀌었는지 알아채는 일</b>입니다.
+      이 페이지는 그 일을 실제로 하고 있다는 기록입니다.</p>
+  </div>
+
+  <div class="stat">
+    <div class="st"><div class="n">2026-08-11</div><div class="l">관측 시작</div></div>
+    <div class="st"><div class="n">2건</div><div class="l">누적 수정</div></div>
+    <div class="st"><div class="n">0일</div><div class="l">평균 복구 소요</div></div>
+    <div class="st"><div class="n">1건</div><div class="l">테스트가 못 잡은 것</div></div>
+  </div>
+
+  <h2>기록</h2>
+  <table>
+    <tr>
+      <th style="width:11%">날짜</th><th style="width:10%">대상</th><th style="width:9%">유형</th>
+      <th>무엇이 어긋났나 · 사용자에게 무슨 손해가 가나</th><th style="width:12%">복구</th>
+    </tr>
+    <tr>
+      <td class="k">2026-08-11</td>
+      <td class="k">Suno</td>
+      <td><span class="tag v">벤더 변경</span></td>
+      <td><b>월간 구독을 연간으로 읽음.</b> Suno는 월간을 고른 화면에도 "연간 간격 청구가 포함된 ₩36,000 절약 ·
+        ₩144,000/년"이라는 연간 권유 줄을 함께 띄웁니다. 화면 전체 텍스트를 훑던 판독 로직이 이 권유 줄의
+        '연간'에 걸렸습니다.<br><br>
+        <b>손해</b> — 카드에 "내년 갱신부터"라고 표시되고, 더 중요하게는 갱신 알림이 <b>1년 뒤로 잡혀
+        한 달 뒤 빠져나갈 ₩16,500을 아예 알리지 못합니다.</b> 결제 전에 알리는 것이 이 도구의 존재 이유라
+        기능 하나가 아니라 제품의 목적이 무너지는 종류의 오류입니다.<br><br>
+        <b>왜 못 잡았나</b> — 테스트 113개가 전부 통과 중이었습니다. 모든 테스트가 주기 값을 손으로 넣어 줬고,
+        "화면 글자 → 주기"를 읽는 구간만 검증이 비어 있었습니다.</td>
+      <td>당일 · <code>v1.0.2</code><br><span class="tag s">테스트 +12</span></td>
+    </tr>
+    <tr>
+      <td class="k">2026-08-11</td>
+      <td class="k">전 벤더</td>
+      <td><span class="tag s">자체 점검</span></td>
+      <td><b>결제 페이지에서 읽은 문자열을 그대로 화면에 넣고 있었음.</b> 서비스명은 결제 페이지의
+        <code>document.title</code>과 본문 텍스트에서 옵니다. 즉 우리가 쓴 글이 아닌데
+        이스케이프 없이 <code>innerHTML</code>로 들어가고 있었습니다.<br><br>
+        <b>손해</b> — 기록함은 확장 프로그램 페이지라, 외부에서 온 문자열이 여기서 태그로 해석되면 안 됩니다.
+        스크립트 실행 자체는 MV3 CSP가 막지만 화면을 흉내 내는 것까지는 막지 못합니다.
+        제출 직전 점검에서 발견했습니다.</td>
+      <td>당일 · <code>v1.0.2</code></td>
+    </tr>
+  </table>
+
+  <div class="box">
+    <p><b>이 기록을 공개로 두는 이유.</b> 이 도구를 도입할지 검토하시는 분이 가장 먼저 던지는 질문은
+      "이거 우리가 만들면 되지 않나요"입니다. 맞는 말입니다. 코드는 하루면 만듭니다.</p>
+    <p>문제는 만든 다음 날부터입니다. 결제창은 계속 바뀌고, 바뀌었다는 사실은 아무도 알려주지 않으며,
+      테스트는 초록색인 채로 틀린 값이 나가기 시작합니다. 위 첫 번째 기록이 정확히 그 사례입니다.
+      <b>이 페이지에 줄이 하나씩 늘어나는 것이 이 도구가 하는 일의 전부이자 값입니다.</b></p>
+  </div>
+
+  <h2>기록 기준</h2>
+  <p><b>벤더 변경</b>은 상대 서비스가 화면이나 결제 설정을 바꿔서 우리 판독이 어긋난 경우입니다.
+    <b>자체 점검</b>은 상대는 그대로인데 우리 쪽 결함을 찾아 고친 경우입니다.
+    둘을 섞지 않는 이유는, 앞의 것만이 "계속 지켜봐야 한다"는 주장의 근거가 되기 때문입니다.</p>
+  <p>고치지 못한 것도 그대로 남깁니다. 아직 원인을 못 찾았거나 상대 정책이라 손댈 수 없는 건은
+    <b>미해결</b>로 적습니다. 기록이 성공 사례집이 되는 순간 이 페이지는 쓸모가 없어집니다.</p>
+
+  <footer>
+    해외AI구독관리 · <a href="./">홈</a> · <a href="privacy.html">개인정보처리방침</a> ·
+    제보 skimj231@gmail.com
+  </footer>
+</body>
+</html>
