@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>해외AI구독관리 — 결제 알림·부가세·세무자료</title>
+<meta name="description" content="해외 AI 툴 구독이 자동으로 빠져나가기 전에 알려주고, 결제창에서 부가세를 줄이고, 분기마다 세무대리인께 보낼 자료 한 장으로 만들어 드리는 크롬 확장 프로그램입니다.">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
+    color:#111315;line-height:1.72;word-break:keep-all;background:#fff;
+    max-width:720px;margin:0 auto;padding:64px 24px 96px;font-size:16px;-webkit-font-smoothing:antialiased}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:2.4px;color:rgba(0,0,0,.4)}
+  h1{font-size:36px;font-weight:800;letter-spacing:-1.4px;margin:12px 0 14px;line-height:1.18}
+  .deck{font-size:18px;color:rgba(0,0,0,.6);margin-bottom:32px}
+  .lead{background:#FF7A1A;border-radius:18px;padding:22px 24px;margin-bottom:36px}
+  .lead p{font-size:17px;font-weight:700;color:#111315;margin:0;line-height:1.55}
+  h2{font-size:19px;font-weight:800;letter-spacing:-.4px;margin:36px 0 8px}
+  p{margin-bottom:14px;color:rgba(0,0,0,.68)}
+  b{color:#111315;font-weight:700}
+  .box{background:#F1F2F5;border-radius:16px;padding:20px 22px;margin:22px 0}
+  .box p:last-child{margin-bottom:0}
+  a{color:#0570DE}
+  .links{margin-top:34px;padding-top:22px;border-top:1px solid #E8EAEE;font-size:15px}
+  .links a{display:inline-block;margin-right:18px;font-weight:700}
+  footer{margin-top:44px;color:rgba(0,0,0,.42);font-size:13.5px}
+</style>
+</head>
+<body>
+  <div class="eyebrow">CHROME 확장 프로그램</div>
+  <h1>해외AI구독관리</h1>
+  <p class="deck">해외 AI 도구를 구독하는 한국 사업자를 위한 도구입니다.
+    결제 전 알림, 부가세 절감, 세무 자료 정리 — 세 가지가 자동으로 돌아갑니다.</p>
+
+  <div class="lead">
+    <p>해외 서비스는 한 번 결제되면 환불이 거의 안 됩니다.
+      그래서 "결제되었습니다"는 이미 늦은 소식이고, "곧 결제됩니다"가 진짜 도움입니다.</p>
+  </div>
+
+  <h2>1. 빠져나가기 전에 알려드립니다</h2>
+  <p>구독의 결제 주기를 기억해 두고 미리 알립니다. 연 자동결제는 14일 전과 3일 전,
+    월 자동결제는 5일 전과 1일 전, 직접 반복 결제는 결제하시던 날.
+    안 쓸 구독 하나를 제때 끊는 것만으로 이 도구를 설치한 값은 나옵니다.</p>
+
+  <h2>2. 결제하는 순간 부가세를 뺍니다</h2>
+  <p>해외 서비스 결제 시 사업자등록번호를 넣으면 부가가치세 10%가 면제됩니다.
+    대부분 이걸 모르고 결제하고, <b>이미 낸 부가세는 환급되지 않습니다.</b>
+    Stripe 결제창이 열리면 얼마가 새고 있는지 금액으로 보여주고, 입력칸이 있으면 채워 넣습니다.</p>
+
+  <h2>3. 분기마다 자료 한 장</h2>
+  <p>결제일·서비스명·금액·통화·부가세액이 자동으로 기록됩니다.
+    버튼 하나로 CSV를 내려받아 세무대리인께 전달하시면 됩니다.</p>
+
+  <h2>확실하지 않으면 비워 둡니다</h2>
+  <p>Stripe는 결제 수단일 뿐이라 국내 사업자도 Stripe로 결제를 받습니다.
+    그 경우는 세금계산서 발급 대상이고 매입세액공제가 가능합니다.
+    그래서 공급자를 해외·국내·확인 필요 세 가지로 나누고,
+    확실하지 않으면 추측해서 채우지 않고 <b>판단 칸을 비운 채</b> 넘깁니다.
+    틀린 값을 자신 있게 적는 것보다 안전합니다.</p>
+
+  <div class="box">
+    <p><b>데이터는 브라우저를 벗어나지 않습니다.</b></p>
+    <p>서버가 없습니다. 회원가입도 로그인도 없습니다. 카드번호는 읽지 않습니다.
+      공동인증서나 홈택스 계정을 요구하지 않습니다.
+      Stripe 결제 도메인 밖에서는 아무것도 읽지 않습니다.
+      자세한 내용은 <a href="privacy.html">개인정보처리방침</a>에 있습니다.</p>
+  </div>
+
+  <h2>이 도구가 하지 않는 것</h2>
+  <p>세무 신고를 대행하지 않습니다. 세무 자문을 하지 않습니다. 홈택스에 접속하지 않습니다.
+    자료를 정리해 전달하는 데까지가 이 도구의 역할이며,
+    최종 판단은 세무대리인 또는 납세자 본인에게 있습니다.</p>
+
+  <div class="links">
+    <a href="privacy.html">개인정보처리방침</a>
+    <a href="mailto:skimj231@gmail.com">문의 · skimj231@gmail.com</a>
+  </div>
+
+  <footer>해외AI구독관리 · 대한민국</footer>
+</body>
+</html>
