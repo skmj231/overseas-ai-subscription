@@ -9,28 +9,28 @@
   body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
     color:#111315;line-height:1.75;word-break:keep-all;background:#fff;
     max-width:720px;margin:0 auto;padding:64px 24px 96px;font-size:16px}
-  .eyebrow{font-size:11px;font-weight:800;letter-spacing:2.4px;color:rgba(0,0,0,.4)}
-  h1{font-size:34px;font-weight:800;letter-spacing:-1.2px;margin:14px 0 8px;line-height:1.2}
+  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.02em;color:rgba(0,0,0,.4)}
+  h1{font-size:34px;font-weight:600;letter-spacing:-.026em;margin:14px 0 8px;line-height:1.2}
   .updated{color:rgba(0,0,0,.45);font-size:14px;margin-bottom:40px}
-  h2{font-size:20px;font-weight:800;letter-spacing:-.5px;margin:40px 0 12px}
+  h2{font-size:20px;font-weight:600;letter-spacing:-.018em;margin:40px 0 12px}
   p{margin-bottom:14px;color:rgba(0,0,0,.75)}
-  .lead{font-size:18px;font-weight:700;color:#111315;background:#FF7A1A;
-    padding:20px 22px;border-radius:16px;margin-bottom:8px}
+  .lead{font-size:18px;font-weight:600;color:#fff;background:#16171A;
+    padding:22px 24px;border-radius:12px;margin-bottom:8px;line-height:1.6}
   table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:14.5px}
-  th{text-align:left;font-weight:800;padding:10px 12px;background:#F1F2F5}
+  th{text-align:left;font-weight:600;padding:10px 12px;background:#F1F2F5}
   td{padding:10px 12px;color:rgba(0,0,0,.75);vertical-align:top}
   tr+tr td{border-top:1px solid #F1F2F5}
-  .never{background:#F1F2F5;border-radius:16px;padding:20px 22px;margin:16px 0}
+  .never{background:#F1F2F5;border-radius:12px;padding:20px 22px;margin:16px 0}
   .never b{display:block;margin-bottom:8px}
   .never li{margin-left:18px;color:rgba(0,0,0,.75);margin-bottom:4px}
   footer{margin-top:56px;color:rgba(0,0,0,.45);font-size:14px}
-  code{background:#F1F2F5;padding:2px 6px;border-radius:5px;font-size:14px}
+  code{background:#F1F2F5;padding:2px 6px;border-radius:4px;font-size:14px}
 </style>
 </head>
 <body>
   <div class="eyebrow">해외AI 구독관리</div>
   <h1>개인정보처리방침</h1>
-  <div class="updated">최종 수정일: 2026년 8월 9일 · 시행일: 2026년 8월 9일 · v1.0</div>
+  <div class="updated">최종 수정일: 2026년 8월 13일 · 시행일: 2026년 8월 13일 · v1.1</div>
 
   <p class="lead">이 확장 프로그램은 어떤 정보도 외부로 전송하지 않습니다.
     모든 데이터는 사용자의 Chrome 브라우저 안에만 저장되며, 개발자를 포함한 누구도 열람할 수 없습니다.</p>
@@ -41,10 +41,11 @@
     이 확장 프로그램에는 서버가 없어 데이터가 전송될 곳 자체가 존재하지 않습니다.</p>
   <table>
     <tr><th>항목</th><th>용도</th><th>저장 위치</th></tr>
-    <tr><td>사업자등록번호</td><td>Stripe 결제창의 세금 ID 입력란에 자동으로 채워 넣기 위해</td><td>사용자 브라우저</td></tr>
+    <tr><td>사업자등록번호</td><td>결제창에 세금 ID 입력란이 보일 때, 사용자가 버튼을 누르면 채워 넣기 위해</td><td>사용자 브라우저</td></tr>
     <tr><td>사업자 유형·과세 유형</td><td>부가세 처리 표기를 정확히 하기 위해</td><td>사용자 브라우저</td></tr>
     <tr><td>결제 기록<br>(결제일·서비스명·금액·통화·부가세액)</td><td>분기별 세무 자료(CSV)를 만들기 위해</td><td>사용자 브라우저</td></tr>
     <tr><td>결제 주기와 자동 여부<br>(월/연 × 자동/수동)</td><td>다음 결제일을 예측해 <b>결제 전에</b> 미리 알리기 위해</td><td>사용자 브라우저</td></tr>
+    <tr><td>구독 알림 목록<br>(서비스명·금액·주기·다음 결제일·관리 주소)</td><td><b>결제 전에 미리 알리기 위해</b>. 사용자가 직접 등록한 일정이며, <b>세무 자료(분기 CSV)에는 들어가지 않습니다.</b></td><td>사용자 브라우저</td></tr>
     <tr><td>환율 캐시</td><td>외화 결제액의 원화 환산 추정을 위해</td><td>사용자 브라우저</td></tr>
   </table>
 
@@ -63,11 +64,19 @@
   </div>
 
   <h2>3. 동작 범위</h2>
-  <p>이 확장 프로그램은 다음 5개 Stripe 결제 도메인에서만 동작합니다. 그 밖의 어떤 웹사이트도 읽지 않습니다.</p>
+  <p>이 확장 프로그램은 다음 결제 도메인에서만 동작합니다. 그 밖의 어떤 웹사이트도 읽지 않습니다.</p>
   <p><code>checkout.stripe.com</code> · <code>buy.stripe.com</code> ·
-     <code>invoice.stripe.com</code> · <code>billing.stripe.com</code> · <code>pay.stripe.com</code></p>
+     <code>invoice.stripe.com</code> · <code>billing.stripe.com</code> · <code>pay.stripe.com</code> ·
+     <code>*.paddle.com</code> · <code>*.lemonsqueezy.com</code> · <code>*.onfastspring.com</code></p>
+  <p>서비스가 결제 화면을 직접 만들어 쓰는 경우(Envato·Artlist 등)에는 위 목록으로 지정할 수 없습니다.
+    이때는 <b>사용자가 그 화면에서 툴바 아이콘을 눌러 '이 결제창에서 켜기'를 선택한 경우에만</b>
+    그 사이트 하나에 대해 브라우저가 권한을 묻고, 허용하신 뒤에 동작합니다.
+    허용하지 않으면 어떤 사이트에도 들어가지 않습니다.</p>
+  <p>세무 자료(기록함·분기 CSV)로 쌓는 것은 <b>Stripe 결제창에서 관측한 것만</b>입니다.</p>
   <p>이 페이지들에서 확장 프로그램은 <b>화면에 표시된 금액·부가세·서비스명 텍스트</b>를 읽습니다.
     이는 결제 금액을 기록으로 남기기 위한 것이며, 읽은 내용은 브라우저를 벗어나지 않습니다.</p>
+
+  <p><b>결제 전 알림 기능</b>은 결제 수단과 무관하게 동작합니다. 다만 위 도메인 밖의 페이지는 자동으로 읽지 않습니다. 사용자가 그 페이지에서 <b>툴바 아이콘을 눌러 명시적으로 요청</b>했을 때만 한 번 읽습니다. 백그라운드에서 웹사이트를 감시하지 않습니다.</p>
 
   <h2>4. 외부 통신</h2>
   <p>확장 프로그램이 하는 유일한 외부 통신은 환율 조회입니다.
@@ -82,7 +91,9 @@
     <tr><td><code>storage</code></td><td>결제 기록과 설정을 사용자 브라우저에 저장하기 위해. 서버가 없으므로 이 권한이 없으면 기록이 남지 않습니다.</td></tr>
     <tr><td><code>alarms</code></td><td>자동 갱신 결제일과 세무 신고 마감이 다가올 때 확인하기 위해. 하루 두 번 깨어납니다.</td></tr>
     <tr><td><code>notifications</code></td><td>갱신 결제가 발생했거나 신고 마감이 임박했을 때 알리기 위해. 사용자가 브라우저 설정에서 언제든 끌 수 있습니다.</td></tr>
-    <tr><td>Stripe 도메인 접근</td><td>결제창의 금액·부가세를 읽고, 세금 ID 입력란에 사업자등록번호를 채워 넣기 위해.</td></tr>
+    <tr><td>activeTab · scripting</td><td>사용자가 툴바 아이콘을 누르고 <b>'이 결제창에서 켜기'</b>를 선택했을 때, <b>그 순간 그 탭에서만</b> 화면에 보이는 글자를 읽어 구독 이름·금액·주기·다음 결제일을 채우기 위해. 누르지 않으면 아무것도 읽지 않으며, 다른 탭은 볼 수 없고, 읽은 내용은 전송되지 않습니다.</td></tr>
+    <tr><td><code>optional_host_permissions</code></td><td>서비스가 직접 만든 결제 화면에서, 사용자가 '이 결제창에서 켜기'를 눌러 허용한 사이트에서만 동작하기 위해. 설치 시점에는 요청하지 않습니다.</td></tr>
+    <tr><td>결제 도메인 접근</td><td>결제창의 금액·결제 주기·부가세를 읽어 다음 결제 전에 알리고 기록하기 위해. 세금 ID 입력란이 화면에 보일 때 사용자가 버튼을 누르면 저장된 번호를 채워 넣습니다.</td></tr>
     <tr><td><code>open.er-api.com</code> 접근</td><td>외화 결제액을 원화로 환산 추정하기 위한 환율 조회.</td></tr>
   </table>
 
