@@ -1,81 +1,201 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
+<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>해외AI구독관리 — 결제 알림·부가세·세무자료</title>
-<meta name="description" content="해외 AI 툴 구독이 자동으로 빠져나가기 전에 알려주고, 결제창에서 부가세를 줄이고, 분기마다 세무대리인께 보낼 자료 한 장으로 만들어 드리는 크롬 확장 프로그램입니다.">
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
-    color:#111315;line-height:1.72;word-break:keep-all;background:#fff;
-    max-width:720px;margin:0 auto;padding:64px 24px 96px;font-size:16px;-webkit-font-smoothing:antialiased}
-  .eyebrow{font-size:11px;font-weight:800;letter-spacing:2.4px;color:rgba(0,0,0,.4)}
-  h1{font-size:36px;font-weight:800;letter-spacing:-1.4px;margin:12px 0 14px;line-height:1.18}
-  .deck{font-size:18px;color:rgba(0,0,0,.6);margin-bottom:32px}
-  .lead{background:#FF7A1A;border-radius:18px;padding:22px 24px;margin-bottom:36px}
-  .lead p{font-size:17px;font-weight:700;color:#111315;margin:0;line-height:1.55}
-  h2{font-size:19px;font-weight:800;letter-spacing:-.4px;margin:36px 0 8px}
-  p{margin-bottom:14px;color:rgba(0,0,0,.68)}
-  b{color:#111315;font-weight:700}
-  .box{background:#F1F2F5;border-radius:16px;padding:20px 22px;margin:22px 0}
-  .box p:last-child{margin-bottom:0}
-  a{color:#0570DE}
-  .links{margin-top:34px;padding-top:22px;border-top:1px solid #E8EAEE;font-size:15px}
-  .links a{display:inline-block;margin-right:18px;font-weight:700}
-  footer{margin-top:44px;color:rgba(0,0,0,.42);font-size:13.5px}
-</style>
-</head>
-<body>
-  <div class="eyebrow">CHROME 확장 프로그램</div>
-  <h1>해외AI구독관리</h1>
-  <p class="deck">해외 AI 도구를 구독하는 한국 사업자를 위한 도구입니다.
-    결제 전 알림, 부가세 절감, 세무 자료 정리 — 세 가지가 자동으로 돌아갑니다.</p>
+<title>해외AI 구독관리 · 결제되기 전에 알려드립니다</title>
+<meta name="description" content="해외 AI 툴 구독이 자동으로 빠져나가기 전에 미리 알려드립니다. 결제된 건은 환불이 거의 안 됩니다. 무료 크롬 확장 프로그램.">
+<meta property="og:title" content="해외AI 구독관리 · 결제되기 전에 알려드립니다">
+<meta property="og:description" content="해외 AI 툴 구독이 자동으로 빠져나가기 전에 미리 알려드립니다. 결제된 건은 환불이 거의 안 됩니다. 무료 크롬 확장 프로그램.">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light">
+<link rel="stylesheet" href="./style.css">
+</head><body>
+<div class="nav"><div class="wrap">
+  <a class="logo" href="./">해외AI 구독관리</a>
+  <a class="m" href="./guide.html">사용법</a>
+  <a class="m" href="./blog.html">블로그</a>
+  <a class="btn" href="./go.html?c=nav">깔아불기</a>
+</div></div>
 
-  <div class="lead">
-    <p>해외 서비스는 한 번 결제되면 환불이 거의 안 됩니다.
-      그래서 "결제되었습니다"는 이미 늦은 소식이고, "곧 결제됩니다"가 진짜 도움입니다.</p>
+<div class="wrap hero">
+  <div class="eyebrow">크롬 확장 프로그램 · 무료</div>
+  <h1>또 빠져나가불었지라?</h1>
+  <p class="lead">해외 AI 구독은 한 번 결제되면 환불이 거의 안 됩니다.<br>
+  나가기 전에 미리 알려드릴게요. 그때 쓸지 말지 정하시면 됩니다.</p>
+  <a class="btn" href="./go.html?c=hero">크롬에 깔아불기</a>
+  <p class="note">무료 · 회원가입 없음 · 서버 없음</p>
+  <div class="stage"><div class="ui">
+  <div class="head"><span>해외AI 구독관리</span><span>아낀 돈 <b>₩62,074</b></span></div>
+  <div class="tabs"><span class="on">구독 알림</span><span>결제 기록 · 세무</span><span>내 정보</span></div>
+  <div class="row"><h4>Higgsfield <em>예정</em></h4>
+    <div class="s">연 구독 · 자동결제 · ₩682,813<br>다음 결제 2026-09-04, 13일 남음</div>
+    <div class="chips"><i class="d">해지하러 가기</i><i>해지함</i><i>알림 끄기</i><i>수정</i></div></div>
+  <div class="row"><h4>ChatGPT Plus <em>예정</em></h4>
+    <div class="s">월 구독 · 자동결제 · USD 20 (약 ₩28,070)<br>다음 결제 2026-09-20, 29일 남음</div>
+    <div class="chips"><i>해지함</i><i>알림 끄기</i><i>수정</i></div></div>
+  <div class="row"><h4>Midjourney <em>해지 확인 중</em></h4>
+    <div class="s">월 구독 · 자동결제 · USD 30 (약 ₩42,165)<br>종료 예정일 2026-08-28</div>
+    <div class="chips"><i>해지함</i><i>알림 끄기</i><i>수정</i></div></div>
+</div></div>
+</div>
+
+<section><div class="wrap">
+  <h2>구독은 자꾸 늘어나불고</h2>
+  <p class="lead">AI 툴은 매달 새로 나옵니다. 써보고, 갈아타고, 해지하는 걸 잊습니다.
+  카드 명세서에는 영문 이름만 스무 줄 찍힙니다. 그중 몇 개를 지금도 쓰고 있는지
+  바로 답할 수 있는 사람은 드뭅니다.</p>
+  <div class="cards">
+    <div class="card"><h3>환불이 안 됩니다</h3>
+      <p>해외 서비스는 결제되고 나면 환불 규정이 까다롭습니다. 막을 수 있는 시점은 결제 전뿐입니다.</p></div>
+    <div class="card"><h3>연 결제는 1년을 기다립니다</h3>
+      <p>월 구독은 한 달 손해지만 연 구독은 다음 기회가 1년 뒤입니다. 놓치면 크게 놓칩니다.</p></div>
+    <div class="card"><h3>해지 버튼은 숨어 있습니다</h3>
+      <p>해지 경로를 다섯 단계 아래에 두는 것이 업계 관행입니다. 미루다 보면 그날이 옵니다.</p></div>
   </div>
+</div></section>
 
-  <h2>1. 빠져나가기 전에 알려드립니다</h2>
-  <p>구독의 결제 주기를 기억해 두고 미리 알립니다. 연 자동결제는 14일 전과 3일 전,
-    월 자동결제는 5일 전과 1일 전, 직접 반복 결제는 결제하시던 날.
-    안 쓸 구독 하나를 제때 끊는 것만으로 이 도구를 설치한 값은 나옵니다.</p>
-
-  <h2>2. 결제하는 순간 부가세를 뺍니다</h2>
-  <p>해외 서비스 결제 시 사업자등록번호를 넣으면 부가가치세 10%가 면제됩니다.
-    대부분 이걸 모르고 결제하고, <b>이미 낸 부가세는 환급되지 않습니다.</b>
-    Stripe 결제창이 열리면 얼마가 새고 있는지 금액으로 보여주고, 입력칸이 있으면 채워 넣습니다.</p>
-
-  <h2>3. 분기마다 자료 한 장</h2>
-  <p>결제일·서비스명·금액·통화·부가세액이 자동으로 기록됩니다.
-    버튼 하나로 CSV를 내려받아 세무대리인께 전달하시면 됩니다.</p>
-
-  <h2>확실하지 않으면 비워 둡니다</h2>
-  <p>Stripe는 결제 수단일 뿐이라 국내 사업자도 Stripe로 결제를 받습니다.
-    그 경우는 세금계산서 발급 대상이고 매입세액공제가 가능합니다.
-    그래서 공급자를 해외·국내·확인 필요 세 가지로 나누고,
-    확실하지 않으면 추측해서 채우지 않고 <b>판단 칸을 비운 채</b> 넘깁니다.
-    틀린 값을 자신 있게 적는 것보다 안전합니다.</p>
-
-  <div class="box">
-    <p><b>데이터는 브라우저를 벗어나지 않습니다.</b></p>
-    <p>서버가 없습니다. 회원가입도 로그인도 없습니다. 카드번호는 읽지 않습니다.
-      공동인증서나 홈택스 계정을 요구하지 않습니다.
-      Stripe 결제 도메인 밖에서는 아무것도 읽지 않습니다.
-      자세한 내용은 <a href="privacy.html">개인정보처리방침</a>에 있습니다.</p>
+<section><div class="wrap split">
+  <div class="t">
+    <div class="eyebrow">결제 전 알림</div>
+    <h2>나가기 전에 미리 알려줄랑께</h2>
+    <p>연 구독은 14일과 3일 전, 월 구독은 5일과 1일 전에 알려드립니다.
+    브라우저를 켜지 않아도 크롬이 알아서 확인하니 그냥 두시면 됩니다.</p>
+    <p class="muted">Stripe든 Paddle이든 앱스토어든 결제 수단은 가리지 않습니다.
+    직접 입력해서 목록에 넣으셔도 똑같이 알려드립니다.</p>
   </div>
+  <div class="ui">
+  <div class="head"><span>해외AI 구독관리</span><span>✕</span></div>
+  <div class="rail"><b>1 결제 알림</b> · 2 부가세</div>
+  <div class="s" style="font-size:12px;color:#86868B;margin-bottom:7px">Higgsfield · 연 구독</div>
+  <div class="tag">매년 빠져나갈 금액</div>
+  <div class="big">₩682,813</div>
+  <div class="kv"><u>오늘 결제</u><b>2026년 9월 4일</b></div>
+  <div class="kv"><u>다음 결제</u><b>2027년 9월 4일</b></div>
+  <div class="say">결제 <b>14일 전</b>에 알려 드릴게요. 그때 계속 쓸지 정하시면 됩니다.</div>
+  <div class="cta">결제 전에 알려주세요</div>
+  <div class="cta g">괜찮습니다</div>
+</div>
+</div></section>
 
-  <h2>이 도구가 하지 않는 것</h2>
-  <p>세무 신고를 대행하지 않습니다. 세무 자문을 하지 않습니다. 홈택스에 접속하지 않습니다.
-    자료를 정리해 전달하는 데까지가 이 도구의 역할이며,
-    최종 판단은 세무대리인 또는 납세자 본인에게 있습니다.</p>
-
-  <div class="links">
-    <a href="privacy.html">개인정보처리방침</a>
-    <a href="mailto:skimj231@gmail.com">문의 · skimj231@gmail.com</a>
+<section><div class="wrap split rev">
+  <div class="t">
+    <div class="eyebrow">부가가치세</div>
+    <h2>부가세는 안 내도 되는 것이제</h2>
+    <p>사업자등록번호를 넣으면 해외 서비스가 부가세 10%를 붙이지 않는 경우가 많습니다.
+    연 결제라면 한 번에 몇만 원씩 차이가 납니다.</p>
+    <p>중요한 건 <b>이미 결제된 건은 소급이 안 된다</b>는 점입니다.
+    그래서 결제되기 전에 알려드리는 일이 먼저입니다.</p>
+    <p class="muted">공제와 신고 처리는 사업 형태에 따라 달라집니다. 세무대리인께 확인하세요.</p>
   </div>
+  <div class="ui">
+  <div class="head"><span>← 뒤로</span><span>✕</span></div>
+  <div class="rail">1 결제 알림 · <b>2 부가세</b></div>
+  <div class="say" style="margin:0 0 8px">이 결제창에 <b>사업자번호 칸</b>이 있습니다.</div>
+  <div class="tag">지금 뺄 수 있는 부가세</div>
+  <div class="big">₩62,074</div>
+  <div class="say" style="margin:0 0 10px">번호를 넣으면 <b>이 결제부터</b> 빠집니다.</div>
+  <div class="kv" style="border:0"><u>지금</u><b>₩682,813</b></div>
+  <div class="kv"><u>번호 넣으면</u><b>₩620,739</b></div>
+  <div class="cta" style="margin-top:14px">사업자번호 넣고 ₩62,074 빼기</div>
+</div>
+</div></section>
 
-  <footer>해외AI구독관리 · 대한민국</footer>
-</body>
-</html>
+<section><div class="wrap">
+  <div class="eyebrow">부가세 계산기</div>
+  <h2>얼마나 내고 계신지 볼랍니까</h2>
+  <p>지금 매달 나가는 해외 구독료 합계를 대충 맞춰 보세요.
+  아래 숫자는 이 페이지 안에서만 계산되고 어디로도 보내지 않습니다.</p>
+  <div class="calc">
+    <div class="row"><label for="mo">월 해외 구독료 합계</label><span class="amt" id="moOut">₩300,000</span></div>
+    <input type="range" id="mo" min="30000" max="1500000" step="10000" value="300000">
+    <div class="out">
+      <div class="cap">이 중 1년치 부가세</div>
+      <div class="big" id="vatOut">₩327,273</div>
+      <div class="cap">사업자등록번호를 넣으면 대부분 안 내도 되는 돈입니다</div>
+    </div>
+  </div>
+  <p class="note">부가세가 포함된 금액으로 가정해 11로 나눈 값입니다. 서비스마다 표기 방식이 다를 수 있습니다.</p>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">해지</div>
+  <h2>해지는 바로 데려다줄랑께</h2>
+  <p>알림에서 해지하러 가기를 누르면 그 서비스의 결제 관리 화면으로 곧장 넘어갑니다.
+  해지했다고 표시해 두면 다음부터 그 구독은 조용해집니다.</p>
+  <ul class="list">
+    <li><b>알림</b><span>결제 며칠 전에 지금 정하라고 알려드립니다.</span></li>
+    <li><b>바로가기</b><span>결제 관리 화면으로 한 번에 넘어갑니다.</span></li>
+    <li><b>기록</b><span>해지함으로 표시하면 목록에서 조용해집니다.</span></li>
+  </ul>
+</div></section>
+
+<section><div class="wrap split">
+  <div class="t">
+    <div class="eyebrow">분기 자료</div>
+    <h2>세무사 줄 자료는 알아서 쌓여불고</h2>
+    <p>결제일과 서비스명, 금액, 환율, 부가세가 자동으로 정리됩니다.
+    분기마다 파일 한 장으로 내보내 그대로 넘기시면 됩니다.</p>
+    <p class="muted">확실하지 않은 건은 비워 두고 확인 필요로 표시합니다.
+    맞는 척하는 숫자보다 빈칸이 낫습니다.</p>
+  </div>
+  <div class="ui">
+  <div class="head"><span>해외AI 구독관리</span><span>아낀 돈 <b>₩62,074</b></span></div>
+  <div class="tabs"><span>구독 알림</span><span class="on">결제 기록 · 세무</span><span>내 정보</span></div>
+  <div class="sum">7건 · 합계 <b>₩1,662,821</b> · 부가세 <b>₩144,148</b> · 확인 필요 2</div>
+  <div class="led"><div class="d">08.20</div><div class="n"><b>OpenAI</b><u>USD 20 · 월 자동결제</u></div>
+    <div class="a"><b>≈₩28,070</b><u>추정</u></div></div>
+  <div class="led"><div class="d">08.19</div><div class="n"><b>테크브릿지</b><u>월 자동결제</u></div>
+    <div class="a"><b>₩110,000</b><u>부가세 ₩10,000</u></div></div>
+  <div class="led"><div class="d">08.15</div><div class="n"><b>Higgsfield</b><u>연 자동결제</u></div>
+    <div class="a"><b>₩682,813</b><u>부가세 ₩62,074</u></div></div>
+  <div class="led"><div class="d">07.28</div><div class="n"><b>Figma</b><u>USD 15 · 월 자동결제</u></div>
+    <div class="a"><b>≈₩21,055</b><u>추정</u></div></div>
+  <div class="cta g" style="margin-top:12px">이번 분기 자료 내보내기</div>
+</div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">개인정보</div>
+  <h2>암것도 안 가져가요</h2>
+  <p>이 확장 프로그램에는 서버가 없습니다. 보낼 곳이 없으니 보낼 수가 없습니다.</p>
+  <ul class="list">
+    <li><b>서버 없음</b><span>읽은 내용은 이 브라우저를 벗어나지 않습니다.</span></li>
+    <li><b>가입 없음</b><span>이메일도 비밀번호도 묻지 않습니다.</span></li>
+    <li><b>카드 안 봄</b><span>카드번호 입력칸은 읽지 않습니다.</span></li>
+    <li><b>지우면 끝</b><span>확장을 삭제하면 저장된 것도 같이 사라집니다.</span></li>
+  </ul>
+  <p class="note" style="margin-top:22px"><a href="./privacy.html">개인정보처리방침 전문 보기</a></p>
+</div></section>
+
+<section><div class="wrap">
+  <h2>자주 묻는 것들</h2>
+  <dl class="faq">
+    <dt>브라우저를 안 켜도 알림이 오나요?</dt>
+    <dd>옵니다. 크롬이 백그라운드에서 12시간마다 한 번 확인합니다. 다만 컴퓨터가 켜져 있고 크롬이 완전히 종료되지 않은 상태여야 합니다.</dd>
+    <dt>알림이 너무 자주 오면요?</dt>
+    <dd>내 정보에서 알림을 끄거나, 며칠 전에 받을지 직접 고르실 수 있습니다.</dd>
+    <dt>사업자가 아니어도 쓸 수 있나요?</dt>
+    <dd>됩니다. 부가세 기능만 안 쓰시면 됩니다. 결제 전 알림은 누구에게나 똑같이 옵니다.</dd>
+    <dt>모든 결제창에서 뜨나요?</dt>
+    <dd>주요 결제 도메인에서는 자동으로 뜹니다. 서비스가 결제 화면을 직접 만들어 쓰는 곳은 툴바 아이콘을 눌러 이 결제창에서 켜기를 선택하시면 됩니다.</dd>
+    <dt>돈을 받나요?</dt>
+    <dd>무료입니다. 유료 기능도 없습니다.</dd>
+  </dl>
+</div></section>
+
+<section style="text-align:center"><div class="wrap">
+  <h2>인자 깔아불쇼</h2>
+  <p class="lead">다음 결제일이 오기 전에 넣어 두는 편이 낫습니다.</p>
+  <a class="btn" href="./go.html?c=footer">크롬에 깔아불기</a>
+  <p class="note">무료 · 회원가입 없음 · 서버 없음</p>
+</div></section>
+<footer><div class="wrap">
+  <p>해외AI 구독관리 · 크롬 확장 프로그램 · 무료<br>
+  <a href="./privacy.html">개인정보처리방침</a> · <a href="mailto:stevejk911@gmail.com">stevejk911@gmail.com</a></p>
+</div></footer>
+<script>
+(function(){var m=document.getElementById('mo'),a=document.getElementById('moOut'),v=document.getElementById('vatOut');
+if(!m)return;var w=function(n){return '₩'+Math.round(n).toLocaleString('ko-KR')};
+function d(){a.textContent=w(+m.value);v.textContent=w(+m.value*12/11)}m.addEventListener('input',d);d()})();
+</script>
+<!-- 분석 스크립트 자리 -->
+</body></html>
