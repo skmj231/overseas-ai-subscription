@@ -139,7 +139,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .scroll{overflow-x:auto}
 .chart{display:flex;align-items:flex-end;gap:4px;min-height:150px;padding-top:22px}
 .chart .hint{align-self:center;margin:0 auto;padding-bottom:40px}
-.chart .b{flex:1;min-width:6px;background:var(--ink);border-radius:4px 4px 0 0;position:relative}
+.chart .b{flex:1;min-width:6px;max-width:46px;background:var(--ink);border-radius:4px 4px 0 0;position:relative}
 .chart .b.z{background:var(--line);height:2px!important}
 .chart .b span{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:5px;
   font-size:11px;color:var(--ink);white-space:nowrap;opacity:0;transition:opacity .1s;
