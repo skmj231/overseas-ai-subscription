@@ -1,0 +1,230 @@
+<!DOCTYPE html><html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>어드민 · 해외AI 구독관리</title>
+<meta name="description" content="설치 추이와 스캐너 상태를 한 화면에서 봅니다.">
+<meta property="og:title" content="어드민 · 해외AI 구독관리">
+<meta property="og:description" content="설치 추이와 스캐너 상태를 한 화면에서 봅니다.">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="./style.css">
+</head><body>
+<div class="nav"><div class="wrap">
+  <a class="logo" href="./">해외AI 구독관리</a>
+  <a class="m" href="./guide.html">사용법</a>
+  <a class="m" href="./blog.html">블로그</a>
+  <a class="btn" href="./go.html?c=nav">깔아불기</a>
+</div></div>
+
+<section style="border:0;padding-top:48px"><div class="wrap">
+  <div class="eyebrow">어드민</div>
+  <h1 style="font-size:34px">지금 어디까지 왔나</h1>
+  <p class="lead">여기 적는 숫자는 이 브라우저에만 저장됩니다. 서버로 가지 않습니다.</p>
+
+  <div class="tiles">
+    <div class="tile"><div class="k">총 설치</div><div class="v" id="t1">0</div><div class="d" id="t1d"></div></div>
+    <div class="tile"><div class="k">증감</div><div class="v" id="t2">0</div><div class="d" id="t2d"></div></div>
+    <div class="tile"><div class="k">랜딩 방문</div><div class="v" id="t3">0</div><div class="d" id="t3d"></div></div>
+    <div class="tile"><div class="k">설치 전환율</div><div class="v" id="t4">0%</div><div class="d" id="t4d"></div></div>
+  </div>
+
+  <div class="panel">
+    <h3>오늘 기록 넣기</h3>
+    <div class="form">
+      <div><label for="f_d">날짜</label><input id="f_d" type="date"></div>
+      <div><label for="f_i">총 설치 수</label><input id="f_i" type="number" min="0" placeholder="0"></div>
+      <div><label for="f_v">랜딩 방문</label><input id="f_v" type="number" min="0" placeholder="0"></div>
+      <div><label for="f_c">설치 클릭</label><input id="f_c" type="number" min="0" placeholder="0"></div>
+      <div><button class="btn sm" id="add">저장하기</button></div>
+    </div>
+    <p class="hint" style="margin-top:14px">총 설치 수는 웹스토어 대시보드의 사용자 수를 그대로 옮겨 적으시면 됩니다.
+    방문과 클릭은 분석 도구에서 가져오세요. 같은 날짜를 다시 넣으면 덮어씁니다.</p>
+  </div>
+
+  <div class="panel">
+    <h3>날마다 늘어난 수</h3>
+    <div class="chart" id="c1"></div><div class="axis" id="a1"></div>
+    <h3 style="margin-top:34px">누적 설치</h3>
+    <div class="chart" id="c2"></div><div class="axis" id="a2"></div>
+    <p class="hint" style="margin-top:12px">최근 30개 기록만 그립니다. 막대에 손을 올리면 값이 보입니다.</p>
+  </div>
+
+  <div class="panel">
+    <h3>기록</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>날짜</th><th class="n">총 설치</th><th class="n">방문</th><th class="n">설치 클릭</th><th class="n"></th></tr></thead>
+      <tbody id="tb"></tbody>
+    </table></div>
+    <div class="tools">
+      <button class="btn sm ghost" id="dump">내보내기</button>
+      <label class="btn sm ghost" style="cursor:pointer">불러오기<input id="load" type="file" accept="application/json" hidden></label>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>어디서 들어오나</h3>
+    <p class="hint">웹스토어 대시보드에 국가별 사용자 수가 나옵니다. 내가 아닌 사람이 깔았는지는 이 표로 확인합니다.
+    한국 밖에서 하나라도 들어오면 확실한 신호입니다.</p>
+    <div class="form" style="grid-template-columns:2fr 1fr 1fr;margin:16px 0">
+      <div><label for="g_c">지역</label><input id="g_c" type="text" placeholder="대한민국"></div>
+      <div><label for="g_n">사용자 수</label><input id="g_n" type="number" min="0" placeholder="0"></div>
+      <div><button class="btn sm" id="gadd">저장하기</button></div>
+    </div>
+    <div class="scroll"><table>
+      <thead><tr><th>지역</th><th class="n">사용자</th><th class="n"></th></tr></thead>
+      <tbody id="gb"></tbody>
+    </table></div>
+  </div>
+
+  <div class="panel">
+    <h3>스캐너 상태</h3>
+    <p class="hint">확장은 어떤 결제창을 읽었는지 밖으로 보내지 않습니다. 그래서 사용량 대신
+    <b>무엇을 읽을 수 있는지</b>와 <b>지금도 제대로 읽는지</b>를 여기서 확인합니다.</p>
+    <div class="scroll" style="margin-top:16px"><table>
+      <thead><tr><th>결제사</th><th>도메인</th><th>진입 방식</th></tr></thead>
+      <tbody>
+        <tr><td>Stripe</td><td class="hint" style="font-size:12.5px">checkout · buy · invoice · billing · pay</td><td><span class="badge ok">자동</span></td></tr>
+        <tr><td>Paddle</td><td class="hint" style="font-size:12.5px">*.paddle.com</td><td><span class="badge ok">자동</span></td></tr>
+        <tr><td>Lemon Squeezy</td><td class="hint" style="font-size:12.5px">*.lemonsqueezy.com</td><td><span class="badge ok">자동</span></td></tr>
+        <tr><td>FastSpring</td><td class="hint" style="font-size:12.5px">*.onfastspring.com</td><td><span class="badge ok">자동</span></td></tr>
+        <tr><td>Chargebee</td><td class="hint" style="font-size:12.5px">*.chargebee.com</td><td><span class="badge">지문</span></td></tr>
+        <tr><td>Recurly</td><td class="hint" style="font-size:12.5px">*.recurly.com</td><td><span class="badge">지문</span></td></tr>
+        <tr><td>Braintree</td><td class="hint" style="font-size:12.5px">*.braintreegateway.com</td><td><span class="badge">지문</span></td></tr>
+        <tr><td>PayPal</td><td class="hint" style="font-size:12.5px">*.paypal.com</td><td><span class="badge">지문</span></td></tr>
+        <tr><td>Gumroad</td><td class="hint" style="font-size:12.5px">*.gumroad.com</td><td><span class="badge">지문</span></td></tr>
+        <tr><td>Polar</td><td class="hint" style="font-size:12.5px">*.polar.sh</td><td><span class="badge">지문</span></td></tr>
+        <tr><td>Creem</td><td class="hint" style="font-size:12.5px">*.creem.io</td><td><span class="badge">지문</span></td></tr>
+        <tr><td>2Checkout</td><td class="hint" style="font-size:12.5px">*.2checkout.com</td><td><span class="badge">지문</span></td></tr>
+        <tr><td>Adyen</td><td class="hint" style="font-size:12.5px">*.adyen.com</td><td><span class="badge">지문</span></td></tr>
+        <tr><td>Checkout.com</td><td class="hint" style="font-size:12.5px">*.checkout.com</td><td><span class="badge">지문</span></td></tr>
+        <tr><td>토스페이먼츠</td><td class="hint" style="font-size:12.5px">*.tosspayments.com</td><td><span class="badge">지문</span></td></tr>
+        <tr><td>이니시스</td><td class="hint" style="font-size:12.5px">*.inicis.com</td><td><span class="badge">지문</span></td></tr>
+      </tbody>
+    </table></div>
+    <p class="hint" style="margin-top:14px"><b>자동</b>은 설치만 하면 그 도메인에서 바로 뜹니다.
+    <b>지문</b>은 페이지 안에 그 결제사의 주소가 보일 때 알아채는 방식이라, 사용자가 이 결제창에서 켜기를 눌러야 합니다.</p>
+    <h3 style="margin-top:30px">자가 점검</h3>
+    <p class="hint">스캐너가 망가졌는지는 실제로 열어 보는 것이 가장 빠릅니다. 새 버전을 올릴 때마다 이 네 가지를 확인하세요.</p>
+    <ul class="list" style="margin-top:10px">
+      <li><b>금액</b><span>Stripe 결제창에서 큰 금액이 실제 청구액과 같은지</span></li>
+      <li><b>주기</b><span>연 구독인지 월 구독인지 맞게 읽는지</span></li>
+      <li><b>부가세</b><span>부가세 줄이 있을 때 금액의 10분의 1 또는 11분의 1에 맞는지</span></li>
+      <li><b>못 읽을 때</b><span>금액을 확신 못 하면 창을 열지 않고 배지만 뜨는지</span></li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h3>바로가기</h3>
+    <div class="tools">
+      <a class="btn sm ghost" href="https://chrome.google.com/webstore/devconsole" target="_blank" rel="noopener">웹스토어 대시보드</a>
+      <a class="btn sm ghost" href="https://chromewebstore.google.com/detail/jkecjjpgplgpcfdbllaldllcliliojfn" target="_blank" rel="noopener">스토어 페이지</a>
+      <a class="btn sm ghost" href="./">랜딩</a>
+    </div>
+  </div>
+</div></section>
+<footer><div class="wrap">
+  <p>해외AI 구독관리 · 크롬 확장 프로그램 · 무료<br>
+  <a href="./privacy.html">개인정보처리방침</a> · <a href="mailto:stevejk911@gmail.com">stevejk911@gmail.com</a></p>
+</div></footer>
+<script>
+(function(){
+var KEY='saas_admin_v1';
+var $=function(s){return document.querySelector(s)};
+var won=function(n){return (+n||0).toLocaleString('ko-KR')};
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{rows:[],geo:[]}}catch(e){return {rows:[],geo:[]}}}
+function save(d){try{localStorage.setItem(KEY,JSON.stringify(d))}catch(e){alert('저장 실패. 브라우저 저장소가 막혀 있습니다.')}}
+var D=load();
+
+function sorted(){return D.rows.slice().sort(function(a,b){return a.d<b.d?-1:1})}
+
+function tiles(){
+  var r=sorted(), last=r[r.length-1]||{}, prev=r[r.length-2]||{};
+  var installs=+last.inst||0;
+  var add=r.length>1?installs-(+prev.inst||0):installs;
+  var visits=r.reduce(function(s,x){return s+(+x.vis||0)},0);
+  var clicks=r.reduce(function(s,x){return s+(+x.clk||0)},0);
+  $('#t1').textContent=won(installs);
+  $('#t1d').textContent=last.d?last.d+' 기준':'아직 기록 없음';
+  $('#t2').textContent=(add>=0?'+':'')+won(add);
+  $('#t2d').textContent=r.length>1?'직전 기록 대비':'첫 기록';
+  $('#t3').textContent=won(visits);
+  $('#t3d').textContent='누적 방문';
+  $('#t4').textContent=clicks?(Math.round(clicks/Math.max(visits,1)*1000)/10)+'%':'0%';
+  $('#t4d').textContent='설치 클릭 '+won(clicks)+'회';
+}
+
+function bars(el,vals,labels,fmt){
+  var max=Math.max.apply(null,vals.concat([1]));
+  el.innerHTML=vals.map(function(v,i){
+    var h=Math.max(2,Math.round(v/max*118));
+    return '<div class="b'+(v?'':' z')+'" style="height:'+h+'px"><span>'+labels[i]+' · '+fmt(v)+'</span></div>';
+  }).join('')||'<div class="hint">기록을 넣으면 그려집니다.</div>';
+}
+
+function charts(){
+  var r=sorted().slice(-30);
+  var lab=r.map(function(x){return x.d.slice(5)});
+  var add=r.map(function(x,i){return i?Math.max(0,(+x.inst||0)-(+r[i-1].inst||0)):0});
+  bars($('#c1'),add,lab,function(v){return v+'명'});
+  bars($('#c2'),r.map(function(x){return +x.inst||0}),lab,function(v){return v+'명'});
+  $('#a1').innerHTML=r.length?'<span>'+r[0].d+'</span><span>'+r[r.length-1].d+'</span>':'';
+  $('#a2').innerHTML=$('#a1').innerHTML;
+}
+
+function table(){
+  var r=sorted().slice().reverse();
+  $('#tb').innerHTML=r.length?r.map(function(x,i){
+    return '<tr><td>'+x.d+'</td><td class="n">'+won(x.inst)+'</td><td class="n">'+won(x.vis)+
+      '</td><td class="n">'+won(x.clk)+'</td><td class="n"><a href="#" data-del="'+x.d+'">지우기</a></td></tr>';
+  }).join(''):'<tr><td colspan="5" class="hint">아직 기록이 없습니다.</td></tr>';
+}
+
+function geo(){
+  $('#gb').innerHTML=D.geo.length?D.geo.map(function(g){
+    return '<tr><td>'+g.c+'</td><td class="n">'+won(g.n)+'</td><td class="n"><a href="#" data-gdel="'+g.c+'">지우기</a></td></tr>';
+  }).join(''):'<tr><td colspan="3" class="hint">웹스토어 대시보드의 국가별 사용자 수를 옮겨 적으세요.</td></tr>';
+}
+
+function draw(){tiles();charts();table();geo()}
+
+$('#add').addEventListener('click',function(){
+  var d=$('#f_d').value;
+  if(!d){alert('날짜를 넣어 주세요');return}
+  D.rows=D.rows.filter(function(x){return x.d!==d});
+  D.rows.push({d:d,inst:+$('#f_i').value||0,vis:+$('#f_v').value||0,clk:+$('#f_c').value||0});
+  save(D);draw();
+});
+$('#gadd').addEventListener('click',function(){
+  var c=$('#g_c').value.trim();
+  if(!c){alert('지역 이름을 넣어 주세요');return}
+  D.geo=D.geo.filter(function(x){return x.c!==c});
+  D.geo.push({c:c,n:+$('#g_n').value||0});
+  D.geo.sort(function(a,b){return b.n-a.n});
+  save(D);draw();$('#g_c').value='';$('#g_n').value='';
+});
+document.addEventListener('click',function(e){
+  var d=e.target.getAttribute&&e.target.getAttribute('data-del');
+  var g=e.target.getAttribute&&e.target.getAttribute('data-gdel');
+  if(d){e.preventDefault();D.rows=D.rows.filter(function(x){return x.d!==d});save(D);draw()}
+  if(g){e.preventDefault();D.geo=D.geo.filter(function(x){return x.c!==g});save(D);draw()}
+});
+$('#dump').addEventListener('click',function(){
+  var a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(D,null,2));
+  a.download='구독관리-기록.json';a.click();
+});
+$('#load').addEventListener('change',function(e){
+  var f=e.target.files[0];if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(){try{var j=JSON.parse(rd.result);D={rows:j.rows||[],geo:j.geo||[]};save(D);draw();alert('불러왔습니다.')}
+  catch(x){alert('파일을 읽지 못했습니다.')}};
+  rd.readAsText(f);
+});
+var t=new Date();
+$('#f_d').value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+draw();
+})();
+</script>
+<!-- 분석 스크립트 자리 -->
+</body></html>
