@@ -80,7 +80,7 @@ section{padding:76px 0;border-top:1px solid var(--line2)}
 .post .warn{background:#FBF7EE;border-left-color:#8A5A0B}
 .post .warn b{color:#8A5A0B}
 .post figure{margin:28px 0}
-.post figure img{width:100%;display:block;border-radius:12px;box-shadow:0 0 0 1px rgba(0,0,0,.07)}
+.post figure img{width:100%;height:auto;display:block;border-radius:12px;box-shadow:0 0 0 1px rgba(0,0,0,.07)}
 .post figcaption{font-size:13.5px;color:var(--gray2);margin-top:10px;line-height:1.6}
 .post .slot{border:1px dashed #D6D8DD;border-radius:12px;padding:34px 24px;text-align:center;
   background:var(--fill);color:var(--gray2);font-size:14px;line-height:1.7}
@@ -247,7 +247,15 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   .split{grid-template-columns:1fr;gap:34px}
   .split.rev .t{order:0}
   .cards{grid-template-columns:1fr}
-  .nav a.m{display:none}
+  .nav .wrap{gap:15px}
+  .nav a.m{font-size:13.5px}
+  .nav .btn{font-size:13px;padding:8px 13px}
   .form{grid-template-columns:repeat(2,1fr)}
   .calc{padding:24px}
+}
+@media (max-width:390px){
+  .nav .wrap{gap:11px}
+  .nav .logo{font-size:15px}
+  .nav a.m{font-size:13px}
+  .nav .btn{font-size:12.5px;padding:8px 11px}
 }
