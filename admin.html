@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>어드민 · 해외AI 구독관리</title>
+<title>어드민 · 돈나가요</title>
 <meta name="description" content="설치 추이와 스캐너 상태를 한 화면에서 봅니다.">
 <meta property="og:title" content="어드민 · 해외AI 구독관리">
 <meta property="og:description" content="설치 추이와 스캐너 상태를 한 화면에서 봅니다.">
@@ -23,8 +23,8 @@
   <p class="lead">여기 적는 숫자는 이 브라우저에만 저장됩니다. 서버로 가지 않습니다.</p>
 
   <div class="tiles">
-    <div class="tile"><div class="k">총 설치</div><div class="v" id="t1">0</div><div class="d" id="t1d"></div></div>
-    <div class="tile"><div class="k">증감</div><div class="v" id="t2">0</div><div class="d" id="t2d"></div></div>
+    <div class="tile"><div class="k">현재 사용자</div><div class="v" id="t1">0</div><div class="d" id="t1d"></div></div>
+    <div class="tile"><div class="k">누적 설치</div><div class="v" id="t2">0</div><div class="d" id="t2d"></div></div>
     <div class="tile"><div class="k">랜딩 방문</div><div class="v" id="t3">0</div><div class="d" id="t3d"></div></div>
     <div class="tile"><div class="k">설치 전환율</div><div class="v" id="t4">0%</div><div class="d" id="t4d"></div></div>
   </div>
@@ -33,19 +33,26 @@
     <h3>오늘 기록 넣기</h3>
     <div class="form">
       <div><label for="f_d">날짜</label><input id="f_d" type="date"></div>
-      <div><label for="f_i">총 설치 수</label><input id="f_i" type="number" min="0" placeholder="0"></div>
+      <div><label for="f_i">현재 사용자 수</label><input id="f_i" type="number" min="0" placeholder="0"></div>
+      <div><label for="f_in">그날 설치</label><input id="f_in" type="number" min="0" placeholder="0"></div>
+      <div><label for="f_un">그날 제거</label><input id="f_un" type="number" min="0" placeholder="0"></div>
       <div><label for="f_v">랜딩 방문</label><input id="f_v" type="number" min="0" placeholder="0"></div>
       <div><label for="f_c">설치 클릭</label><input id="f_c" type="number" min="0" placeholder="0"></div>
       <div><button class="btn sm" id="add">저장하기</button></div>
     </div>
-    <p class="hint" style="margin-top:14px">총 설치 수는 웹스토어 대시보드의 사용자 수를 그대로 옮겨 적으시면 됩니다.
-    방문과 클릭은 분석 도구에서 가져오세요. 같은 날짜를 다시 넣으면 덮어씁니다.</p>
+    <p class="hint" style="margin-top:14px"><b>현재 사용자 수</b>는 웹스토어 → 분석 → <b>사용자</b>의 숫자입니다.
+    이건 깔려 있는 수라서, 설치 1건과 제거 1건이 같은 날 일어나면 움직이지 않습니다.
+    그래서 <b>그날 설치</b>와 <b>그날 제거</b>는 웹스토어 → 분석 → <b>설치 및 제거</b>에서 따로 가져와 적습니다.
+    이 두 칸이 유입 경로와 상관없이 실제로 깔고 지운 수입니다.
+    방문과 클릭은 아직 집계 도구가 없으면 0으로 두셔도 됩니다. 같은 날짜를 다시 넣으면 덮어씁니다.</p>
   </div>
 
   <div class="panel">
-    <h3>날마다 늘어난 수</h3>
+    <h3>날마다 설치</h3>
     <div class="chart" id="c1"></div><div class="axis" id="a1"></div>
-    <h3 style="margin-top:34px">누적 설치</h3>
+    <h3 style="margin-top:34px">날마다 제거</h3>
+    <div class="chart" id="c3"></div><div class="axis" id="a3"></div>
+    <h3 style="margin-top:34px">현재 사용자</h3>
     <div class="chart" id="c2"></div><div class="axis" id="a2"></div>
     <p class="hint" style="margin-top:12px">최근 30개 기록만 그립니다. 막대에 손을 올리면 값이 보입니다.</p>
   </div>
@@ -53,7 +60,7 @@
   <div class="panel">
     <h3>기록</h3>
     <div class="scroll"><table>
-      <thead><tr><th>날짜</th><th class="n">총 설치</th><th class="n">방문</th><th class="n">설치 클릭</th><th class="n"></th></tr></thead>
+      <thead><tr><th>날짜</th><th class="n">사용자</th><th class="n">설치</th><th class="n">제거</th><th class="n">방문</th><th class="n">클릭</th><th class="n"></th></tr></thead>
       <tbody id="tb"></tbody>
     </table></div>
     <div class="tools">
@@ -140,14 +147,15 @@ function sorted(){return D.rows.slice().sort(function(a,b){return a.d<b.d?-1:1})
 
 function tiles(){
   var r=sorted(), last=r[r.length-1]||{}, prev=r[r.length-2]||{};
-  var installs=+last.inst||0;
-  var add=r.length>1?installs-(+prev.inst||0):installs;
+  var users=+last.inst||0;
+  var ins=r.reduce(function(s,x){return s+(+x.ins||0)},0);
+  var uns=r.reduce(function(s,x){return s+(+x.unin||0)},0);
   var visits=r.reduce(function(s,x){return s+(+x.vis||0)},0);
   var clicks=r.reduce(function(s,x){return s+(+x.clk||0)},0);
-  $('#t1').textContent=won(installs);
+  $('#t1').textContent=won(users);
   $('#t1d').textContent=last.d?last.d+' 기준':'아직 기록 없음';
-  $('#t2').textContent=(add>=0?'+':'')+won(add);
-  $('#t2d').textContent=r.length>1?'직전 기록 대비':'첫 기록';
+  $('#t2').textContent=won(ins);
+  $('#t2d').textContent=ins?'제거 '+won(uns)+'건':'설치 및 제거에서 옮겨 적으세요';
   $('#t3').textContent=won(visits);
   $('#t3d').textContent='누적 방문';
   $('#t4').textContent=clicks?(Math.round(clicks/Math.max(visits,1)*1000)/10)+'%':'0%';
@@ -165,19 +173,21 @@ function bars(el,vals,labels,fmt){
 function charts(){
   var r=sorted().slice(-30);
   var lab=r.map(function(x){return x.d.slice(5)});
-  var add=r.map(function(x,i){return i?Math.max(0,(+x.inst||0)-(+r[i-1].inst||0)):0});
-  bars($('#c1'),add,lab,function(v){return v+'명'});
+  bars($('#c1'),r.map(function(x){return +x.ins||0}),lab,function(v){return v+'건'});
+  bars($('#c3'),r.map(function(x){return +x.unin||0}),lab,function(v){return v+'건'});
   bars($('#c2'),r.map(function(x){return +x.inst||0}),lab,function(v){return v+'명'});
   $('#a1').innerHTML=r.length?'<span>'+r[0].d+'</span><span>'+r[r.length-1].d+'</span>':'';
   $('#a2').innerHTML=$('#a1').innerHTML;
+  $('#a3').innerHTML=$('#a1').innerHTML;
 }
 
 function table(){
   var r=sorted().slice().reverse();
   $('#tb').innerHTML=r.length?r.map(function(x,i){
-    return '<tr><td>'+x.d+'</td><td class="n">'+won(x.inst)+'</td><td class="n">'+won(x.vis)+
+    return '<tr><td>'+x.d+'</td><td class="n">'+won(x.inst)+'</td><td class="n">'+won(x.ins)+
+      '</td><td class="n">'+won(x.unin)+'</td><td class="n">'+won(x.vis)+
       '</td><td class="n">'+won(x.clk)+'</td><td class="n"><a href="#" data-del="'+x.d+'">지우기</a></td></tr>';
-  }).join(''):'<tr><td colspan="5" class="hint">아직 기록이 없습니다.</td></tr>';
+  }).join(''):'<tr><td colspan="7" class="hint">아직 기록이 없습니다.</td></tr>';
 }
 
 function geo(){
@@ -192,7 +202,8 @@ $('#add').addEventListener('click',function(){
   var d=$('#f_d').value;
   if(!d){alert('날짜를 넣어 주세요');return}
   D.rows=D.rows.filter(function(x){return x.d!==d});
-  D.rows.push({d:d,inst:+$('#f_i').value||0,vis:+$('#f_v').value||0,clk:+$('#f_c').value||0});
+  D.rows.push({d:d,inst:+$('#f_i').value||0,ins:+$('#f_in').value||0,unin:+$('#f_un').value||0,
+    vis:+$('#f_v').value||0,clk:+$('#f_c').value||0});
   save(D);draw();
 });
 $('#gadd').addEventListener('click',function(){
