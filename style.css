@@ -115,6 +115,9 @@ section{padding:76px 0;border-top:1px solid var(--line2)}
 .cmts{margin-top:52px;padding-top:8px;border-top:1px solid var(--line)}
 .cmts h3{font-size:18px;margin:26px 0 4px}
 .cmts .hint{font-size:14.5px;color:var(--gray);margin-bottom:20px;line-height:1.7}
+.cmts .quiet{font-size:14px;color:var(--gray2);line-height:1.75;margin:22px 0 0;
+  padding-top:18px;border-top:1px solid var(--line2)}
+.cmts .quiet a{color:var(--gray);text-decoration:underline;text-underline-offset:2px}
 .entry{display:block;text-decoration:none;padding:24px 0;border-bottom:1px solid var(--line2)}
 .entry .k{font-size:12.5px;color:var(--gray2);margin-bottom:6px}
 .entry h3{margin-bottom:6px}
