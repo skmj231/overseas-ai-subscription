@@ -6,6 +6,10 @@
 <meta property="og:title" content="사업자번호 넣는 칸이 안 보이는 이유 · 돈나가요">
 <meta property="og:description" content="Billing에 들어갔는데 Tax ID 칸이 없다면 이유는 대개 하나입니다. 국가를 먼저 바꿔야 나타납니다. 칸 이름의 영어 변형과 넣은 뒤 확인하는 법.">
 <meta property="og:type" content="website">
+<meta property="og:image" content="https://oopsub.netlify.app/thumb-where-to-put-brn.png">
+<meta property="og:url" content="https://oopsub.netlify.app/blog-where-to-put-brn.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://oopsub.netlify.app/thumb-where-to-put-brn.png">
 <meta name="color-scheme" content="light">
 <link rel="stylesheet" href="./style.css">
 </head><body>
@@ -24,6 +28,10 @@
 <p>사업자등록번호를 넣으면 부가세가 빠진다는 것까지는 아셨을 겁니다.
 그런데 막상 Billing 화면에 들어가면 그런 칸이 안 보입니다.
 내가 못 찾는 건지, 이 서비스는 원래 없는 건지부터 헷갈립니다.</p>
+
+<figure><img src="./fig-brn-where.png" alt="계정 메뉴에서 Tax ID 입력칸까지 가는 다섯 단계"
+  width="1000" height="400">
+<figcaption>네 번째에서 대부분 포기합니다. 국가를 바꾸기 전에는 칸이 화면에 없습니다.</figcaption></figure>
 
 <h2>열에 일곱은 이 이유입니다</h2>
 
@@ -88,6 +96,55 @@
 <div class="slot" data-shot="brn-chatgpt">
   <b>화면 캡처가 들어갈 자리입니다</b>
   실제 입력 화면을 여기에 넣을 예정입니다. 금액과 계정 정보는 가린 채로 올립니다.
+</div>
+
+<h2>넣을 때 틀리기 쉬운 것</h2>
+
+<p>번호 형식 때문에 저장이 안 되는 경우가 잦습니다. 넷 중 하나입니다.</p>
+
+<div class="tw"><table>
+  <thead><tr><th>이렇게 넣으면</th><th>결과</th></tr></thead>
+  <tbody>
+    <tr><td>220-81-62517 (하이픈 포함)</td><td>받는 곳도 있고 거부하는 곳도 있습니다. 안 되면 하이픈을 빼세요</td></tr>
+    <tr><td>22081625170 (11자리)</td><td>거부됩니다. 사업자등록번호는 <b>10자리</b>입니다</td></tr>
+    <tr><td>법인등록번호 13자리</td><td>거부됩니다. 사업자등록번호와 다른 번호입니다</td></tr>
+    <tr><td>유형을 KR BRN으로 안 고름</td><td>형식 오류가 납니다. 목록에서 한국을 먼저 고르세요</td></tr>
+  </tbody>
+</table></div>
+
+<p>가장 안전한 형태는 <b>하이픈 없는 10자리 숫자</b>입니다.
+그래도 안 되면 하이픈을 넣어 다시 시도해 보세요.</p>
+
+<h2>넣었는데 부가세가 그대로라면</h2>
+
+<p>순서대로 확인하시면 원인이 나옵니다.</p>
+
+<ul>
+  <li><b>하루 이틀 기다려 보세요.</b> 번호 검증에 시간이 걸리는 곳이 있습니다.
+  검증 중에는 다음 결제까지 반영이 안 될 수 있습니다.</li>
+  <li><b>청구 주소의 국가</b>가 대한민국인지 다시 보세요.
+  Tax ID는 저장됐는데 주소가 다른 나라로 남아 있으면 적용이 안 됩니다.</li>
+  <li><b>이번 청구는 이미 확정된 것</b>일 수 있습니다.
+  갱신일 직전에 넣으면 이번 건에는 반영이 안 되고 다음 건부터 빠집니다.</li>
+  <li><b>계정이 두 개</b>인지 보세요. 개인 계정에 넣고 팀 계정으로 결제되고 있는 경우가 흔합니다.</li>
+</ul>
+
+<div class="prompt">
+  <div class="ph"><b>AI에게 이렇게 물어보세요</b><span>쓰는 서비스 이름만 넣으면 경로를 찾아줍니다</span></div>
+  <pre>나는 한국 개인사업자야. [서비스 이름]을 구독 중인데
+사업자등록번호(Tax ID)를 넣어서 부가가치세 10%를 빼고 싶어.
+
+다음을 알려줘.
+1. 그 서비스에서 Tax ID를 입력하는 화면까지 가는 메뉴 경로를 단계별로
+2. 그 칸의 정확한 이름 (Tax ID, VAT number, Business number 중 무엇인지)
+3. 국가나 청구 주소를 먼저 바꿔야 칸이 나타나는지
+4. 한국 사업자등록번호를 넣을 때 하이픈을 넣어야 하는지 빼야 하는지
+5. 개인 요금제에서도 되는지, 팀이나 비즈니스 요금제에서만 되는지
+
+확실하지 않은 항목은 추측하지 말고 "확인 필요"라고 적어줘.
+화면이 바뀌었을 수 있으니 공식 도움말 문서 링크도 같이 줘.</pre>
+  <div class="pf"><button type="button" class="cp">프롬프트 복사</button>
+    <span class="pn">화면 구성이 자주 바뀌는 서비스는 이 방법이 이 글보다 최신입니다.</span></div>
 </div>
 
 <h2>넣고 나서 확인하는 법</h2>
@@ -189,12 +246,14 @@
     }
   });
 
-  [].forEach.call(document.querySelectorAll(".copy .cp"), function(b){
+  [].forEach.call(document.querySelectorAll(".cp"), function(b){
+    var box = b.closest ? b.closest(".copy, .prompt") : b.parentNode;
     b.addEventListener("click", function(){
-      var pre = b.parentNode.querySelector("pre");
+      var pre = box && box.querySelector("pre");
       if (!pre) return;
       var txt = pre.textContent;
-      var ok = function(){ b.textContent = "복사했습니다"; setTimeout(function(){ b.textContent = "문장 복사"; }, 1800); };
+      var was = b.textContent;
+      var ok = function(){ b.textContent = "복사했습니다"; setTimeout(function(){ b.textContent = was; }, 1800); };
       if (navigator.clipboard) { navigator.clipboard.writeText(txt).then(ok, no); } else no();
       function no(){
         var a = document.createElement("textarea");

@@ -6,6 +6,10 @@
 <meta property="og:title" content="환불 요청 영어 메일, 그대로 복사해 쓰세요 · 돈나가요">
 <meta property="og:description" content="실수로 결제됐을 때, 해지했는데 또 결제됐을 때, 무료 체험이 끝난 줄 몰랐을 때. 상황별 영어 문장과 보낼 곳 찾는 법.">
 <meta property="og:type" content="website">
+<meta property="og:image" content="https://oopsub.netlify.app/thumb-refund-email.png">
+<meta property="og:url" content="https://oopsub.netlify.app/blog-refund-email.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://oopsub.netlify.app/thumb-refund-email.png">
 <meta name="color-scheme" content="light">
 <link rel="stylesheet" href="./style.css">
 </head><body>
@@ -133,8 +137,61 @@ Best regards,
 <h2>답이 없으면</h2>
 
 <p>영업일 기준 사나흘을 기다린 뒤 같은 메일에 한 번 더 답장하세요.
-새 메일을 쓰는 것보다 같은 스레드에 붙이는 편이 잘 처리됩니다.
-그래도 답이 없으면 그때 카드사 이의제기를 생각해 보시면 됩니다.</p>
+새 메일을 쓰는 것보다 같은 스레드에 붙이는 편이 잘 처리됩니다.</p>
+
+<div class="copy">
+<pre>Hello,
+
+I am following up on my refund request sent on [보낸 날짜].
+I have not received a response yet.
+
+Could you please let me know the status?
+My account email is [이메일 주소].
+
+Thank you.</pre>
+<button type="button" class="cp">문장 복사</button>
+</div>
+
+<h2>답장이 왔을 때</h2>
+
+<p>영어 답장이 오면 대개 셋 중 하나입니다. 무엇인지 알아야 다음을 정할 수 있습니다.</p>
+
+<div class="tw"><table>
+  <thead><tr><th>답장에 이런 말이 있으면</th><th>뜻</th><th>다음</th></tr></thead>
+  <tbody>
+    <tr><td>We have issued a refund<br>Your refund has been processed</td>
+      <td>환불해 줬습니다</td><td>3~10영업일 뒤 카드 내역 확인. 해지도 됐는지 따로 확인</td></tr>
+    <tr><td>Our policy does not allow<br>outside the refund window</td>
+      <td>거절입니다</td><td>한 번 더 정중히 요청해 볼 수 있습니다. 그래도 안 되면 해지만 확인</td></tr>
+    <tr><td>We can offer a credit instead</td>
+      <td>현금 대신 적립금 제안</td><td>계속 쓸 생각이면 받고, 아니면 현금 환불을 다시 요청하세요</td></tr>
+  </tbody>
+</table></div>
+
+<p>거절당해도 <b>해지가 됐는지는 반드시 따로 확인</b>하세요.
+환불은 거절하고 구독은 그대로 살려 두는 경우가 있습니다.</p>
+
+<div class="prompt">
+  <div class="ph"><b>AI에게 이렇게 물어보세요</b><span>받은 영어 답장을 붙여넣고 무슨 뜻인지 확인하세요</span></div>
+  <pre>해외 서비스에 환불을 요청했더니 아래와 같은 답장이 왔어.
+
+[받은 영어 메일 전문 붙여넣기]
+
+다음을 알려줘.
+1. 이 답장이 환불 승인인지, 거절인지, 조건부 제안인지
+2. 나에게 요구하는 것이 있는지 (추가 정보, 확인, 회신 기한 등)
+3. 환불이 된다면 언제 어떤 방식으로 들어오는지
+4. 구독 해지도 함께 처리됐는지, 아니면 따로 해야 하는지
+
+그리고 내가 보낼 답장을 영어로 써줘.
+- 환불 승인이면 짧게 감사 인사와 해지 확인 요청
+- 거절이면 정중하게 한 번 더 요청하되, 화내거나 법적 조치를 언급하지 말고
+- 조건부 제안이면 현금 환불을 다시 요청하는 문장으로
+
+내가 고쳐야 할 부분은 대괄호로 표시해줘.</pre>
+  <div class="pf"><button type="button" class="cp">프롬프트 복사</button>
+    <span class="pn">메일 전문을 그대로 넣으면 됩니다. 다음에 뭘 해야 하는지까지 나옵니다.</span></div>
+</div>
 
 <div class="callout">
   <p>환불을 받으셨든 못 받으셨든, <b>해지가 실제로 됐는지는 따로 확인</b>하셔야 합니다.
@@ -214,12 +271,14 @@ Best regards,
     }
   });
 
-  [].forEach.call(document.querySelectorAll(".copy .cp"), function(b){
+  [].forEach.call(document.querySelectorAll(".cp"), function(b){
+    var box = b.closest ? b.closest(".copy, .prompt") : b.parentNode;
     b.addEventListener("click", function(){
-      var pre = b.parentNode.querySelector("pre");
+      var pre = box && box.querySelector("pre");
       if (!pre) return;
       var txt = pre.textContent;
-      var ok = function(){ b.textContent = "복사했습니다"; setTimeout(function(){ b.textContent = "문장 복사"; }, 1800); };
+      var was = b.textContent;
+      var ok = function(){ b.textContent = "복사했습니다"; setTimeout(function(){ b.textContent = was; }, 1800); };
       if (navigator.clipboard) { navigator.clipboard.writeText(txt).then(ok, no); } else no();
       function no(){
         var a = document.createElement("textarea");

@@ -6,6 +6,10 @@
 <meta property="og:title" content="해외 AI 툴에 낸 부가세, 신고 때 돌려받는 줄 아셨다면 · 돈나가요">
 <meta property="og:description" content="국내에서 낸 부가세는 신고할 때 돌려받습니다. 해외 AI 구독에 낸 부가세는 돌려받기 어렵습니다. 왜 다른지, 그래서 무엇부터 손대야 하는지.">
 <meta property="og:type" content="website">
+<meta property="og:image" content="https://oopsub.netlify.app/thumb-vat-not-refundable.png">
+<meta property="og:url" content="https://oopsub.netlify.app/blog-vat-not-refundable.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://oopsub.netlify.app/thumb-vat-not-refundable.png">
 <meta name="color-scheme" content="light">
 <link rel="stylesheet" href="./style.css">
 </head><body>
@@ -33,6 +37,10 @@
 연 구독이라면 한 번 놓칠 때마다 수만 원에서 수십만 원입니다.</p>
 
 <h2>어디서 갈라지나</h2>
+
+<figure><img src="./fig-vat-path.png" alt="국내 결제와 해외 결제에서 부가세가 어떻게 달라지는지 비교한 그림"
+  width="1000" height="600">
+<figcaption>같은 1,000원인데 국내는 신고 때 돌아오고 해외는 돌아오지 않습니다.</figcaption></figure>
 
 <div class="tw"><table>
   <thead><tr><th></th><th>국내 서비스 결제</th><th>해외 AI 툴 결제</th></tr></thead>
@@ -94,9 +102,67 @@
   <li><b>3순위 · 소액 월 결제</b> 시간 날 때 몰아서</li>
 </ul>
 
-<p>예를 들어 연 68만 원짜리 구독 하나면 부가세가 6만 원가량입니다.
-이걸 이번 갱신 전에 처리하면 6만 원이 안 나가고, 놓치면 6만 원이 확정된 뒤 1년을 기다립니다.
-월 3만 원짜리 다섯 개를 처리하는 것보다 이 하나가 먼저입니다.</p>
+<h3>숫자로 보면 이렇습니다</h3>
+
+<p>툴 다섯 개를 쓰는 분이 있다고 하겠습니다. 표시 금액에 부가세가 포함돼 있다고 보면
+부가세는 <b>표시 금액을 11로 나눈 값</b>입니다.</p>
+
+<div class="tw"><table>
+  <thead><tr><th>서비스</th><th>주기</th><th>표시 금액</th><th>이 중 부가세</th><th>1년 기준</th><th>순서</th></tr></thead>
+  <tbody>
+    <tr><td>영상 툴</td><td>연</td><td>682,813원</td><td>62,074원</td><td><b>62,074원</b></td><td><b>1순위</b></td></tr>
+    <tr><td>디자인 툴</td><td>연</td><td>220,000원</td><td>20,000원</td><td><b>20,000원</b></td><td><b>2순위</b></td></tr>
+    <tr><td>글쓰기 툴</td><td>월</td><td>44,000원</td><td>4,000원</td><td>48,000원</td><td>3순위</td></tr>
+    <tr><td>협업 툴</td><td>월</td><td>22,000원</td><td>2,000원</td><td>24,000원</td><td>4순위</td></tr>
+    <tr><td>메모 툴</td><td>월</td><td>11,000원</td><td>1,000원</td><td>12,000원</td><td>5순위</td></tr>
+  </tbody>
+</table></div>
+
+<p>1년 기준으로는 월 결제 셋을 합친 것이 연 결제 하나보다 큽니다.
+그런데도 <b>연 결제가 1순위</b>인 이유는 시간 때문입니다.</p>
+
+<div class="callout">
+  <p>월 결제는 이번 달을 놓쳐도 <b>다음 달에 하면 4,000원만 손해</b>입니다.<br>
+  연 결제는 갱신일을 놓치면 <b>62,074원이 확정되고 다음 기회가 1년 뒤</b>입니다.</p>
+  <p>금액이 아니라 <b>되돌릴 수 있는 기회가 언제 다시 오는지</b>로 순서를 정하셔야 합니다.</p>
+</div>
+
+<h3>부가세가 이미 빠져 있는지 확인하는 법</h3>
+
+<p>번호를 넣었는데 실제로 적용됐는지는 인보이스에서 확인합니다. 세 가지 경우가 있습니다.</p>
+
+<div class="tw"><table>
+  <thead><tr><th>인보이스에 보이는 것</th><th>뜻</th><th>할 일</th></tr></thead>
+  <tbody>
+    <tr><td><b>Tax</b> 또는 <b>VAT</b> 줄에 금액이 있음</td><td>부가세가 붙고 있습니다</td><td>번호를 넣으세요</td></tr>
+    <tr><td>그 줄이 <b>0.00</b>으로 바뀜</td><td>적용됐습니다</td><td>끝났습니다</td></tr>
+    <tr><td>그 줄이 <b>아예 사라짐</b></td><td>이것도 적용된 것입니다</td><td>끝났습니다</td></tr>
+  </tbody>
+</table></div>
+
+<p>세 번째 경우를 모르고 "줄이 없어졌는데 잘못된 건가" 하고 다시 넣는 분이 있습니다.
+줄이 사라진 것은 정상입니다. 총액이 줄었는지만 보시면 됩니다.</p>
+
+<div class="prompt">
+  <div class="ph"><b>AI에게 이렇게 물어보세요</b><span>내 구독 목록을 붙여넣고 순서를 받으세요</span></div>
+  <pre>아래는 내가 쓰는 해외 AI 구독 목록이야. 나는 한국 개인사업자야.
+
+[여기에 서비스명, 금액, 주기, 다음 결제일을 붙여넣기]
+
+각 서비스에 대해 다음을 표로 정리해줘.
+1. 표시 금액에 부가세가 포함돼 있다고 보고 부가세 추정액 (금액을 11로 나눈 값)
+2. 1년 기준 부가세 총액
+3. 사업자등록번호를 넣어야 하는 우선순위
+
+우선순위는 금액이 아니라 이 기준으로 정해줘.
+- 연 결제이면서 다음 결제일이 가까운 것이 최우선 (놓치면 1년을 기다려야 하므로)
+- 그다음 금액이 큰 월 결제
+- 마지막으로 소액 월 결제
+
+각 항목마다 "지금 안 하면 얼마가 확정되는지"를 한 줄로 적어줘.</pre>
+  <div class="pf"><button type="button" class="cp">프롬프트 복사</button>
+    <span class="pn">표를 그대로 붙여넣으면 됩니다. 금액만 있으면 계산해 줍니다.</span></div>
+</div>
 
 <h2>오늘 할 일 세 가지</h2>
 
@@ -105,6 +171,24 @@
   <li>각각의 <b>다음 결제일</b>과 <b>연 결제인지 월 결제인지</b>를 옆에 적습니다.</li>
   <li>가장 가까운 연 결제부터 사업자등록번호를 넣습니다.</li>
 </ul>
+
+<h2>이런 경우는 어떻게 하나</h2>
+
+<div class="tw"><table>
+  <thead><tr><th>상황</th><th>어떻게</th></tr></thead>
+  <tbody>
+    <tr><td>사업자가 아닌데 쓰고 있다</td>
+      <td>부가세를 뺄 방법이 없습니다. 대신 안 쓰는 것을 끊는 쪽이 실익이 큽니다</td></tr>
+    <tr><td>간이과세자다</td>
+      <td>매입세액 공제 구조가 일반과세자와 다릅니다. 번호를 넣어 안 붙게 하는 것은 똑같이 유리합니다</td></tr>
+    <tr><td>개인카드로 결제했다</td>
+      <td>카드 종류와 부가세 면제는 무관합니다. 결제 정보에 사업자번호가 들어 있느냐로 갈립니다</td></tr>
+    <tr><td>이번 달에 이미 결제됐다</td>
+      <td>이번 건은 지나갔습니다. 지금 넣으면 다음 결제부터 빠집니다. 넣어 두세요</td></tr>
+    <tr><td>곧 해지할 서비스다</td>
+      <td>번호를 넣지 말고 해지하세요. 안 쓸 것에 부가세를 아끼는 것은 의미가 없습니다</td></tr>
+  </tbody>
+</table></div>
 
 <div class="callout warn">
   <p><b>세무대리인께 확인하세요.</b> 이 글은 일반적인 구조를 설명한 것입니다.
@@ -185,12 +269,14 @@
     }
   });
 
-  [].forEach.call(document.querySelectorAll(".copy .cp"), function(b){
+  [].forEach.call(document.querySelectorAll(".cp"), function(b){
+    var box = b.closest ? b.closest(".copy, .prompt") : b.parentNode;
     b.addEventListener("click", function(){
-      var pre = b.parentNode.querySelector("pre");
+      var pre = box && box.querySelector("pre");
       if (!pre) return;
       var txt = pre.textContent;
-      var ok = function(){ b.textContent = "복사했습니다"; setTimeout(function(){ b.textContent = "문장 복사"; }, 1800); };
+      var was = b.textContent;
+      var ok = function(){ b.textContent = "복사했습니다"; setTimeout(function(){ b.textContent = was; }, 1800); };
       if (navigator.clipboard) { navigator.clipboard.writeText(txt).then(ok, no); } else no();
       function no(){
         var a = document.createElement("textarea");
