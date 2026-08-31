@@ -24,6 +24,7 @@
   <div class="meta">절세</div>
   <h1 style="font-size:34px">사업자번호 넣는 칸이 안 보이는 이유</h1>
   <div class="date">2026년 8월 30일</div>
+  <div class="tax-db"><div class="tax-db-head"><b>서비스별 Tax ID 위치</b><input id="taxSearch" placeholder="서비스 이름 검색"></div><div class="tax-grid" id="taxGrid"><div data-service="chatgpt openai"><b>ChatGPT</b><span>Settings → Subscription → Manage → Billing information → Tax ID</span><small>유형: KR BRN · 10자리</small></div><div data-service="claude anthropic"><b>Claude</b><span>Settings → Billing → Tax information</span><small>API는 Console의 Organization 설정 확인</small></div><div data-service="cursor"><b>Cursor</b><span>Settings → Billing → Manage subscription → Billing information</span><small>결제 포털에서 국가를 Korea로 먼저 선택</small></div><div data-service="midjourney"><b>Midjourney</b><span>Manage Sub → Edit Billing → Tax ID</span><small>결제 포털 화면과 플랜에 따라 표기가 다를 수 있음</small></div><div data-service="figma"><b>Figma</b><span>Admin settings → Billing → Billing details</span><small>조직 관리자 권한 필요</small></div><div data-service="canva"><b>Canva</b><span>Settings → Billing & plans → Billing details</span><small>국가를 Korea로 설정한 뒤 확인</small></div></div><p class="muted">화면은 서비스가 바꿀 수 있습니다. 메뉴가 다르면 Billing, Tax information, VAT ID를 차례로 찾으세요.</p></div>
   
 <p>사업자등록번호를 넣으면 부가세가 빠진다는 것까지는 아셨을 겁니다.
 그런데 막상 Billing 화면에 들어가면 그런 칸이 안 보입니다.
@@ -265,4 +266,4 @@
 })();
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e0b3d8c045874b76b2e5d1ae430fc07d"}'></script><!-- End Cloudflare Web Analytics -->
-</body></html>
+<script src="./tools.js"></script></body></html>
