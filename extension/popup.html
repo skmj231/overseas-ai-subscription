@@ -256,6 +256,21 @@
     .me .acts .p { background: #1E6B3A; color: #fff; }
     .me .acts .g { background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; }
   }
+  /* Donna 1.3.2 visual identity */
+  :root { --donna-forest:#010D0A; --donna-forest-2:#06251D; --donna-cream:#FBF8F0; --donna-gold:#D6AC49; }
+  html, body, #app { background:var(--donna-cream); }
+  header { margin:0 0 8px; padding:15px 18px; background:linear-gradient(145deg,var(--donna-forest-2),var(--donna-forest)); color:#F9F4E9; }
+  header .brand { color:#F9F4E9; }
+  header .brand img { width:34px; height:34px; border-radius:11px; box-shadow:0 8px 18px -10px rgba(0,0,0,.8); }
+  header .brand b { font-size:13px; }
+  header .brand small { color:var(--donna-gold); }
+  header .saved { color:#F9F4E9; }
+  .top button.on,.tabs .tab.on,.due,.todo .t .x,.me .acts .p,#export,.chip.ask,.confirm,.wc .btns button.p,.form .acts .p { background:var(--donna-forest); }
+  .top { background:rgba(5,43,33,.04); }
+  .view,.wc,.form,.gate { background:var(--donna-cream); }
+  .due { border-radius:14px; box-shadow:0 14px 28px -20px rgba(5,43,33,.72); }
+  .me input[type=text],.me select,.form input,.form select,.todo .t .go,.me .acts .g,.tabs .tab,#copy,.gate button { background:#FFFCF5; }
+  li:hover { background:#F1EDE3; }
 </style>
 </head>
 <body>
