@@ -1,0 +1,393 @@
+/* 해외AI구독관리 — 플랫.
+ *
+ * 모서리는 약하게만 굴린다(10~12px). 둥글수록 장난감처럼 보이고,
+ * 각질수록 문서처럼 보인다. 이건 남의 돈이 빠져나가는 걸 막는 물건이라 문서 쪽이 맞다.
+ * 글자 굵기는 600·700 둘뿐이다. 800까지 쓰면 무엇이 중요한지 도리어 흐려진다.
+ *
+ * 색은 쓰지 않는다. 검정·흰색·회색 세 가지뿐이다.
+ *
+ * 주황을 쓰던 시절에는 그 위의 회색 라벨이 1.5:1이라 사실상 안 읽혔고,
+ * 호박·청록으로 낮춰도 애매한 갈색으로 보였다. 색으로 뜻을 나누려 할수록
+ * 색 고르기가 어려워지고, 어떤 화면에서는 늘 탁해 보인다.
+ *
+ * 그래서 뜻은 색이 아니라 밝기와 자리로 나눈다.
+ *   검정 면 + 흰 글자 = 지금 봐야 한다 (배지·강조 줄·주버튼)
+ *   회색 면 + 회색 글자 = 이미 끝났거나 조용한 것
+ *   흰 면 + 검은 글자 = 본문
+ * 대비는 최소 4.5:1, 강조는 17:1까지 나온다. 오래 봐도 눈이 아프지 않다.
+ *
+ *   먹  #16171A · 잉크 #17181B(면) · 흰 #FFFFFF · 조용한 면 #F1F2F5
+ */
+
+/* ============ 배지 ============ */
+@keyframes svst-ready {
+  0%   { box-shadow: 0 0 0 1px rgba(17,19,21,.14), 0 4px 14px -6px rgba(17,19,21,.30); }
+  55%  { box-shadow: 0 0 0 3px rgba(17,19,21,.16), 0 10px 30px -6px rgba(17,19,21,.55); }
+  100% { box-shadow: 0 0 0 1px rgba(17,19,21,.14), 0 4px 14px -6px rgba(17,19,21,.30); }
+}
+/* 확인된 게 없을 때는 배지도 조용해야 한다. 읽을 값이 확정되면 그때 한 번 밝아진다. */
+#svst-badge.svst-ready { animation: svst-ready 2.4s ease-in-out 2; }
+
+#svst-badge {
+  color-scheme: light;
+  position: fixed;
+  left: 24px;
+  bottom: 26px;
+  z-index: 2147483646;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 20px 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  background: #ffffff;
+  /* 결제창은 대부분 흰 바탕이다. 흰 배지를 흰 배경에 두면 없는 것과 같다.
+     카드가 닫혀 있는 동안 이 배지가 유일한 존재 표시라서, 여기서 안 보이면 아무것도 안 보인다. */
+  box-shadow: 0 0 0 1px rgba(17,19,21,.10),
+              0 4px 14px -6px rgba(17,19,21,.30);
+  color: #111315;
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', sans-serif;
+  transition: transform .16s ease, background .2s ease;
+}
+#svst-badge:hover { transform: translateY(-2px); }
+#svst-badge:active { transform: translateY(0); }
+/* 값이 붙으면 흰 배지가 검은 판으로 바뀐다. 흰 결제창 위에서 이게 어떤 색면보다 잘 보이고,
+   오래 봐도 눈이 피로하지 않다. 라벨과 숫자는 둘 다 흰색이고, 위아래는 크기로 나눈다. */
+#svst-badge.svst-orange,
+#svst-badge.svst-mint {
+  background: #17181B;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.22), 0 8px 24px -8px rgba(17,19,21,.45);
+}
+/* 두 장을 같은 칸에 겹쳐 둔다. grid 한 칸에 넣으면 배지 크기가 둘 중 넓은 쪽에 맞춰져서,
+   장이 바뀔 때 배지가 들썩이지 않는다. */
+#svst-badge.svst-two { display: grid; }
+#svst-badge.svst-two .svst-face {
+  grid-area: 1 / 1;
+  display: flex; flex-direction: column; gap: 4px;
+  opacity: 0; transition: opacity .5s ease;
+}
+#svst-badge.svst-two .svst-face.svst-on { opacity: 1; }
+#svst-badge:not(.svst-two) .svst-face { display: flex; flex-direction: column; gap: 4px; }
+#svst-badge:not(.svst-two) .svst-alt { display: none; }
+
+#svst-badge .svst-plate-label {
+  font-size: 11px; font-weight: 600; letter-spacing: .02em;
+  color: rgba(0,0,0,.5); white-space: nowrap;
+}
+#svst-badge.svst-orange .svst-plate-label,
+#svst-badge.svst-mint   .svst-plate-label { color: rgba(255,255,255,.72); }
+#svst-badge .svst-plate-val {
+  font-size: 25px; font-weight: 600; letter-spacing: -.022em; line-height: 1.1;
+  color: #16171A; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+#svst-badge.svst-orange .svst-plate-val,
+#svst-badge.svst-mint   .svst-plate-val { color: #FFFFFF; }
+#svst-badge.svst-dot.svst-orange .svst-plate-label::after { background: #FFFFFF; }
+#svst-badge:not(.svst-pill) { padding: 12px 18px; border-radius: 10px; }
+#svst-badge:not(.svst-pill) .svst-plate-label { font-size: 11px; letter-spacing: .02em; }
+#svst-badge:not(.svst-pill) .svst-plate-val { display: none; }
+#svst-badge.svst-dot .svst-plate-label::after {
+  content: '';
+  display: inline-block; vertical-align: middle;
+  width: 6px; height: 6px; border-radius: 50%; margin-left: 7px;
+  background: #111315;
+}
+
+/* ============ 카드 ============ */
+/* 크기는 하나로 고정한다.
+   화면마다 높이가 달라지면 같은 자리를 눌렀는데 매번 다른 것이 눌리고,
+   짧은 화면에서는 카드가 갑자기 쪼그라들어 다른 물건처럼 보인다.
+   남는 자리는 비워 두는 편이 낫다 — 빽빽한 것보다 빈 것이 읽기 쉽다. */
+#svst-card {
+  color-scheme: light;   /* 결제창이 어두운 테마여도 카드는 흰 종이로 남는다 */
+  position: fixed;
+  left: 24px;
+  bottom: 118px;
+  width: 404px;
+  height: 588px;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  z-index: 2147483647;
+  display: none;
+  flex-direction: column;
+  padding: 30px 30px 24px;
+  border-radius: 12px;
+  border: none;
+  background: #ffffff;
+  /* 결제창이 흰 배경이면 카드가 배경에 묻힌다. 리셋이 border를 죽이므로 ring으로 그린다. */
+  box-shadow: 0 0 0 1px rgba(17,19,21,.09),
+              0 10px 30px -12px rgba(17,19,21,.28);
+  color: #111315;
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', sans-serif;
+  font-size: 14.5px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  word-break: keep-all;
+  box-sizing: border-box;
+}
+#svst-card.svst-open { display: flex; }
+#svst-card > * { flex: 0 0 auto; }
+#svst-card * { box-sizing: border-box; }
+/* 방어적 리셋 — 호스트 페이지 스타일이나 잔여 규칙이 선을 만들지 못하게 */
+#svst-card *, #svst-badge * { border: 0 !important; outline: 0; background-image: none; }
+
+/* 면을 가진 것은 '누를 수 있는 것'뿐이다.
+   설명·상태·이름표까지 네모를 두르면 무엇이 버튼인지 알 수 없게 된다. */
+#svst-card .svst-ghost,
+#svst-card input[type="text"] { box-shadow: inset 0 0 0 1px rgba(17,19,21,.10); }
+#svst-card .svst-compare { box-shadow: inset 0 0 0 1px rgba(17,19,21,.07); }
+
+/* ── 뒤로 — 글자 그대로. 면도 테두리도 없다. 제목 자리에 들어간다 ── */
+#svst-card .svst-back {
+  font-size: 13px; font-weight: 500; color: rgba(0,0,0,.45); cursor: pointer;
+  line-height: 1; letter-spacing: -.01em;
+}
+#svst-card .svst-back:hover { color: #111315; }
+
+/* ── 자리를 고정하는 세 칸 ──
+   위 칸(상황 한 줄 + 이름표)과 숫자 칸의 높이를 못박는다.
+   그러면 화면이 바뀌어도 숫자와 본문이 늘 같은 높이에 온다 — 눈이 다시 찾을 필요가 없다.
+   글이 길어지면 이 칸이 늘어나면서 정렬이 깨지므로, 여기 들어갈 문장은 짧아야 한다.
+   길이 제한이 아니라 자리 자체가 문장을 짧게 만든다. */
+#svst-card .svst-top {
+  min-height: 83px;   /* 단계 표시 + 상황 한 줄 + 이름표가 모두 들어가는 가장 높은 경우에 맞춘다 */
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 10px;
+}
+#svst-card .svst-hero {
+  min-height: 52px; margin-bottom: 12px;
+  display: flex; align-items: flex-end;
+}
+#svst-card .svst-hero:empty { display: none; }
+
+/* 버튼은 언제나 카드 맨 아래 같은 자리에 있다. 남는 공간은 여기서 전부 흡수한다.
+   버튼 아래 꼬리(잔글씨 또는 기록함·설정 링크)도 높이를 고정해야 버튼의 끝이 어긋나지 않는다.
+   화면마다 잔글씨가 있고 없고가 다른데, 그것 때문에 버튼이 위아래로 움직이면
+   같은 자리를 눌렀다고 생각하고 다른 것을 누르게 된다. */
+#svst-card .svst-acts { margin-top: auto; }
+#svst-card .svst-tail {
+  min-height: 48px; margin-top: 14px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px;
+}
+
+/* ── 날짜 두 줄 ──
+   "5일 전에 알려 드릴게요"만 있으면 무엇의 5일 전인지 알 수가 없다.
+   언제 나가고 그다음 언제 또 나가는지를 먼저 보여주고, 알림 시점은 그 아래 붙인다. */
+#svst-card .svst-dl { margin-top: 4px; }
+#svst-card .svst-dl > div {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 11px 0; box-shadow: inset 0 1px 0 rgba(17,19,21,.08);
+  font-size: 13.5px; color: rgba(0,0,0,.5);
+}
+#svst-card .svst-dl > div:first-child { box-shadow: none; padding-top: 2px; }
+#svst-card .svst-dl b {
+  color: #111315; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+}
+
+/* ── 지금 어디 ──
+   화면 이름을 대고, 남은 단계도 같이 보여 준다. 면도 테두리도 없다 —
+   여기는 읽는 자리지 누르는 자리가 아니다. 지금 있는 곳만 검게 남기고 나머지는 물린다. */
+#svst-card .svst-rail {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600; letter-spacing: .01em;
+  color: rgba(0,0,0,.28); white-space: nowrap;
+}
+#svst-card .svst-rail .svst-now { color: #111315; }
+#svst-card .svst-rail .svst-mid { color: rgba(0,0,0,.18); font-weight: 500; }
+
+/* ── 상황 한 줄 — 숫자가 왜 여기 있는지 먼저 말한다 ── */
+#svst-card .svst-ctx {
+  font-size: 13px; color: rgba(0,0,0,.5); line-height: 1.55;
+}
+#svst-card .svst-ctx b { color: #111315; font-weight: 700; }
+
+/* ── 덧붙이는 말 — 네모 대신 위에 실선 한 줄만 긋는다 ──
+   직계 자식으로만 좁힌다. 비교 블록(.svst-compare) 안의 '나중' 줄도 같은 이름을 쓰는데,
+   거기까지 이 규칙이 닿으면 민트 줄이 아래로 밀려 두 줄 사이가 벌어진다. */
+#svst-card > .svst-later {
+  margin-top: 18px; padding-top: 15px;
+  box-shadow: inset 0 1px 0 rgba(17,19,21,.09);
+  font-size: 13px; color: rgba(0,0,0,.5); line-height: 1.6;
+}
+#svst-card > .svst-later b { color: #111315; font-weight: 600; }
+#svst-card::before, #svst-card::after,
+#svst-badge::before, #svst-badge::after { content: none !important; }
+
+#svst-card .svst-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+#svst-card .svst-title {
+  font-size: 11px; font-weight: 600; letter-spacing: .02em; color: rgba(0,0,0,.38);
+}
+#svst-card .svst-close {
+  cursor: pointer; color: rgba(0,0,0,.32); font-size: 15px; line-height: 1;
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+#svst-card .svst-close:hover { color: #111315; }
+
+/* 이름표 — 지금 봐야 하는 것은 검은 면에 흰 글자, 이미 끝난 것은 회색 면에 회색 글자.
+   그냥 화면 제목일 뿐인 것(설정·사업자등록번호…)은 면 없이 글자로 충분하다. */
+#svst-card .svst-eyebrow {
+  display: inline-block; align-self: flex-start;
+  padding: 5px 9px; border-radius: 6px; margin-bottom: 0;
+  font-size: 11px; font-weight: 600; letter-spacing: .01em;
+  background: #16171A; color: #FFFFFF;
+}
+#svst-card .svst-eyebrow.svst-ok { background: #F1F2F5; color: rgba(0,0,0,.52); }
+#svst-card .svst-eyebrow.svst-plain {
+  background: transparent; color: rgba(0,0,0,.42);
+  padding: 0; letter-spacing: .01em;
+}
+
+#svst-card .svst-big {
+  font-size: 40px; font-weight: 600; letter-spacing: -.026em; line-height: 1.08;
+  color: #111315; margin: 0; font-variant-numeric: tabular-nums;
+}
+#svst-card .svst-msg {
+  font-size: 21px; font-weight: 600; letter-spacing: -.018em; line-height: 1.32;
+  margin: 0; color: #111315;
+}
+#svst-card .svst-body {
+  font-size: 14.5px; font-weight: 400; color: rgba(0,0,0,.55); line-height: 1.55; margin: 0;
+}
+#svst-card .svst-body b, #svst-card .svst-ctx b { font-weight: 600; }
+
+/* 구분 — 선 대신 여백 */
+#svst-card .svst-rule { height: 0; margin: 14px 0 0; }
+
+/* ---- 버튼: 채운 면만 ---- */
+#svst-card .svst-btn {
+  display: block; width: 100%; margin-top: 14px;
+  padding: 14px 0; border-radius: 10px; cursor: pointer; border: none;
+  font-family: inherit; font-size: 15px; font-weight: 600; letter-spacing: -.01em;
+  background: #111315; color: #fff;
+  transition: background .15s ease, transform .1s ease;
+}
+#svst-card .svst-btn:hover { background: #2a2d31; }
+#svst-card .svst-btn:active { transform: scale(.99); }
+
+#svst-card .svst-btn.svst-ghost {
+  margin-top: 8px; padding: 13px 0; font-size: 14.5px; font-weight: 500;
+  background: #F1F2F5; color: #111315;
+}
+#svst-card .svst-btn.svst-ghost:hover { background: #E6E8EC; }
+
+
+/* 지금 vs 나중 — "뭐가 적용되는지"를 금액으로 보여주는 블록 */
+#svst-card .svst-compare {
+  margin-top: 16px; border-radius: 10px; overflow: hidden;
+}
+#svst-card .svst-compare > div {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; font-size: 13.5px; font-weight: 500;
+}
+#svst-card .svst-compare .svst-now { background: #F4F5F7; color: rgba(0,0,0,.45); }
+#svst-card .svst-compare .svst-later { background: #16171A; color: rgba(255,255,255,.72); font-weight: 600; }
+#svst-card .svst-compare b { font-variant-numeric: tabular-nums; font-weight: 600; }
+#svst-card .svst-compare .svst-now b { color: rgba(0,0,0,.58); }
+#svst-card .svst-compare .svst-later b { color: #FFFFFF; }
+#svst-card .svst-body b { color: #111315; font-weight: 700; }
+
+/* 노트 — 네모 대신 왼쪽에 선 한 줄 */
+#svst-card .svst-quiet {
+  margin-top: 18px; padding: 2px 0 2px 13px;
+  box-shadow: inset 2px 0 0 rgba(17,19,21,.13);
+  font-size: 13.5px; font-weight: 400; color: rgba(0,0,0,.55); line-height: 1.55;
+}
+#svst-card .svst-quiet b { color: #111315; font-weight: 600; }
+
+#svst-card .svst-tip {
+  margin-top: 14px; font-size: 13px; color: rgba(0,0,0,.45); line-height: 1.5;
+}
+#svst-card .svst-tip b { color: #111315; font-weight: 600; }
+
+/* 입력 */
+#svst-card input[type="text"] {
+  width: 100%; margin-top: 12px; padding: 14px 15px;
+  border-radius: 10px; border: none; font-family: inherit;
+  font-size: 17px; font-weight: 400; letter-spacing: .02em; color: #111315;
+  font-variant-numeric: tabular-nums;
+  background: #F1F2F5;
+}
+#svst-card input[type="text"]:focus {
+  outline: none; background: #fff;
+  box-shadow: inset 0 0 0 1.5px rgba(17,19,21,.55);
+}
+#svst-card input::placeholder { color: rgba(0,0,0,.28); }
+#svst-card input.svst-bad { background: #fff; box-shadow: inset 0 0 0 1.5px #16171A; }
+#svst-card .svst-err {
+  font-size: 12.5px; color: #16171A; font-weight: 600; line-height: 1.5;
+  margin-top: 8px; min-height: 0;
+}
+#svst-card .svst-err:empty { display: none; }
+
+
+/* 풋터 — 카드 높이가 고정이라 남는 자리는 여기서 흡수한다. 늘 카드 맨 아래에 붙는다. */
+#svst-card .svst-foot {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin: 0; padding: 0;
+}
+#svst-card .svst-flink {
+  font-size: 12px; font-weight: 500; letter-spacing: -.01em;
+  color: rgba(0,0,0,.45); cursor: pointer;
+}
+#svst-card .svst-flink:hover { color: #111315; }
+#svst-card .svst-fdot { color: rgba(0,0,0,.18); font-size: 10px; }
+
+#svst-card .svst-fine {
+  margin-top: 0; font-size: 12px; font-weight: 400; color: rgba(0,0,0,.36); text-align: center; line-height: 1.5;
+}
+#svst-card .svst-row { display: flex; gap: 9px; }
+#svst-card .svst-row .svst-btn { flex: 1; }
+
+/* ── 첫 실행 동의 — 무엇이 저장되고 무엇을 안 하는지 */
+/* 네 줄 전부 네모를 두르면 동의 화면이 벽돌담이 된다. 줄 사이 실선 하나면 충분하다. */
+#svst-card .svst-facts { margin-top: 14px; }
+#svst-card .svst-fact {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 0;
+  box-shadow: inset 0 1px 0 rgba(17,19,21,.07);
+  font-size: 13.5px; line-height: 1.6; color: rgba(0,0,0,.56);
+}
+#svst-card .svst-facts .svst-fact:first-child { box-shadow: none; padding-top: 0; }
+#svst-card .svst-fact b { color: #111315; font-weight: 700; }
+#svst-card .svst-fact .svst-mk {
+  flex-shrink: 0; width: 28px; margin-top: 3px;
+  font-size: 10.5px; font-weight: 800; letter-spacing: .4px; color: #111315;
+}
+#svst-card .svst-fact.svst-never .svst-mk { color: rgba(0,0,0,.28); }
+
+/* ── 결제 임박 — 주황을 꽉 채워 카드 전체가 경고가 되게 */
+#svst-card.svst-due { background: #17181B; color: #F5F5F7; }
+#svst-card.svst-due .svst-title { color: rgba(255,255,255,.42); }
+#svst-card.svst-due .svst-close { color: rgba(255,255,255,.45); }
+#svst-card.svst-due .svst-eyebrow { background: rgba(255,255,255,.14); color: #FFFFFF; }
+#svst-card.svst-due .svst-big, #svst-card.svst-due .svst-msg { color: #FFFFFF; }
+#svst-card.svst-due .svst-body { color: rgba(255,255,255,.6); }
+#svst-card.svst-due .svst-body b { color: #FFFFFF; }
+#svst-card.svst-due .svst-quiet { box-shadow: inset 2px 0 0 rgba(255,255,255,.2); color: rgba(255,255,255,.6); }
+#svst-card.svst-due .svst-btn { background: #FFFFFF; color: #16171A; }
+#svst-card.svst-due .svst-btn.svst-ghost { background: rgba(255,255,255,.10); color: #F5F5F7; box-shadow: none; }
+#svst-card.svst-due .svst-btn.svst-ghost:hover { background: rgba(255,255,255,.16); }
+
+
+/* ============ 어두운 테마에서도 같은 얼굴 ============ */
+/* 결제창이 어둡거나 크롬의 '자동 어둡게'가 켜져 있어도 이 카드는 흰 종이로 남는다.
+   스스로 어둠을 처리한다고 선언해 두면 크롬이 색을 뒤집지 않는다. */
+@media (prefers-color-scheme: dark) {
+  #svst-card { background: #ffffff; color: #111315; }
+  #svst-badge { background: #ffffff; color: #111315; }
+  #svst-badge.svst-orange,
+  #svst-badge.svst-mint { background: #17181B; }
+  #svst-badge.svst-orange .svst-plate-val,
+  #svst-badge.svst-mint .svst-plate-val { color: #FFFFFF; }
+  #svst-card .svst-btn { background: #111315; color: #FFFFFF; }
+  #svst-card .svst-ghost { background: #F1F2F5; color: #111315; }
+  #svst-card .svst-eyebrow { background: #16171A; color: #FFFFFF; }
+  #svst-card .svst-eyebrow.svst-ok,
+  #svst-card .svst-eyebrow.svst-plain { background: #F1F2F5; color: rgba(0,0,0,.52); }
+  #svst-card input[type="text"] { background: #FFFFFF; color: #111315; }
+}

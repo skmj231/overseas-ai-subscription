@@ -14,7 +14,8 @@ a{color:inherit}
   backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
   border-bottom:1px solid var(--line)}
 .nav .wrap{display:flex;align-items:center;gap:22px;height:56px}
-.nav .logo{font-weight:700;letter-spacing:-.5px;text-decoration:none;font-size:15.5px;margin-right:auto}
+.nav .logo{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:-.5px;text-decoration:none;font-size:15.5px;margin-right:auto}
+.nav .logo img{width:30px;height:30px;border-radius:9px}
 .nav a.m{color:var(--gray);text-decoration:none;font-size:14px}
 .nav a.m:hover,.nav a.m.on{color:var(--ink)}
 .nav .btn{font-size:13.5px;padding:8px 15px}
