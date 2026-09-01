@@ -122,7 +122,15 @@ func makeToolbarIcon(_ size: Int) -> NSImage {
     let full = NSRect(x:0, y:0, width:size, height:size)
     let tile = NSBezierPath(roundedRect: full, xRadius:CGFloat(size) * 0.22, yRadius:CGFloat(size) * 0.22)
     forestDark.setFill(); tile.fill()
-    drawBellEdgeToEdge(in: full)
+    let inset = CGFloat(size) * 0.055
+    drawBellEdgeToEdge(in: full.insetBy(dx:inset, dy:inset))
+  }
+}
+
+func makeBareBell(_ size: Int) -> NSImage {
+  canvas(width:size, height:size) {
+    let inset = CGFloat(size) * 0.04
+    drawBellEdgeToEdge(in:NSRect(x:inset, y:inset, width:CGFloat(size)-inset*2, height:CGFloat(size)-inset*2))
   }
 }
 
@@ -133,6 +141,9 @@ for size in [16, 32, 48, 128, 180, 256] {
 }
 for size in [16, 32, 48, 128, 180, 256] {
   try save(makeToolbarIcon(size), name: "donna-toolbar-icon-\(size).png")
+}
+for size in [16, 48, 128] {
+  try save(makeBareBell(size), name: "donna-bell-symbol-\(size).png")
 }
 
 let og = canvas(width: 1200, height: 630) {

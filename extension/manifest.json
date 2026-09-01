@@ -92,7 +92,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icon48.png", "icon128.png"],
+      "resources": ["icon48.png", "icon128.png", "bell48.png"],
       "matches": ["https://*/*"]
     }
   ]

@@ -448,7 +448,7 @@
     if (document.getElementById("svst-badge")) return;
     const badge = document.createElement("div");
     badge.id = "svst-badge";
-    const brandIcon = chrome.runtime.getURL("icon48.png");
+    const brandIcon = chrome.runtime.getURL("bell48.png");
     /* 배지는 두 장이 겹쳐 있다. 앞장은 "이번에 아낄 돈", 뒷장은 "부가세로 아낀 돈".
        한 번에 하나만 보이고 서서히 바뀐다 — 둘을 나란히 쓰면 어느 쪽이 이번 건인지 헷갈린다. */
     badge.innerHTML =
@@ -687,7 +687,7 @@
     return `<div class="svst-head">
         ${o.back
           ? `<span class="svst-back" data-svst="back-${o.back}">← 뒤로</span>`
-          : `<span class="svst-title svst-brand"><img src="${chrome.runtime.getURL("icon48.png")}" alt="돈나가요"></span>`}
+          : `<span class="svst-title svst-brand"><img src="${chrome.runtime.getURL("bell48.png")}" alt="돈나가요"></span>`}
         <span class="svst-close" id="svst-x">✕</span>
       </div>
       <div class="svst-top">
