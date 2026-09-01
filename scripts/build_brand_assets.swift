@@ -13,6 +13,19 @@ guard let bell = NSImage(contentsOf: bellURL) else {
   exit(1)
 }
 
+let bellContentRect: NSRect = {
+  guard let data = bell.tiffRepresentation, let rep = NSBitmapImageRep(data: data) else { return .zero }
+  var minX = rep.pixelsWide, minY = rep.pixelsHigh, maxX = 0, maxY = 0
+  for y in 0..<rep.pixelsHigh {
+    for x in 0..<rep.pixelsWide {
+      if (rep.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.02 {
+        minX = min(minX, x); minY = min(minY, y); maxX = max(maxX, x); maxY = max(maxY, y)
+      }
+    }
+  }
+  return NSRect(x:minX, y:minY, width:maxX-minX+1, height:maxY-minY+1)
+}()
+
 try FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
 
 func color(_ value: UInt32, _ alpha: CGFloat = 1) -> NSColor {
@@ -74,6 +87,10 @@ func drawBell(in rect: NSRect, shadow: Bool = true) {
   }
 }
 
+func drawBellEdgeToEdge(in rect: NSRect) {
+  bell.draw(in: rect, from: bellContentRect, operation: .sourceOver, fraction: 1)
+}
+
 func text(_ value: String, at point: NSPoint, size: CGFloat, weight: NSFont.Weight, color: NSColor) {
   let paragraph = NSMutableParagraphStyle()
   paragraph.lineBreakMode = .byWordWrapping
@@ -102,8 +119,10 @@ func makeIcon(_ size: Int) -> NSImage {
 
 func makeToolbarIcon(_ size: Int) -> NSImage {
   canvas(width: size, height: size) {
-    let inset = max(0, CGFloat(size) * 0.015)
-    drawBell(in: NSRect(x: inset, y: inset, width: CGFloat(size) - inset * 2, height: CGFloat(size) - inset * 2), shadow: false)
+    let full = NSRect(x:0, y:0, width:size, height:size)
+    let tile = NSBezierPath(roundedRect: full, xRadius:CGFloat(size) * 0.22, yRadius:CGFloat(size) * 0.22)
+    forestDark.setFill(); tile.fill()
+    drawBellEdgeToEdge(in: full)
   }
 }
 
