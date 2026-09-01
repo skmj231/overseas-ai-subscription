@@ -1,13 +1,14 @@
 import AppKit
 
 let args = CommandLine.arguments
-guard args.count == 3 else {
-  fputs("usage: build_brand_assets.swift <bell.png> <output-directory>\n", stderr)
+guard args.count == 3 || args.count == 4 else {
+  fputs("usage: build_brand_assets.swift <bell.png> <output-directory> [favicon.png]\n", stderr)
   exit(1)
 }
 
 let bellURL = URL(fileURLWithPath: args[1])
 let outputURL = URL(fileURLWithPath: args[2], isDirectory: true)
+let favicon = args.count == 4 ? NSImage(contentsOfFile: args[3]) : nil
 guard let bell = NSImage(contentsOf: bellURL) else {
   fputs("could not load bell image\n", stderr)
   exit(1)
@@ -119,6 +120,10 @@ func makeIcon(_ size: Int) -> NSImage {
 
 func makeToolbarIcon(_ size: Int) -> NSImage {
   canvas(width: size, height: size) {
+    if let favicon {
+      favicon.draw(in:NSRect(x:0,y:0,width:size,height:size), from:.zero, operation:.sourceOver, fraction:1)
+      return
+    }
     let full = NSRect(x:0, y:0, width:size, height:size)
     let tile = NSBezierPath(roundedRect: full, xRadius:CGFloat(size) * 0.22, yRadius:CGFloat(size) * 0.22)
     forestDark.setFill(); tile.fill()
