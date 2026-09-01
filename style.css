@@ -27,6 +27,7 @@ a{color:inherit}
 .btn.sm{font-size:13.5px;padding:9px 16px;border-radius:10px}
 .btn.ghost{background:var(--fill);color:var(--ink)}
 .note{font-size:13px;color:var(--gray2);margin-top:12px}
+.business-links{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:22px}
 
 .eyebrow{font-size:13px;font-weight:600;color:var(--gray2);margin-bottom:16px}
 h1{font-size:52px;font-weight:700;letter-spacing:-2px;line-height:1.2;margin-bottom:20px}
@@ -171,6 +172,40 @@ section{padding:76px 0;border-top:1px solid var(--line2)}
 footer{border-top:1px solid var(--line);padding:48px 0 72px;margin-top:20px}
 footer p{font-size:13.5px;color:var(--gray2);margin:0}
 footer a{color:var(--gray2)}
+
+/* Business early access */
+.business-hero{padding-top:92px;padding-bottom:84px}
+.business-hero h1{max-width:720px}
+.business-hero .lead{max-width:650px}
+.business-status{display:inline-block;margin-bottom:26px;padding:6px 10px;border-radius:7px;background:var(--greenfill);color:var(--green);font-size:12px;font-weight:700}
+.business-cta{display:flex;align-items:center;gap:18px;margin-top:34px}
+.business-cta .note{margin:0}
+.business-problem{border-top:1px solid var(--line)}
+.business-rows{margin-top:34px;border-top:1px solid var(--line)}
+.business-row{display:grid;grid-template-columns:180px 1fr;gap:38px;padding:26px 0;border-bottom:1px solid var(--line)}
+.business-row b{font-size:16px}
+.business-row p{margin:0;max-width:610px}
+.business-offer{background:var(--green);color:#fff}
+.business-offer h2,.business-offer h3{color:#fff}
+.business-offer p{color:rgba(255,255,255,.7)}
+.business-offer .eyebrow{color:var(--gold)}
+.business-offer-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+.business-offer ul{list-style:none;margin-top:24px}
+.business-offer li{padding:12px 0;border-top:1px solid rgba(255,255,255,.14);font-size:15px;color:rgba(255,255,255,.82)}
+.business-offer li b{display:block;color:#fff;font-size:16px}
+.business-price{padding:28px;border:1px solid rgba(255,255,255,.2);border-radius:16px}
+.business-price strong{display:block;font-size:34px;letter-spacing:-1.4px;margin:8px 0}
+.business-price small{display:block;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:24px}
+.business-price .btn{background:var(--gold);color:#183128;width:100%;text-align:center}
+.business-footnote{margin-top:22px;font-size:12px!important;color:rgba(255,255,255,.5)!important}
+.business-fit{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+.business-fit ul{list-style:none;margin-top:20px}
+.business-fit li{padding:10px 0;border-top:1px solid var(--line);color:var(--ink2)}
+
+@media(max-width:700px){
+  .business-hero{padding-top:58px;padding-bottom:62px}.business-cta{align-items:flex-start;flex-direction:column}
+  .business-row{grid-template-columns:1fr;gap:6px}.business-offer-grid,.business-fit{grid-template-columns:1fr;gap:36px}
+}
 
 /* ── 제품 화면을 HTML로 그린다 ── */
 .ui{background:#fff;border-radius:16px;padding:18px;font-size:13px;line-height:1.5;text-align:left;
