@@ -10,14 +10,13 @@ a{color:inherit}
 .wrap{max-width:880px;margin:0 auto;padding:0 24px}
 .wrap.narrow{max-width:720px}
 
-.nav{position:sticky;top:0;z-index:20;background:rgba(1,13,10,.96);color:#F7F2E8;
-  backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
-  border-bottom:1px solid rgba(255,255,255,.08)}
+.nav{position:sticky;top:0;z-index:20;background:rgba(251,248,240,.96);color:var(--ink);
+  backdrop-filter:saturate(160%) blur(20px);-webkit-backdrop-filter:saturate(160%) blur(20px)}
 .nav .wrap{display:flex;align-items:center;gap:22px;height:56px}
 .nav .logo{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:-.5px;text-decoration:none;font-size:15.5px;margin-right:auto}
 .nav .logo img{width:30px;height:30px;border-radius:9px}
-.nav a.m{color:rgba(247,242,232,.7);text-decoration:none;font-size:14px}
-.nav a.m:hover,.nav a.m.on{color:#fff}
+.nav a.m{color:var(--gray);text-decoration:none;font-size:14px}
+.nav a.m:hover,.nav a.m.on{color:var(--ink)}
 .nav .btn{font-size:13.5px;padding:8px 15px;background:var(--gold);color:#183128}
 
 .btn{display:inline-block;background:var(--green);color:#fff;text-decoration:none;font-weight:600;
