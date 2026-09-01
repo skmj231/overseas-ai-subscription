@@ -70,8 +70,8 @@
     /pay\.stripe\.com/.test(location.host) ? "receipt" : "checkout";
 
   // ---------- 유틸 ----------
-  const won = (n) => n == null ? "—" : "₩" + Math.round(n).toLocaleString("ko-KR");
-  const money = (t) => !t ? "—" : (t.cur === "KRW" ? won(t.val)
+  const won = (n) => n == null ? "-" : "₩" + Math.round(n).toLocaleString("ko-KR");
+  const money = (t) => !t ? "-" : (t.cur === "KRW" ? won(t.val)
     : (R.ZERO_DECIMAL.has(t.cur) ? "" : "") + t.cur + " " + t.val.toLocaleString("en-US"));
   const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
   const todayISO = () => {
@@ -158,6 +158,19 @@
     });
   }
   const SUCCESS_RE = /(결제가 완료|결제 완료|Payment successful|Thanks for (your|subscribing)|paid successfully|영수증 보내기)/i;
+
+  /* 나중에 "지금 얼마인지" 다시 볼 주소다. 결제창에 이 링크가 있는 곳이 꽤 있는데,
+     그때 안 주워 두면 나중에 열 곳이 없어서 확인 자체를 못 한다. */
+  const MANAGE_RE = /(구독\s*관리|결제\s*관리|청구\s*정보|Manage\s+(subscription|billing|plan)|Billing\s*(portal|settings)?|Manage\s*your\s*subscription)/i;
+  function findManageLink(root) {
+    try {
+      const el = Array.from(root.querySelectorAll("a[href]"))
+        .find(a => MANAGE_RE.test((a.textContent || "").trim().slice(0, 60)));
+      if (!el) return null;
+      const u = new URL(el.getAttribute("href"), location.href);
+      return u.protocol === "https:" ? u.href : null;
+    } catch (e) { return null; }   // 상대 경로가 깨져 있어도 조용히 넘어간다
+  }
 
   function scanPage() {
     const text = document.body ? document.body.innerText : "";
@@ -249,6 +262,7 @@
        도메인 목록에 있는 곳은 이미 결제창이므로 그대로 인정한다. */
     r.processor = R.processorOf(embeddedHosts());
     r.hasCard = hasCardField(root);
+    r.manageLink = PAGE === "portal" ? location.href : findManageLink(root);
     r.checkoutLike = HOSTED_ONLY || R.looksLikeCheckout({
       processor: r.processor, hasCardField: r.hasCard, hasTotalWord: r.amountSure
     });
@@ -271,10 +285,14 @@
       if (raw && raw.length > 1 && !/^stripe$/i.test(raw)) S.merchantLock = raw;
     }
     if (S.merchantLock) scan.merchant = S.merchantLock;
-    /* 주기를 화면에서 못 읽어 사용자에게 한 번 물었다면 그 답을 계속 쓴다.
-       주기를 모르면 다음 결제일을 계산할 수 없고, 모르는 채로 '월'이라 가정하면
-       틀린 날짜로 알림이 간다. 그건 알림이 없는 것보다 나쁘다. */
-    if (!scan.interval && S.cycleLock) scan.interval = S.cycleLock;
+    /* 사용자가 고른 주기는 화면에서 읽은 값보다 앞선다.
+       예전에는 못 읽었을 때만 이 값을 썼는데, 그러면 잘못 읽은 것을 사용자가 고쳐도
+       다음 스캔에서 원래대로 돌아갔다. 화면 글자보다 사람이 아는 것이 정확하다.
+       다른 결제창으로 옮겨 가면 그 답은 더 이상 근거가 아니므로 함께 버린다. */
+    if (S.cycleLock && S.cycleLock.mkey && S.cycleLock.mkey !== mkeyOf(scan.merchant)) {
+      S.cycleLock = null;
+    }
+    if (S.cycleLock) scan.interval = S.cycleLock.interval || S.cycleLock;
     return scan;
   }
 
@@ -430,7 +448,7 @@
     if (document.getElementById("svst-badge")) return;
     const badge = document.createElement("div");
     badge.id = "svst-badge";
-    /* 배지는 두 장이 겹쳐 있다. 앞장은 "이번에 아낄 돈", 뒷장은 "지금까지 아낀 돈".
+    /* 배지는 두 장이 겹쳐 있다. 앞장은 "이번에 아낄 돈", 뒷장은 "부가세로 아낀 돈".
        한 번에 하나만 보이고 서서히 바뀐다 — 둘을 나란히 쓰면 어느 쪽이 이번 건인지 헷갈린다. */
     badge.innerHTML =
       `<span class="svst-face svst-on"><span class="svst-plate-label">돈나가요</span>` +
@@ -520,12 +538,15 @@
     /* 누적 절감액은 "이 도구를 계속 켜 둘 이유"다. 하지만 이번 결제 금액과 같은 자리에
        나란히 쓰면 어느 쪽이 지금 이야기인지 흐려진다. 그래서 자리를 나누지 않고 시간을 나눈다.
        확정된 절감이 아직 없으면 뒷장은 아예 만들지 않는다 — 0원을 자랑할 이유가 없다. */
-    const saved = (S.stats && S.stats.saved) || 0;
+    /* 이 숫자는 "이미 아낀 돈"이 아니다. 사업자번호 등록이 끝나 이제 부가세가 안 붙게 된
+       서비스들의, 1년치 부가세 합계다. 과거형으로 부르면 지금 당장 그만큼 벌었다고 읽힌다. */
+    const W = self.SVSTWatch;
+    const vatYear = W ? W.vatFreeYear(S.stats) : 0;
     const alt = b.querySelector(".svst-alt");
-    const twoFaced = on && saved > 0;
+    const twoFaced = on && vatYear > 0;
     if (twoFaced) {
-      alt.querySelector(".svst-plate-label").textContent = "지금까지 아낀 돈";
-      alt.querySelector(".svst-plate-val").textContent = won(saved);
+      alt.querySelector(".svst-plate-label").textContent = "안 낼 수 있는 부가세";
+      alt.querySelector(".svst-plate-val").textContent = "연 " + won(vatYear);
     }
     b.classList.toggle("svst-two", twoFaced);
     if (twoFaced) startFlip(b); else stopFlip(b);
@@ -685,6 +706,8 @@
       </div>`;
   }
 
+  const cycSeg = (v, t, cur) =>
+    `<button class="svst-seg-b${cur === v ? " on" : ""}" data-svst="cyc-${v}">${t}</button>`;
   const btn = (a, t) => `<button class="svst-btn" data-svst="${a}">${t}</button>`;
   const ghost = (a, t) => `<button class="svst-btn svst-ghost" data-svst="${a}">${t}</button>`;
 
@@ -765,7 +788,13 @@
       card.innerHTML = screen({
         rail: railFor(scan, 0),
         back: S.cycleLock ? "cycle" : "",
-        ctx: `${esc(scan.merchant || "이 서비스")} · ${planWord(scan.interval)}`,
+        /* 주기는 화면을 읽어 맞히지만 틀릴 때가 있다. 플랜 고르는 칸에 다른 주기가 같이
+           떠 있는 결제창이 흔하기 때문이다(연 결제인데 위쪽에 '/month'가 보이는 식).
+           틀린 주기는 틀린 날짜가 되고, 틀린 날짜로 가는 알림은 안 가느니만 못하다.
+           그래서 주기가 적힌 바로 그 자리에서 한 번에 바꿀 수 있게 둔다.
+           줄을 새로 만들지 않아 카드 높이는 다른 화면과 그대로 같다. */
+        ctx: `${esc(scan.merchant || "이 서비스")}
+          <span class="svst-seg">${cycSeg("month", "매달", scan.interval)}${cycSeg("year", "매년", scan.interval)}</span>`,
         tone: known ? "hot" : "plain",
         label: known ? `${everyWord(scan.interval)} 빠져나갈 금액` : "결제 전 알림",
         big: known ? money(scan.total) : "",
@@ -1114,7 +1143,8 @@
         }
         if (a === "watch-skip") { await setWatchState(scan, "off"); return render(); }
         if (a === "cyc-month" || a === "cyc-year") {
-          S.cycleLock = a === "cyc-year" ? "year" : "month";
+          S.cycleLock = { interval: a === "cyc-year" ? "year" : "month",
+                          mkey: mkeyOf((S.scan && S.scan.merchant) || "") };
           S.scan = lockMerchant(scanPage());
           S.dec = decide(S.scan);
           return render();
@@ -1239,7 +1269,11 @@
       interval: scan.interval,
       auto: true,
       lastPaid: todayISO(),
-      manageUrl: PAGE === "portal" ? location.href : null,
+      manageUrl: PAGE === "portal" ? location.href : (scan.manageLink || null),
+      /* 등록한 그 화면 주소. 나중에 "그 사이트 어디였더라"가 되지 않게 남긴다.
+         Stripe 결제창 주소(/c/pay/...)는 하루면 만료돼 열어도 오류 화면만 나온다.
+         죽은 링크를 보여주느니 아예 안 남긴다. */
+      sourceUrl: /^checkout\.stripe\.com$/i.test(location.host) ? null : location.href,
       source: PROCESSOR
     };
     try {
@@ -1249,12 +1283,27 @@
   }
 
   // ---------- 절감 확정 ----------
+  /* 면제가 먹었을 때 화면이 두 가지로 갈린다. 부가세 줄을 "₩0"으로 바꾸는 곳도 있고,
+     줄을 통째로 지우는 곳도 있다. 실제로는 지우는 쪽이 훨씬 많다(Envato가 그렇다).
+     0만 인정하면 이 기능은 대부분의 결제창에서 아무 일도 하지 않는다.
+     다만 "아직 화면을 못 읽었다"와 "부가세가 없다"는 다르다. 총액을 확실히 읽어
+     화면이 다 뜬 것이 확인됐을 때만 없어진 것으로 본다. */
+  function vatGone(scan) {
+    if (scan.vat === 0) return true;
+    return scan.vat == null && !!scan.amountSure;
+  }
+
   async function checkSavings(scan) {
-    if (PAGE !== "checkout" || scan.vat !== 0) return;
+    if (PAGE !== "checkout" || !vatGone(scan)) return;
     const mk = mkeyOf(scan.merchant);
     if (S.pending[mk] && !S.savedCounted) {
       S.savedCounted = true;
-      S.stats.saved += S.pending[mk].vat;
+      /* 한 숫자에 더하지 않고 서비스별로 남긴다. 주기가 달라서 그냥 더하면 뜻을 잃는다.
+         보여줄 때 1년 기준으로 맞춰 합친다. */
+      S.stats.vatFree = Object.assign({}, S.stats.vatFree, {
+        [mk]: { name: S.pending[mk].merchant, vat: S.pending[mk].vat,
+                interval: scan.interval === "year" ? "year" : "month", at: todayISO() }
+      });
       await chrome.storage.local.set({ stats: S.stats });
       await clearTask(mk, "register");
       setTimeout(async () => {
@@ -1337,11 +1386,46 @@
       return;
     }
     if (S.pending[mk]) {
-      setBadge("done", scan.vat === 0 ? "지금부터 아끼는 금액" : cyc + "아끼기로 예약됨", won(S.pending[mk].vat));
+      /* vat === 0 이면 등록이 끝나 이제 안 붙는 상태다. 아직이면 등록해야 빠지는 금액이다.
+         둘 다 앞으로의 이야기라 과거형을 쓰지 않는다. 말은 쉽게 한다. */
+      setBadge("done",
+        vatGone(scan) ? "앞으로도 부가세 없어요" : "등록하면 부가세 안 내도 돼요",
+        cyc + won(S.pending[mk].vat));
       announce("pending");
       return;
     }
     setBadge(null, "", "");
+  }
+
+  /* 화면에서 숫자를 확실히 읽었을 때 딱 한 번 알린다. 알림 목록의 금액을 최신으로 맞추고,
+     달라졌으면 백그라운드가 알려 준다. 사용자가 버튼을 눌러 답한 것은 여기 오지 않는다 —
+     "계속 씁니다"는 결제 여부에 대한 답이지 금액을 본 것이 아니기 때문이다. */
+  async function reportObservation(scan, dec) {
+    if (S.observed || !S.consent) return;
+    if (!(scan.total && scan.total.val > 0 && scan.amountSure)) return;
+    S.observed = true;
+    try {
+      await chrome.runtime.sendMessage({
+        type: "observePrice",
+        data: {
+          key: mkeyOf(scan.merchant),
+          amountOrig: scan.total.val,
+          currency: scan.total.cur,
+          amountKrw: dec.fx ? dec.fx.krw : null,
+          interval: scan.interval,
+          by: PAGE,
+          manageUrl: scan.manageLink || null,
+          canceled: looksCanceledHere(scan)
+        }
+      });
+    } catch (e) { /* 백그라운드가 자고 있으면 다음 기회에 */ }
+  }
+
+  /* 구독관리 화면에 '취소됨'이 보이면 묻지 않고 해지로 처리한다. 이미 열려 있는 화면이라 공짜다.
+     판정 규칙은 watch.js 한 곳에만 둔다. 여기에 정규식을 복사해 두면 언젠가 둘이 달라진다. */
+  function looksCanceledHere(scan) {
+    const W = self.SVSTWatch;
+    return PAGE === "portal" && !!(W && W.looksCanceled(scan.pageText));
   }
 
   // ---------- 메인 루프 ----------
@@ -1355,6 +1439,7 @@
     else if (PAGE === "checkout" && scan.total) await stashDraft(scan);
     else if ((PAGE === "invoice" || PAGE === "receipt") && scan.total) await captureReceipt(scan, dec);
 
+    await reportObservation(scan, dec);
     updateBadge(scan, dec);
 
     const sig = [scan.vat, scan.success, scan.hasTaxField, scan.hasBizToggle, scan.hasTaxTrigger, scan.interval,

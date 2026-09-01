@@ -57,8 +57,8 @@
    오래 봐도 눈이 피로하지 않다. 라벨과 숫자는 둘 다 흰색이고, 위아래는 크기로 나눈다. */
 #svst-badge.svst-orange,
 #svst-badge.svst-mint {
-  background: #17181B;
-  box-shadow: 0 0 0 1px rgba(0,0,0,.22), 0 8px 24px -8px rgba(17,19,21,.45);
+  background: #1E6B3A;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.22), 0 8px 24px -8px rgba(24,90,48,.45);
 }
 /* 두 장을 같은 칸에 겹쳐 둔다. grid 한 칸에 넣으면 배지 크기가 둘 중 넓은 쪽에 맞춰져서,
    장이 바뀔 때 배지가 들썩이지 않는다. */
@@ -92,7 +92,7 @@
   content: '';
   display: inline-block; vertical-align: middle;
   width: 6px; height: 6px; border-radius: 50%; margin-left: 7px;
-  background: #111315;
+  background: #1E6B3A;
 }
 
 /* ============ 카드 ============ */
@@ -181,6 +181,7 @@
   font-size: 13.5px; color: rgba(0,0,0,.5);
 }
 #svst-card .svst-dl > div:first-child { box-shadow: none; padding-top: 2px; }
+
 #svst-card .svst-dl b {
   color: #111315; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.01em;
 }
@@ -201,6 +202,16 @@
   font-size: 13px; color: rgba(0,0,0,.5); line-height: 1.55;
 }
 #svst-card .svst-ctx b { color: #111315; font-weight: 700; }
+/* 주기를 고르는 자리. 서비스 이름 옆, 주기가 적혀 있던 그 자리다.
+   줄 높이 안에 들어가도록 크기를 맞춘다 — 여기서 한 줄이 늘면 카드 전체가 들썩인다. */
+#svst-card .svst-seg { display: inline-flex; gap: 3px; margin-left: 5px; vertical-align: middle; }
+#svst-card .svst-seg-b {
+  font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: -.01em;
+  height: 18px; padding: 0 8px; border-radius: 6px; cursor: pointer; border: 0; line-height: 18px;
+  background: #fff; box-shadow: inset 0 0 0 1px rgba(17,19,21,.13); color: rgba(0,0,0,.42);
+}
+#svst-card .svst-seg-b:hover { background: #FAFAFB; }
+#svst-card .svst-seg-b.on { background: #1E6B3A; color: #fff; box-shadow: none; }
 
 /* ── 덧붙이는 말 — 네모 대신 위에 실선 한 줄만 긋는다 ──
    직계 자식으로만 좁힌다. 비교 블록(.svst-compare) 안의 '나중' 줄도 같은 이름을 쓰는데,
@@ -234,7 +245,7 @@
   display: inline-block; align-self: flex-start;
   padding: 5px 9px; border-radius: 6px; margin-bottom: 0;
   font-size: 11px; font-weight: 600; letter-spacing: .01em;
-  background: #16171A; color: #FFFFFF;
+  background: #1E6B3A; color: #FFFFFF;
 }
 #svst-card .svst-eyebrow.svst-ok { background: #F1F2F5; color: rgba(0,0,0,.52); }
 #svst-card .svst-eyebrow.svst-plain {
@@ -263,10 +274,10 @@
   display: block; width: 100%; margin-top: 14px;
   padding: 14px 0; border-radius: 10px; cursor: pointer; border: none;
   font-family: inherit; font-size: 15px; font-weight: 600; letter-spacing: -.01em;
-  background: #111315; color: #fff;
+  background: #1E6B3A; color: #fff;
   transition: background .15s ease, transform .1s ease;
 }
-#svst-card .svst-btn:hover { background: #2a2d31; }
+#svst-card .svst-btn:hover { background: #185A30; }
 #svst-card .svst-btn:active { transform: scale(.99); }
 
 #svst-card .svst-btn.svst-ghost {
@@ -285,7 +296,7 @@
   padding: 12px 14px; font-size: 13.5px; font-weight: 500;
 }
 #svst-card .svst-compare .svst-now { background: #F4F5F7; color: rgba(0,0,0,.45); }
-#svst-card .svst-compare .svst-later { background: #16171A; color: rgba(255,255,255,.72); font-weight: 600; }
+#svst-card .svst-compare .svst-later { background: #1E6B3A; color: rgba(255,255,255,.72); font-weight: 600; }
 #svst-card .svst-compare b { font-variant-numeric: tabular-nums; font-weight: 600; }
 #svst-card .svst-compare .svst-now b { color: rgba(0,0,0,.58); }
 #svst-card .svst-compare .svst-later b { color: #FFFFFF; }
@@ -361,7 +372,7 @@
 #svst-card .svst-fact.svst-never .svst-mk { color: rgba(0,0,0,.28); }
 
 /* ── 결제 임박 — 주황을 꽉 채워 카드 전체가 경고가 되게 */
-#svst-card.svst-due { background: #17181B; color: #F5F5F7; }
+#svst-card.svst-due { background: #1E6B3A; color: #F5F5F7; }
 #svst-card.svst-due .svst-title { color: rgba(255,255,255,.42); }
 #svst-card.svst-due .svst-close { color: rgba(255,255,255,.45); }
 #svst-card.svst-due .svst-eyebrow { background: rgba(255,255,255,.14); color: #FFFFFF; }
@@ -381,12 +392,12 @@
   #svst-card { background: #ffffff; color: #111315; }
   #svst-badge { background: #ffffff; color: #111315; }
   #svst-badge.svst-orange,
-  #svst-badge.svst-mint { background: #17181B; }
+  #svst-badge.svst-mint { background: #1E6B3A; }
   #svst-badge.svst-orange .svst-plate-val,
   #svst-badge.svst-mint .svst-plate-val { color: #FFFFFF; }
-  #svst-card .svst-btn { background: #111315; color: #FFFFFF; }
+  #svst-card .svst-btn { background: #1E6B3A; color: #FFFFFF; }
   #svst-card .svst-ghost { background: #F1F2F5; color: #111315; }
-  #svst-card .svst-eyebrow { background: #16171A; color: #FFFFFF; }
+  #svst-card .svst-eyebrow { background: #1E6B3A; color: #FFFFFF; }
   #svst-card .svst-eyebrow.svst-ok,
   #svst-card .svst-eyebrow.svst-plain { background: #F1F2F5; color: rgba(0,0,0,.52); }
   #svst-card input[type="text"] { background: #FFFFFF; color: #111315; }

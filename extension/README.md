@@ -16,5 +16,6 @@ node extension/tests/run.js
 - `background.js`, `content.js`, `popup.js`, `rules.js`, `watch.js`
 - `popup.html`, `panel.css`
 - `icon16.png`, `icon48.png`, `icon128.png`
+- `test.html`, `test.js`
 
 `tests/`와 이 문서는 배포 ZIP에 넣지 않습니다.

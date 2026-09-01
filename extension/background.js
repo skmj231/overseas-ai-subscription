@@ -34,9 +34,49 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     getRates().then(rates => sendResponse({ rates, rate: rates ? rates.KRW : null }));
     return true;
   }
+  /* 점검 화면(test.html)이 상황을 만든 뒤 "지금 한 번 돌려 보라"고 부른다.
+     알람은 12시간마다 깨어나므로, 손으로 확인할 때는 기다릴 수가 없다. */
+  if (msg && msg.type === "runTick") {
+    tick().then(() => sendResponse({ ok: true })).catch(() => sendResponse({ ok: false }));
+    return true;
+  }
   if (msg && msg.type === "openBook") {
     chrome.tabs.create({ url: chrome.runtime.getURL("popup.html") });
   }
+  /* 화면에서 실제로 읽은 금액이 들어온다. 알림 목록의 금액을 최신으로 맞추고,
+     달라졌으면 그 사실만 한 번 알린다. 같으면 조용히 관측 시각만 갱신한다. */
+  if (msg && msg.type === "observePrice" && msg.data) {
+    (async () => {
+      const d = msg.data;
+      const { watch = {}, consent = null, stats = {} } =
+        await chrome.storage.local.get(["watch", "consent", "stats"]);
+      const w = watch[d.key];
+      if (!consent || !w) return sendResponse({ ok: false });
+      const today = todayISO();
+
+      /* 구독관리 화면에서 '취소됨'이 보였다. 묻지 않고 해지로 처리한다. */
+      if (d.canceled && w.status !== WATCH.STATUS.CANCELED) {
+        const add = WATCH.savedByCancel(w);
+        watch[d.key] = WATCH.applyAction(w, "canceled", today);
+        const next = add > 0 ? { ...stats, canceledYear: Math.round((stats.canceledYear || 0) + add) } : stats;
+        await chrome.storage.local.set({ watch, stats: next });
+        return sendResponse({ ok: true, canceled: true });
+      }
+
+      const r = WATCH.recordPrice(w, d, today);
+      watch[d.key] = { ...r.w, manageUrl: d.manageUrl || r.w.manageUrl };
+      await chrome.storage.local.set({ watch });
+
+      if (r.changed && r.before && r.before.amountOrig != null) {
+        const fmt = (v, c) => (c && c !== "KRW" ? `${c} ${v}` : `₩${Math.round(v).toLocaleString("ko-KR")}`);
+        notify(`svst-price-${d.key}-${today}`, `${w.name} 금액이 달라졌습니다`,
+          `${fmt(r.before.amountOrig, r.before.currency)} → ${fmt(r.w.amountOrig, r.w.currency)}`, null);
+      }
+      sendResponse({ ok: true, changed: r.changed });
+    })();
+    return true;
+  }
+
   /* 결제창에서 켠 알림. 같은 서비스를 두 번 등록하면 목록이 지저분해지고 알림도 두 번 간다.
      그래서 키가 같으면 새로 만들지 않고 금액·주기만 최신으로 고친다. */
   if (msg && msg.type === "addWatch" && msg.data) {
@@ -48,7 +88,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       watch[key] = watch[key]
         ? { ...watch[key], name: made.name, amountOrig: made.amountOrig, currency: made.currency,
             amountKrw: made.amountKrw, interval: made.interval, due: made.due,
-            manageUrl: made.manageUrl || watch[key].manageUrl, status: WATCH.STATUS.ACTIVE, misses: 0 }
+            manageUrl: made.manageUrl || watch[key].manageUrl,
+            sourceUrl: made.sourceUrl || watch[key].sourceUrl,
+            status: WATCH.STATUS.ACTIVE, misses: 0 }
         : made;
       await chrome.storage.local.set({ watch });
       sendResponse({ ok: true, key });
@@ -123,10 +165,20 @@ function alertDaysBefore(billing) {
 }
 
 async function checkRenewals() {
-  const { subs = {}, notified = {} } = await chrome.storage.local.get(["subs", "notified"]);
+  const { subs = {}, notified = {}, watch = {} } =
+    await chrome.storage.local.get(["subs", "notified", "watch"]);
   const today = todayISO();
   const upcoming = [], overdue = [], trials = [];
   let touched = false;
+
+  /* 같은 구독이 subs(세무 관측)와 watch(사용자가 켠 알림) 양쪽에 있을 수 있다.
+     둘 다 결제 전 알림을 만들면 한 건에 알림이 두 번 간다. 문구도 서로 다르게 나간다.
+     결제 전 알림은 watch 쪽이 금액을 언제 본 것인지까지 말하므로 그쪽에 넘기고,
+     여기서는 영수증 확정과 무료 체험만 맡는다. */
+  const watchedHere = (mkey) => {
+    const w = watch[mkey];
+    return !!w && (w.status === WATCH.STATUS.ACTIVE || w.status === WATCH.STATUS.PENDING);
+  };
 
   for (const mkey of Object.keys(subs)) {
     const s = subs[mkey];
@@ -145,7 +197,7 @@ async function checkRenewals() {
     /* 결제 전 — 판단할 시간을 준다.
        'left === d' 로 정확히 맞추면 그날 브라우저를 안 켠 사람은 영영 못 받는다.
        'left <= d' 로 두고 키로 중복만 막으면, 늦게라도 반드시 한 번은 간다. */
-    for (const d of alertDaysBefore({ interval: s.interval, auto })) {
+    for (const d of watchedHere(mkey) ? [] : alertDaysBefore({ interval: s.interval, auto })) {
       const key = `pre-${mkey}-${next}-${d}`;
       if (left >= 0 && left <= d && !notified[key]) {
         upcoming.push({ mkey, merchant: s.merchant || "구독", date: next, left, auto,
@@ -167,8 +219,7 @@ async function checkRenewals() {
     const fired = u.auto
       ? notify(`svst-pre-${u.mkey}-${u.left}`,
           u.left === 0 ? `${u.merchant} 오늘 자동 결제됩니다` : `${u.merchant} ${u.left}일 뒤 자동 결제`,
-          `${amt}이 자동으로 빠져나갑니다. 계속 쓰실 거면 그냥 두시면 되고, ` +
-          `안 쓰실 거면 지금 해지하세요. 해외 서비스는 결제 후 환불이 어렵습니다.`)
+          `${amt}이 자동으로 빠져나갑니다. 해외 서비스는 결제되고 나면 환불이 어렵습니다.`)
       : notify(`svst-pre-${u.mkey}-${u.left}`, `${u.merchant} 결제하실 때가 됐어요`,
           `지난번 이맘때 ${amt}을 결제하셨습니다. 이번에도 필요하신가요?`);
     if (fired) { notified[u.key] = true; touched = true; }
@@ -177,8 +228,8 @@ async function checkRenewals() {
   if (trials.length) {
     const names = trials.map(d => d.merchant).join(", ");
     const t = notify(`svst-trial-${Date.now()}`, "무료 체험이 곧 유료로 바뀝니다",
-      `${names} — 계속 쓰실 거면 지금 사업자번호를 등록하세요. 첫 결제부터 부가세가 빠집니다. ` +
-      `안 쓰실 거면 지금이 해지할 마지막 기회입니다.`);
+      `${names}. 계속 쓰실 거면 지금 사업자번호를 등록하세요. 첫 결제부터 부가세가 빠집니다. ` +
+      `안 쓰실 거면 오늘 안에 해지하시면 됩니다.`);
     if (t) { trials.forEach(d => { notified["trial-" + d.mkey] = d.date; }); touched = true; }
   }
 
@@ -199,14 +250,14 @@ async function checkRenewals() {
    끊은 구독을 계속 알리면 사용자는 알림을 끄는 게 아니라 확장을 지운다.
    판정은 전부 watch.js의 순수 함수가 하고, 여기서는 저장과 발송만 한다. */
 async function checkWatch() {
-  const { watch = {}, notified = {}, notiMap = {} } = await chrome.storage.local.get(
-    ["watch", "notified", "notiMap"]);
+  const { watch = {}, notified = {}, notiMap = {}, ledger = [], consent = null } =
+    await chrome.storage.local.get(["watch", "notified", "notiMap", "ledger", "consent"]);
   const today = todayISO();
-  const { notifications, updates } = WATCH.planTick(watch, today, notified, SET.lead);
-  if (!notifications.length && !Object.keys(updates).length) return;
+  const { notifications, updates, records } = WATCH.planTick(watch, today, notified, SET.lead);
+  if (!notifications.length && !Object.keys(updates).length && !(records || []).length) return;
 
   for (const n of notifications) {
-    const m = WATCH.messageFor(n.kind, n.w, n.left);
+    const m = WATCH.messageFor(n.kind, n.w, n.left, { fresh: n.fresh, ago: n.ago });
     const id = `svstw-${n.key}-${Date.now()}`;
     if (!notify(id, m.title, m.message, m.buttons)) continue;
     notiMap[id] = { key: n.key, actions: m.actions, url: n.w.manageUrl || null };
@@ -215,7 +266,18 @@ async function checkWatch() {
   for (const k of Object.keys(updates)) {
     if (watch[k]) watch[k] = { ...watch[k], ...updates[k] };
   }
-  await chrome.storage.local.set({ watch, notified, notiMap });
+  /* 동의 전에는 한 바이트도 쓰지 않는다. 추정 행도 예외가 아니다. */
+  const next = consent ? addEstimated(ledger, records) : ledger;
+  await chrome.storage.local.set({ watch, notified, notiMap, ledger: next });
+}
+
+/* 추정 행은 id가 결정적이라(구독키 + 날짜) 몇 번 돌아도 한 줄만 남는다. */
+function addEstimated(ledger, records) {
+  const out = ledger.slice();
+  for (const r of (records || [])) {
+    if (!out.some(x => x.id === r.id)) out.push(r);
+  }
+  return out;
 }
 
 /* 버튼을 누른 그 순간이 정보가 가장 정확한 시점이다. 나중에 물으면 기억이 흐려지고 답도 안 한다. */
@@ -226,9 +288,47 @@ chrome.notifications.onButtonClicked.addListener(async (id, idx) => {
   const action = (entry.actions || [])[idx];
   if (!action) return;
 
-  watch[entry.key] = WATCH.applyAction(watch[entry.key], action, todayISO());
+  const today = todayISO();
+  const before = watch[entry.key];
+
+  /* '금액 확인하기'는 상태를 바꾸지 않는다. 화면을 열어 줄 뿐이고,
+     실제 갱신은 그 페이지에서 content.js가 숫자를 읽었을 때 일어난다.
+     여기서 미리 "확인했다"고 표시해 버리면, 못 읽었을 때도 확인한 것이 된다. */
+  if (action === "verify") {
+    delete notiMap[id];
+    await chrome.storage.local.set({ notiMap });
+    chrome.notifications.clear(id);
+    if (entry.url) chrome.tabs.create({ url: entry.url });
+    return;
+  }
+
+  watch[entry.key] = WATCH.applyAction(before, action, today);
+
+  const { ledger = [], stats = {}, consent = null } =
+    await chrome.storage.local.get(["ledger", "stats", "consent"]);
+  let nextLedger = ledger, nextStats = stats;
+
+  /* '결제됐어요'는 결제가 일어났다는 가장 확실한 답이다. 그런데 그 화면은 못 봤다.
+     기록함이 비는 걸 막기 위해 마지막으로 본 금액으로 추정 한 줄을 남긴다. */
+  if (action === "paid" && consent) {
+    const row = WATCH.estimatedRow(before, entry.key, before.due || today);
+    if (row) nextLedger = addEstimated(ledger, [row]);
+  }
+
+  /* 해지로 1년에 안 나가게 된 돈을 센다. 부가세로 아낀 실제 금액과는 단위가 달라
+     같은 숫자에 섞지 않고 따로 쌓는다. */
+  if (action === "canceled" && consent) {
+    const add = WATCH.savedByCancel(before);
+    if (add > 0) {
+      nextStats = { ...stats, canceledYear: Math.round((stats.canceledYear || 0) + add) };
+      notify(`svst-cancel-${Date.now()}`,
+        `${before.name} 해지하셨습니다`,
+        `1년에 ₩${add.toLocaleString("ko-KR")}을 안 내도 됩니다.`, null);
+    }
+  }
+
   delete notiMap[id];
-  await chrome.storage.local.set({ watch, notiMap });
+  await chrome.storage.local.set({ watch, notiMap, ledger: nextLedger, stats: nextStats });
   chrome.notifications.clear(id);
 
   // '해지하러 가기'는 말만 하고 끝나면 안 된다. 실제로 그 화면을 열어 준다.
@@ -268,7 +368,59 @@ async function checkDeadlines() {
   }
 }
 
-async function tick() { await loadSettings(); await checkRenewals(); await checkWatch(); await checkDeadlines(); }
+// ---------- 월 1회 요약 ----------
+/* 설치하고 두 주가 지나면 이 도구가 사용자에게 하는 말은 "돈 나간다"뿐이다.
+   나쁜 소식만 오는 물건은 결국 꺼진다. 한 달에 한 번, 지금 상태를 한 줄로 알린다.
+   새 권한도 서버도 필요 없다. 이미 가진 숫자를 더하는 것이 전부다. */
+async function checkMonthly() {
+  const { watch = {}, ledger = [], stats = {}, notified = {}, consent = null } =
+    await chrome.storage.local.get(["watch", "ledger", "stats", "notified", "consent"]);
+  if (!consent) return;
+
+  const today = todayISO();
+  const key = "mo-" + today.slice(0, 7);
+  if (notified[key]) return;
+  if (Number(today.slice(8, 10)) < 2) return;   // 달이 바뀌자마자 보내면 숫자가 빈다
+
+  const live = Object.keys(watch).filter(k => {
+    const w = watch[k];
+    return w && (w.status === WATCH.STATUS.ACTIVE || w.status === WATCH.STATUS.PENDING);
+  });
+  if (!live.length) return;
+
+  /* 월 환산 합계. 연 구독은 12로 나눈다. 금액을 모르는 건은 빼고 세고, 몇 건인지 밝힌다. */
+  let monthly = 0, unknown = 0;
+  for (const k of live) {
+    const w = watch[k];
+    if (w.amountKrw == null) { unknown++; continue; }
+    monthly += w.interval === "year" ? w.amountKrw / 12 : w.amountKrw;
+  }
+
+  const stale = live.filter(k => WATCH.freshness(watch[k], today) === WATCH.FRESH.STALE).length;
+  const review = ledger.filter(r => r.supplier === "unknown" || r.status === "estimated").length;
+  const savedYear = stats.canceledYear || 0;
+  const vatYear = WATCH.vatFreeYear(stats);
+
+  const parts = [`구독 ${live.length}건 · 월 ₩${Math.round(monthly).toLocaleString("ko-KR")}`];
+  if (unknown) parts.push(`금액 미확인 ${unknown}건`);
+  if (stale) parts.push(`금액 확인할 때가 된 것 ${stale}건`);
+  if (review) parts.push(`세무 확인 필요 ${review}건`);
+  /* 둘 다 "앞으로 1년에 안 나갈 돈"이다. 이미 번 돈이 아니므로 그렇게 부르지 않는다. */
+  if (vatYear > 0) parts.push(`부가세를 안 내도 되어 1년에 ₩${vatYear.toLocaleString("ko-KR")}`);
+  if (savedYear > 0) parts.push(`해지해서 1년에 ₩${savedYear.toLocaleString("ko-KR")}`);
+
+  if (!notify(`svst-mo-${key}`, `${today.slice(5, 7)}월 해외 구독 정리`, parts.join("\n"))) return;
+  notified[key] = true;
+  await chrome.storage.local.set({ notified });
+}
+
+async function tick() {
+  await loadSettings();
+  await checkRenewals();
+  await checkWatch();
+  await checkDeadlines();
+  await checkMonthly();
+}
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.alarms.create("svst-daily", { periodInMinutes: 60 * 12 });

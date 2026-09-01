@@ -61,6 +61,124 @@
     return picked.slice().sort((a, b) => b - a);
   }
 
+  // ---------- 금액의 신선도 ----------
+  /* 자동 결제는 브라우저에 화면을 남기지 않는다. 저쪽 서버에서 카드로 빠져나갈 뿐이다.
+     그래서 우리가 아는 금액은 늘 "마지막으로 눈으로 본 금액"이고, 가입할 때 본 값이
+     1년째 그대로 남아 있는 경우가 대부분이다.
+     날짜를 세는 대신 그 사이에 결제가 몇 번 지나갔는지를 세고, 아는 만큼만 말한다. */
+  const CYCLE_DAYS = { month: 30, year: 365 };
+  const FRESH = { SEEN: "seen", LIKELY: "likely", STALE: "stale" };
+
+  function cyclesSince(w, today) {
+    const from = w && (w.seenAt || w.createdAt);
+    if (!from || !w || !w.interval) return null;
+    const days = daysBetween(from, today);
+    if (days < 0) return 0;
+    return Math.floor(days / (CYCLE_DAYS[w.interval] || 30));
+  }
+
+  function freshness(w, today) {
+    const c = cyclesSince(w, today);
+    if (c == null) return FRESH.STALE;      // 언제 본 값인지 모르면 모른다고 한다
+    return c <= 0 ? FRESH.SEEN : c === 1 ? FRESH.LIKELY : FRESH.STALE;
+  }
+
+  /* "7개월 전"처럼 사람이 읽는 시점. 정확한 날짜는 팝업에서 본다. */
+  function seenAgo(w, today) {
+    const from = w && w.seenAt;
+    if (!from) return "";
+    const months = Math.floor(daysBetween(from, today) / 30);
+    if (months < 1) return "이번 달";
+    if (months < 12) return months + "개월 전";
+    return Math.floor(months / 12) + "년 전";
+  }
+
+  /* 화면에서 실제로 숫자를 읽었을 때만 부른다. 사용자가 버튼을 눌러 답한 것은 여기 오지 않는다.
+     "계속 씁니다"는 결제 여부에 대한 답이지 금액을 본 게 아니기 때문이다. */
+  function recordPrice(w, obs, today) {
+    if (!w || !obs || obs.amountOrig == null) return { w, changed: false, before: null };
+    const cur = obs.currency || w.currency;
+    const same = w.amountOrig != null && w.currency === cur
+      && Math.abs(Number(w.amountOrig) - Number(obs.amountOrig)) < 0.01;
+    const log = (w.priceLog || []).slice();
+    if (!same) {
+      log.push({ d: today, amountOrig: Number(obs.amountOrig), currency: cur });
+      while (log.length > 6) log.shift();
+    }
+    return {
+      w: { ...w,
+        amountOrig: Number(obs.amountOrig),
+        currency: cur,
+        amountKrw: obs.amountKrw != null ? Number(obs.amountKrw) : w.amountKrw,
+        interval: obs.interval || w.interval,
+        seenAt: today,
+        seenBy: obs.by || "portal",
+        priceLog: log },
+      changed: !same,
+      before: same ? null : { amountOrig: w.amountOrig, currency: w.currency, amountKrw: w.amountKrw }
+    };
+  }
+
+  /* 부가세가 안 붙게 된 서비스들. 여기서 조심할 게 두 가지다.
+     하나, 서비스마다 결제 주기가 다르다. 월 구독의 부가세와 연 구독의 부가세를 한 숫자에
+     그냥 더하면 그 합계가 무엇을 뜻하는지 말할 수 없다. 전부 1년 기준으로 맞춰 더한다.
+     둘, 이건 "이미 아낀 돈"이 아니라 "앞으로 안 붙는 돈"이다. 등록을 마친 시점의 사실이고,
+     그 결제를 지금 끝냈는지와는 별개다. 그래서 과거형으로 부르지 않는다. */
+  function vatFreeYear(stats) {
+    const m = (stats && stats.vatFree) || {};
+    let sum = 0;
+    for (const k of Object.keys(m)) {
+      const v = m[k];
+      if (!v || !(Number(v.vat) > 0)) continue;
+      sum += v.interval === "year" ? Number(v.vat) : Number(v.vat) * 12;
+    }
+    return Math.round(sum);
+  }
+
+  function vatFreeCount(stats) {
+    const m = (stats && stats.vatFree) || {};
+    return Object.keys(m).filter(k => m[k] && Number(m[k].vat) > 0).length;
+  }
+
+  /* 해지로 1년에 안 나가게 된 돈. 부가세로 아낀 실제 금액과는 단위가 달라서 따로 센다.
+     둘을 한 숫자에 섞으면 "아낀 돈"이 무엇을 뜻하는지 아무도 모르게 된다. */
+  function savedByCancel(w) {
+    const krw = w && w.amountKrw;
+    if (krw == null || !(krw > 0)) return 0;
+    return Math.round(w.interval === "year" ? krw : krw * 12);
+  }
+
+  /* 자동 갱신은 화면을 안 남기므로 기록함이 빈다. 주기가 지나간 것이 확실할 때
+     마지막으로 본 금액으로 한 줄을 남긴다. 관측이 아니므로 '추정'으로 표시하고,
+     부가세는 비운다. 모르는 것을 지어내지 않는다. */
+  function estimatedRow(w, key, date) {
+    if (!w || w.amountOrig == null) return null;
+    return {
+      id: "e-" + String(key || "sub") + "-" + date,   // 같은 날 같은 구독은 한 줄뿐
+      date,
+      merchant: w.name || "해외 서비스",
+      mkey: String(key || ""),
+      desc: "",
+      currency: w.currency || "KRW",
+      amountOrig: Number(w.amountOrig),
+      amountKrw: w.amountKrw != null ? Number(w.amountKrw) : null,
+      krwBasis: "estimate",
+      fxRate: null,
+      fxNote: "",
+      vatKrw: null,
+      supplier: "unknown",
+      supplierWhy: "자동 갱신이라 화면을 보지 못했음",
+      charge: "renewal",
+      vatCsv: "",
+      vatReview: false,
+      interval: w.interval,
+      auto: w.auto !== false,
+      billingSource: "assumed",
+      status: "estimated",
+      source: "watch"
+    };
+  }
+
   // ---------- 새 구독 ----------
   function makeWatch(input, today) {
     const interval = input.interval === "year" ? "year" : "month";
@@ -75,11 +193,17 @@
       lastPaid: input.lastPaid || null,
       due: dueFrom(anchor, interval, today),
       manageUrl: input.manageUrl || null,
+      sourceUrl: input.sourceUrl || null,   // 등록할 때 보고 있던 화면
       source: input.source || "manual",
       status: STATUS.ACTIVE,
       misses: 0,
       ackedFor: null,
-      createdAt: today
+      createdAt: today,
+      /* 결제창·영수증·빌링 화면에서 실제로 숫자를 읽고 온 경우에만 관측으로 인정한다.
+         손으로 입력한 것은 관측이 아니다. */
+      seenAt: input.amountOrig != null && input.source && input.source !== "manual" ? today : null,
+      seenBy: input.source && input.source !== "manual" ? (input.seenBy || "checkout") : null,
+      priceLog: []
     };
   }
 
@@ -94,18 +218,31 @@
     return won(w.amountKrw != null ? w.amountKrw : w.amountOrig);
   }
 
-  function messageFor(kind, w, left) {
+  function messageFor(kind, w, left, meta) {
     /* 금액을 못 읽은 채로 등록된 구독이 있다. 처음 보는 결제창에서 알림만 건 경우다.
        그때 금액 자리를 비워 두면 "이 자동으로 빠져나갑니다" 같은 문장이 된다.
        빈칸을 남기지 말고 문장 자체를 바꾼다. */
     const amt = amountText(w);
     if (kind === "pre" && w.auto !== false) {
+      /* 제목은 날짜를 말하고 본문은 금액을 말한다. 날짜는 확실하지만 금액은 아닐 수 있다.
+         그 차이를 금액 표현 자체에 담는다. meta가 없으면 예전처럼 확실하게 말한다. */
+      const fresh = (meta && meta.fresh) || FRESH.SEEN;
+      const ago = (meta && meta.ago) || "";
+      /* 확인할 주소가 없으면 확인 버튼을 띄우지 않는다. 눌렀는데 아무 일도 없는 게 제일 나쁘다. */
+      const verifiable = fresh === FRESH.STALE && !!amt && !!w.manageUrl;
+
+      let line;
+      if (!amt) line = "자동으로 결제됩니다.";
+      else if (fresh === FRESH.LIKELY) line = `지난번과 같다면 ${amt}이 빠져나갑니다.`;
+      else if (fresh === FRESH.STALE)
+        line = `마지막으로 본 금액은 ${amt}${ago ? ", " + ago + " 기준" : ""}입니다. 그 사이 올랐을 수 있습니다.`;
+      else line = `${amt}이 자동으로 빠져나갑니다.`;
+
       return {
         title: left === 0 ? `${w.name} · 오늘 자동 결제` : `${w.name} · ${left}일 뒤 자동 결제`,
-        message: (amt ? `${amt}이 자동으로 빠져나갑니다. ` : "자동으로 결제됩니다. ") +
-                 `안 쓰실 거면 지금이 마지막 기회입니다. 해외 서비스는 결제 후 환불이 어렵습니다.`,
-        buttons: ["해지하러 가기", "계속 씁니다"],
-        actions: ["cancel-go", "keep"]
+        message: line + " 해외 서비스는 결제되고 나면 환불이 어렵습니다.",
+        buttons: verifiable ? ["금액 확인하기", "계속 씁니다"] : ["해지하러 가기", "계속 씁니다"],
+        actions: verifiable ? ["verify", "keep"] : ["cancel-go", "keep"]
       };
     }
     if (kind === "pre") {
@@ -138,6 +275,7 @@
   function planTick(watch, today, notified, lead) {
     const notifications = [];
     const updates = {};
+    const records = [];      // 자동 갱신이라 화면을 못 본 결제를 '추정'으로 남긴다
     watch = watch || {}; notified = notified || {};
 
     for (const key of Object.keys(watch)) {
@@ -154,7 +292,8 @@
         for (const d of alertDaysBefore(w, lead)) {
           const nkey = `w-pre-${key}-${w.due}-${d}`;
           if (left <= d && !notified[nkey]) {
-            notifications.push({ kind: "pre", nkey, key, w, left });
+            notifications.push({ kind: "pre", nkey, key, w, left,
+                                 fresh: freshness(w, today), ago: seenAgo(w, today) });
             break;
           }
         }
@@ -163,9 +302,13 @@
 
       // ── 예정일이 지났다
       if (w.ackedFor === w.due) {
-        // "계속 씁니다"라고 답했으니 결제된 것으로 보고 조용히 넘긴다
+        /* "계속 씁니다"라고 답했으니 결제된 것으로 보고 넘긴다.
+           그 결제는 브라우저에 화면을 남기지 않았으므로 기록함에도 안 들어간다.
+           분기 자료가 비는 걸 막기 위해 마지막으로 본 금액으로 한 줄 남긴다. 추정이다. */
         updates[key] = { due: addInterval(w.due, w.interval), ackedFor: null, misses: 0,
                          lastPaid: w.due };
+        const row = estimatedRow(w, key, w.due);
+        if (row) records.push(row);
         continue;
       }
 
@@ -180,13 +323,15 @@
 
       // 물어봤는데 답이 없다 — 기다릴 만큼 기다렸으면 조용해진다
       if (-left >= GRACE_DAYS) {
+        /* 답이 없다. 결제가 됐는지 안 됐는지 모르므로 기록을 남기지 않는다.
+           모르는 것을 추정으로라도 적어 두면 세무 자료가 조용히 오염된다. */
         const misses = (w.misses || 0) + 1;
         updates[key] = misses >= MAX_MISSES
           ? { status: STATUS.STALE, misses }
           : { due: addInterval(w.due, w.interval), misses };
       }
     }
-    return { notifications, updates };
+    return { notifications, updates, records };
   }
 
   // ---------- 사용자가 버튼을 눌렀을 때 ----------
@@ -292,6 +437,8 @@
     STATUS, GRACE_DAYS, MAX_MISSES,
     addInterval, daysBetween, dueFrom, alertDaysBefore, LEAD_DEFAULT,
     makeWatch, messageFor, amountText,
+    FRESH, CYCLE_DAYS, cyclesSince, freshness, seenAgo,
+    recordPrice, savedByCancel, estimatedRow, vatFreeYear, vatFreeCount,
     planTick, applyAction, looksCanceled, parsePage
   };
   if (typeof module !== "undefined" && module.exports) module.exports = root.SVSTWatch;

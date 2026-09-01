@@ -9,7 +9,7 @@ let ST = { ledger: [], subs: {}, stats: { saved: 0 }, tasks: [], profile: null, 
 let QUARTER = "this";
 let pendingExport = null;
 
-const won = n => n == null ? "—" : "₩" + Math.round(n).toLocaleString("ko-KR");
+const won = n => n == null ? "-" : "₩" + Math.round(n).toLocaleString("ko-KR");
 const todayISO = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -156,7 +156,7 @@ function renderDue() {
     }).join("") +
     (anyAuto
       ? `<div class="note">가만히 두면 자동으로 빠져나갑니다.
-           안 쓰실 구독이면 <b>지금</b> 해지하세요. 해외 서비스는 결제 후 환불이 거의 안 됩니다.</div>`
+           해외 서비스는 결제되고 나면 환불이 거의 안 됩니다.</div>`
       : `<div class="note">지난번 이맘때 결제하셨습니다. 이번에도 필요하신지 확인해 보세요.</div>`);
 }
 
@@ -170,8 +170,17 @@ function render() {
   const leak = real.reduce((a, r) => a + (r.vatKrw || 0), 0);
   const unsure = real.filter(r => r.supplier === SUP.UNKNOWN || r.amountKrw == null).length;
 
+  /* 두 숫자 모두 "앞으로 1년에 안 나갈 돈"이다. 이미 아낀 돈이 아니다.
+     하나는 사업자번호 등록으로 부가세가 안 붙게 된 것, 하나는 해지로 결제 자체가 없어진 것.
+     단위를 1년으로 맞춰야 나란히 놓을 수 있고, 그래야 합계도 말이 된다. */
+  const vatYear = WT.vatFreeYear(ST.stats);
+  const cutYear = ST.stats.canceledYear || 0;
+  const parts = [
+    vatYear > 0 ? `부가세 ${won(vatYear)}` : "",
+    cutYear > 0 ? `해지 ${won(cutYear)}` : ""
+  ].filter(Boolean);
   document.getElementById("total-saved").textContent =
-    ST.stats.saved > 0 ? `아낀 돈 ${won(ST.stats.saved)}` : "";
+    parts.length ? "1년에 안 나갈 수 있는 돈 · " + parts.join(" · ") : "";
 
   document.getElementById("summary").innerHTML = real.length
     ? `<b>${real.length}건</b> · 합계 <b>${won(sum)}</b>`
@@ -434,7 +443,26 @@ function watchLine(w, today) {
     return join(cyc, amt, "결제 여부를 확인하지 못해 <b>알림을 멈췄습니다</b>");
   const left = WT.daysBetween(today, w.due);
   const when = left < 0 ? "예정일 지남" : left === 0 ? "<b>오늘</b>" : `<b>${left}일 뒤</b>`;
-  return join(cyc, pay, amt || "금액 미확인") + `<br>다음 결제 ${when} · ${w.due}`;
+  /* 자동 결제는 화면을 남기지 않는다. 그래서 여기 적힌 금액은 늘 "마지막으로 본 금액"이다.
+     언제 본 것인지 밝히지 않으면 오래된 값을 오늘 값으로 읽게 된다. */
+  const fresh = amt ? WT.freshness(w, today) : null;
+  const ago = fresh === WT.FRESH.STALE ? WT.seenAgo(w, today) : "";
+  const note = fresh === WT.FRESH.STALE
+    ? `<br><span class="old">${ago ? ago + " 확인한 금액입니다" : "언제 확인한 금액인지 모릅니다"}</span>`
+    : "";
+  return join(cyc, pay, amt || "금액 미확인") + `<br>다음 결제 ${when} · ${w.due}` + note;
+}
+
+/* 등록할 때 보고 있던 화면. "그 사이트가 어디였더라"를 없애는 한 줄이다.
+   해지 주소가 따로 잡힌 곳은 그쪽이 더 쓸모 있으므로 그걸 먼저 쓴다. */
+function siteLine(w) {
+  const url = w.manageUrl || w.sourceUrl;
+  if (!url) return "";
+  let host = "";
+  try { host = new URL(url).host.replace(/^www\./, ""); } catch (e) { return ""; }
+  const what = w.manageUrl ? "관리 화면" : "등록한 화면";
+  return `<div class="site"><span class="lnk3" data-w="site" data-k="${esc(w.__k)}"
+    title="${esc(url)}">${esc(host)} ↗</span> <i>${what}</i></div>`;
 }
 
 function renderWatch() {
@@ -454,6 +482,7 @@ function renderWatch() {
 
   box.innerHTML = keys.map(k => {
     const w = WATCH[k];
+    w.__k = k;
     const left = w.due ? WT.daysBetween(today, w.due) : 999;
     const chip = STATE_CHIP[w.status]
       || (left >= 0 && left <= (w.interval === "year" ? 14 : 5)
@@ -462,7 +491,10 @@ function renderWatch() {
     return `<div class="wc">
       <div class="t"><span>${esc(w.name)}</span><span class="st ${chip.cls}">${chip.label}</span></div>
       <div class="b">${watchLine(w, today)}</div>
+      ${siteLine(w)}
       <div class="btns">
+        ${live && w.manageUrl && WT.amountText(w) && WT.freshness(w, today) === WT.FRESH.STALE
+          ? `<button class="p" data-w="verify" data-k="${esc(k)}">지금 금액 확인</button>` : ""}
         ${live && w.manageUrl ? `<button data-w="open" data-k="${esc(k)}">해지하러 가기</button>` : ""}
         ${live ? `<button data-w="canceled" data-k="${esc(k)}">해지함</button>` : ""}
         ${w.status === WT.STATUS.STALE || w.status === WT.STATUS.CANCELED || w.status === WT.STATUS.PAUSED
@@ -476,6 +508,14 @@ function renderWatch() {
   box.querySelectorAll("[data-w]").forEach(b => b.addEventListener("click", async () => {
     const k = b.dataset.k, act = b.dataset.w;
     if (act === "edit") return openForm(k);
+    /* 확인은 여는 것까지다. 실제 갱신은 그 페이지에서 숫자를 읽었을 때 일어난다.
+       여기서 미리 확인했다고 표시하면 못 읽었을 때도 확인한 것이 된다. */
+    if (act === "site") {
+      const u = WATCH[k].manageUrl || WATCH[k].sourceUrl;
+      if (u) chrome.tabs.create({ url: u });
+      return;
+    }
+    if (act === "verify") { if (WATCH[k].manageUrl) chrome.tabs.create({ url: WATCH[k].manageUrl }); return; }
     if (act === "open") { if (WATCH[k].manageUrl) chrome.tabs.create({ url: WATCH[k].manageUrl });
       WATCH[k] = WT.applyAction(WATCH[k], "cancel-go", todayISO()); }
     else if (act === "del") { delete WATCH[k]; }
@@ -524,7 +564,7 @@ async function enableHere() {
     }
 
     await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: ["panel.css"] });
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["rules.js", "content.js"] });
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["rules.js", "watch.js", "content.js"] });
 
     const already = await chrome.permissions.contains({ origins: [origin + "/*"] });
     if (already) return grabNote("켰습니다. 결제창 왼쪽 아래를 보세요.");
@@ -565,7 +605,7 @@ async function toggleAllSites() {
   try {
     await chrome.scripting.registerContentScripts([{
       id: "svst-all", matches: ["https://*/*"], allFrames: true,
-      js: ["rules.js", "content.js"], css: ["panel.css"], runAt: "document_idle"
+      js: ["rules.js", "watch.js", "content.js"], css: ["panel.css"], runAt: "document_idle"
     }]);
   } catch (e) { /* 이미 등록돼 있으면 그대로 둔다 */ }
   grabNote("이제 어느 결제창에서든 자동으로 뜹니다.");
@@ -587,7 +627,7 @@ function askAlways(origin) {
       await chrome.scripting.registerContentScripts([{
         id: "svst-" + host.replace(/[^a-z0-9]/gi, "-"),
         matches: [origin + "/*"],
-        js: ["rules.js", "content.js"], css: ["panel.css"],
+        js: ["rules.js", "watch.js", "content.js"], css: ["panel.css"],
         runAt: "document_idle"
       }]);
     } catch (e) { /* 이미 등록돼 있으면 그대로 둔다 */ }
@@ -837,7 +877,7 @@ function switchView(which) {
 async function init() {
   /* 툴바 팝업은 창 자체가 좁다. 새 탭으로 열렸을 때만 조금 넓힌다 —
      넓다고 가로를 다 쓰면 글줄이 길어져 오히려 못 읽는다. */
-  if (window.innerWidth > 620) document.body.classList.add("tab");
+  if (window.innerWidth > 620) document.body.classList.add("wide");
 
   const st = await chrome.storage.local.get(["ledger", "subs", "stats", "tasks", "profile", "suppliers", "watch", "settings"]);
   ST.ledger = st.ledger || [];

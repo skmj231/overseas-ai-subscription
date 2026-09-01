@@ -6,7 +6,7 @@
 <style>
   /* 색은 panel.css와 같은 규칙 — 검정·흰색·회색뿐이다.
      검은 면 + 흰 글자 = 지금 봐야 한다 · 회색 면 + 회색 글자 = 끝났거나 조용한 것.
-     먹 #16171A · 잉크 #17181B(면) · 조용한 면 #F1F2F5 */
+     먹 #16171A · 잉크 #17181B(면) · 조용한 면은 흰 바탕에 헤어라인 rgba(0,0,0,.09) */
   /* 크롬의 '웹 콘텐츠 자동 어둡게'가 켜져 있으면 이 화면을 제멋대로 뒤집어
      검은 배경에 검은 글씨가 된다. 밝은 화면이라고 못 박아 두면 손대지 않는다. */
   :root { color-scheme: light; }
@@ -23,18 +23,23 @@
     color: #111315; font-size: 13px; word-break: keep-all; background: #fff;
     -webkit-font-smoothing: antialiased;
   }
-  body.tab { width: 560px; max-height: none; padding-top: 18px; }
+  /* 새 탭으로 열 때 넓힌다. 예전에는 이 클래스 이름이 'tab'이라 아래 분기 선택 칩(.tab)의
+     배경·모서리·글자 크기까지 <body>가 통째로 물려받았다. 화면 둘레에 회색 테가 생기고
+     본문 글자가 11.5px로 줄어들던 원인이다. 이름을 갈라 둔다. */
+  body.wide { width: 560px; max-height: none; padding-top: 18px; }
   header { padding: 16px 18px 12px; display: flex; align-items: center; justify-content: space-between; }
-  header .brand { display:flex; align-items:center; gap:7px; font-size: 12px; font-weight: 700;
-    color: #111315; }
+  header .brand { display:flex; align-items:center; gap:7px; color:#111315; text-decoration:none; }
   header .brand img { width:24px; height:24px; border-radius:7px; }
+  header .brand b { display:block; font-size:12px; line-height:1.15; }
+  header .brand small { display:block; margin-top:2px; font-size:9px; font-weight:600;
+    color:rgba(0,0,0,.38); letter-spacing:.01em; }
   /* 이름표에 면을 두르면 눌러야 하는 것처럼 보인다. 색만 남기고 네모는 버린다. */
   header .saved { font-size: 11.5px; font-weight: 600; color: #111315; }
   header .saved:empty { display: none; }
 
   /* 결제 예정 — 이 화면에서 가장 먼저 보여야 하는 것.
      결제된 뒤에 알면 늦다. 해외 서비스는 환불이 거의 안 된다. */
-  .due { margin: 0 16px 8px; padding: 16px 18px; border-radius: 10px; background: #17181B; color: #F5F5F7; }
+  .due { margin: 0 16px 8px; padding: 16px 18px; border-radius: 10px; background: #1E6B3A; color: #F5F5F7; }
   .due:empty { display: none; }
   .due h4 { font-size: 10.5px; font-weight: 600; letter-spacing: .01em; color: rgba(255,255,255,.72); margin-bottom: 10px; }
   .due .r { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; font-size: 13px; }
@@ -53,10 +58,10 @@
   .todo .t { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 12.5px; line-height: 1.45; }
   .todo .t b { font-weight: 600; }
   .todo .t .x { font-size: 10.5px; font-weight: 600; cursor: pointer;
-    background: #111315; color: #fff; border-radius: 6px; padding: 4px 9px; flex-shrink: 0; }
+    background: #1E6B3A; color: #fff; border-radius: 6px; padding: 4px 9px; flex-shrink: 0; }
   .todo .t .a { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .todo .t .go { font-size: 10.5px; font-weight: 600; cursor: pointer; font-family: inherit;
-    background: #F1F2F5; color: #111315; border-radius: 6px; padding: 4px 9px; }
+    background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; border-radius: 6px; padding: 4px 9px; }
   .todo .how { font-size: 10.5px; color: rgba(0,0,0,.42); line-height: 1.65; margin-top: 9px; }
 
   /* 내 정보 — 결제창에 가지 않아도 여기서 번호를 넣고 고친다 */
@@ -64,12 +69,12 @@
   .me label { display: block; font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
     color: rgba(0,0,0,.38); margin: 13px 0 5px; }
   .me input[type=text], .me select { width: 100%; padding: 11px 12px; border-radius: 8px;
-    background: #F1F2F5; font-family: inherit; font-size: 13px; color: #111315; }
+    background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); font-family: inherit; font-size: 13px; color: #111315; }
   .me .row { display: flex; gap: 7px; }
   .me .row > * { flex: 1; }
   .me .chk { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 500;
     letter-spacing: 0; color: #111315; margin: 13px 0 2px; }
-  .me .chk input { width: auto; accent-color: #111315; }
+  .me .chk input { width: auto; accent-color: #1E6B3A; }
   .me .hint { font-size: 10.5px; color: rgba(0,0,0,.42); line-height: 1.65; margin-top: 8px; }
   .me .err { font-size: 11px; color: #111315; font-weight: 600; min-height: 14px; margin-top: 9px;
     line-height: 1.5; }
@@ -77,14 +82,14 @@
   .me .acts { display: flex; gap: 7px; margin-top: 13px; }
   .me .acts button { flex: 1; padding: 11px 0; border-radius: 8px; font-family: inherit;
     font-size: 12.5px; font-weight: 700; cursor: pointer; }
-  .me .acts .p { background: #111315; color: #fff; }
-  .me .acts .g { background: #F1F2F5; color: #111315; }
+  .me .acts .p { background: #1E6B3A; color: #fff; }
+  .me .acts .g { background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; }
 
   .tabs { display: flex; gap: 6px; padding: 10px 16px 0; }
-  .tab { border-radius: 8px; background: #F1F2F5; font-size: 11.5px; padding: 8px 15px;
+  .tabs .tab { border-radius: 8px; background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); font-size: 11.5px; padding: 8px 15px;
     cursor: pointer; color: rgba(0,0,0,.5); font-family: inherit; }
-  .tab:hover { background: #E6E8EC; }
-  .tab.on { background: #111315; color: #fff; font-weight: 700; }
+  .tabs .tab:hover { background: #FAFAFB; }
+  .tabs .tab.on { background: #1E6B3A; color: #fff; font-weight: 700; }
 
   .summary { padding: 14px 16px 6px; font-size: 12.5px; color: rgba(0,0,0,.55); }
   .summary b { color: #111315; }
@@ -104,20 +109,20 @@
   .a .w { font-weight: 700; font-size: 12.5px; }
   .a .v { font-size: 10px; color: rgba(0,0,0,.45); }
   .a .fx { font-size: 10px; color: #fff; cursor: pointer; font-weight: 600; white-space: nowrap;
-    background: #16171A; border-radius: 5px; padding: 3px 7px; margin-top: 3px; display: inline-block; }
-  .a .fx:hover { background: #2a2d31; }
+    background: #1E6B3A; border-radius: 5px; padding: 3px 7px; margin-top: 3px; display: inline-block; }
+  .a .fx:hover { background: #185A30; }
 
   /* 상태는 읽는 것이고 '공급자?'는 누르는 것이다. 면은 누르는 쪽에만 준다. */
   .chip { font-size: 10px; font-weight: 600; flex-shrink: 0; color: rgba(0,0,0,.4); }
   .chip.ok { color: rgba(0,0,0,.4); }
   .chip.est { color: #16171A; }
   .chip.next { color: rgba(0,0,0,.38); }
-  .chip.ask { background: #111315; color: #fff; cursor: pointer;
+  .chip.ask { background: #1E6B3A; color: #fff; cursor: pointer;
     border-radius: 5px; padding: 3px 7px; font-size: 9.5px; }
 
-  .confirm { background: #111315; border-radius: 7px; font-size: 10.5px; padding: 5px 11px;
+  .confirm { background: #1E6B3A; border-radius: 7px; font-size: 10.5px; padding: 5px 11px;
     cursor: pointer; color: #fff; font-weight: 700; font-family: inherit; flex-shrink: 0; }
-  .confirm:hover { background: #2a2d31; }
+  .confirm:hover { background: #185A30; }
 
   .empty { padding: 52px 24px; text-align: center; color: rgba(0,0,0,.42); font-size: 12.5px; line-height: 1.75; }
   .empty .then { display: block; margin-top: 20px; padding-top: 16px; font-size: 11.5px;
@@ -128,10 +133,10 @@
   footer { padding: 14px 16px 8px; display: flex; gap: 8px; }
   footer button { flex: 1; border-radius: 10px; padding: 13px 0;
     font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
-  #export { color: #fff; background: #111315; }
-  #export:hover { background: #2a2d31; }
-  #copy { color: #111315; background: #F1F2F5; }
-  #copy:hover { background: #E6E8EC; }
+  #export { color: #fff; background: #1E6B3A; }
+  #export:hover { background: #185A30; }
+  #copy { color: #111315; background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); }
+  #copy:hover { background: #FAFAFB; }
   .fine { text-align: center; font-size: 10px; color: rgba(0,0,0,.32); padding: 4px 0 14px; line-height: 1.9; }
   .fine .lnk { color: rgba(0,0,0,.5); font-weight: 700; cursor: pointer; font-size: 10.5px; }
   .fine .lnk:hover { color: #111315; }
@@ -142,26 +147,27 @@
   .top { display: flex; gap: 6px; padding: 2px 16px 0; }
   /* 고르지 않은 탭만 회색 면을 가진다. 고른 탭은 아래 내용과 같은 흰색이라
      탭과 내용이 한 장으로 이어져 보인다 — 지금 보고 있는 것이 무엇인지가 색으로 드러난다. */
-  .top button { flex: 1; border-radius: 8px; background: #F1F2F5; font-size: 12px; padding: 9px 0;
+  .top button { flex: 1; border-radius: 8px; background: transparent; font-size: 12px; padding: 9px 0;
     cursor: pointer; color: rgba(0,0,0,.5); font-family: inherit; font-weight: 700;
     transition: background .15s ease, color .15s ease; }
-  .top button:hover { background: #E6E8EC; }
-  .top button.on { background: #fff; color: #111315; }
+  .top button:hover { background: #FAFAFB; }
+  .top button.on { background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; }
   .top button.on:hover { background: #fff; }
+  .top button:not(.on):hover { background: #FAFAFB; }
   .view { display: none; background: #fff; } .view.on { display: block; }
 
   .wrap { padding: 12px 16px 0; }
   .wrap .hd { display: flex; align-items: center; margin-bottom: 10px; }
   .wrap .hd h4 { font-size: 10px; font-weight: 600; letter-spacing: .01em; color: rgba(0,0,0,.4); }
   .wrap .hd .add { margin-left: auto; font-size: 11px; font-weight: 600; cursor: pointer;
-    background: #111315; color: #fff; border-radius: 7px; padding: 6px 11px; font-family: inherit; }
+    background: #1E6B3A; color: #fff; border-radius: 7px; padding: 6px 11px; font-family: inherit; }
 
   .wnote { font-size: 11.5px; color: rgba(0,0,0,.5); padding: 0 0 10px; line-height: 1.5; }
   .wnote:empty { display: none; }
   .wnote .lnk2 { display: block; margin-top: 6px; font-family: inherit; font-size: 11.5px;
-    font-weight: 600; color: #111315; background: #F1F2F5; border-radius: 7px;
+    font-weight: 600; color: #111315; background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); border-radius: 7px;
     padding: 8px 11px; cursor: pointer; text-align: left; width: 100%; }
-  .wnote .lnk2:hover { background: #E6E8EC; }
+  .wnote .lnk2:hover { background: #FAFAFB; }
 
   .wc { background: #fff; border-radius: 10px; padding: 14px 15px; margin-bottom: 9px;
     box-shadow: 0 0 0 1px rgba(0,0,0,.055), 0 4px 14px -6px rgba(20,22,26,.16); }
@@ -175,11 +181,18 @@
   .wc .t .st.wait { color: #16171A; }
   .wc .t .st.off { color: rgba(0,0,0,.3); }
   .wc .b { font-size: 12.5px; color: rgba(0,0,0,.55); line-height: 1.55; margin-top: 5px; }
+  /* 언제 본 금액인지. 금액 자체보다 흐리게 둔다 — 경고가 아니라 단서다. */
+  .wc .b .old { color: rgba(0,0,0,.38); }
+  /* 어느 화면에서 등록했는지. 주소를 다 적으면 줄이 길어지므로 도메인만 보여준다. */
+  .wc .site { margin-top: 5px; font-size: 11.5px; color: rgba(0,0,0,.38); }
+  .wc .site .lnk3 { font-weight: 600; color: #111315; cursor: pointer; }
+  .wc .site .lnk3:hover { text-decoration: underline; }
+  .wc .site i { font-style: normal; }
   .wc .b b { color: #111315; font-weight: 700; }
   .wc .btns { display: flex; gap: 6px; margin-top: 11px; }
   .wc .btns button { border-radius: 7px; font-size: 11.5px; font-weight: 700; padding: 8px 12px;
-    cursor: pointer; font-family: inherit; background: #F1F2F5; color: #111315; }
-  .wc .btns button.p { background: #111315; color: #fff; }
+    cursor: pointer; font-family: inherit; background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; }
+  .wc .btns button.p { background: #1E6B3A; color: #fff; }
   .wc .btns button:hover { opacity: .86; }
   .wc .btns .sp { margin-left: auto; }
 
@@ -187,16 +200,16 @@
   .form { position: fixed; top: 0; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 440px; background: #fff; padding: 20px 18px; display: none; z-index: 11;
     overflow-y: auto; }
-  body.tab .form { width: 560px; }
+  body.wide .form { width: 560px; }
   .form.on { display: block; }
   .form h3 { font-size: 18px; font-weight: 600; letter-spacing: -.018em; margin-bottom: 4px; }
   .form .lead { font-size: 12px; color: rgba(0,0,0,.5); line-height: 1.55; margin-bottom: 14px; }
-  .form .grab { width: 100%; padding: 12px; border-radius: 8px; background: #F1F2F5; color: #16171A;
+  .form .grab { width: 100%; padding: 12px; border-radius: 8px; background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #16171A;
     font-weight: 600; font-size: 12.5px; cursor: pointer; font-family: inherit; margin-bottom: 6px; }
   .form .grabnote { font-size: 10.5px; color: rgba(0,0,0,.42); line-height: 1.5; margin-bottom: 14px; }
   .form label { display: block; font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
     color: rgba(0,0,0,.4); margin: 11px 0 4px; }
-  .form input, .form select { width: 100%; padding: 11px 12px; border-radius: 8px; background: #F1F2F5;
+  .form input, .form select { width: 100%; padding: 11px 12px; border-radius: 8px; background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09);
     font-family: inherit; font-size: 13px; color: #111315; }
   .form .row { display: flex; gap: 7px; }
   .form .row > * { flex: 1; }
@@ -207,8 +220,8 @@
   .form .acts { display: flex; gap: 7px; margin-top: 8px; }
   .form .acts button { flex: 1; border-radius: 10px; padding: 13px 0; font-size: 12.5px;
     font-weight: 700; cursor: pointer; font-family: inherit; }
-  .form .acts .p { background: #111315; color: #fff; }
-  .form .acts .g { background: #F1F2F5; color: #111315; }
+  .form .acts .p { background: #1E6B3A; color: #fff; }
+  .form .acts .g { background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; }
   .form .fine2 { font-size: 10px; color: rgba(0,0,0,.34); line-height: 1.7; margin-top: 12px; }
 
   /* 과세유형 질문 — CSV를 만들 때 딱 한 번 */
@@ -218,9 +231,9 @@
   .gate h3 { font-size: 19px; font-weight: 600; letter-spacing: -.018em; margin: 10px 0 6px; }
   .gate p { font-size: 13px; color: rgba(0,0,0,.55); line-height: 1.6; margin-bottom: 16px; }
   .gate button { display: block; width: 100%; margin-top: 8px; padding: 14px 16px; border-radius: 10px;
-    background: #F1F2F5; color: #111315; font-family: inherit; font-size: 13.5px; font-weight: 700;
+    background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; font-family: inherit; font-size: 13.5px; font-weight: 700;
     cursor: pointer; text-align: left; line-height: 1.4; }
-  .gate button:hover { background: #E6E8EC; }
+  .gate button:hover { background: #FAFAFB; }
   .gate button .sub { display: block; font-size: 11px; font-weight: 500; color: rgba(0,0,0,.45); margin-top: 2px; }
 
   /* 크롬 '웹 콘텐츠 자동 어둡게'는 스스로 어둠을 처리하지 않는 페이지만 뒤집는다.
@@ -230,25 +243,25 @@
     html, body, .view { background: #fff; }
     body { color: #111315; }
     #app { background: #fff; }
-    .top button { background: #F1F2F5; color: rgba(0,0,0,.5); }
-    .top button.on { background: #fff; color: #111315; }
-    .due { background: #17181B; color: #F5F5F7; }
+    .top button { background: transparent; color: rgba(0,0,0,.5); }
+    .top button.on { background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; }
+    .due { background: #1E6B3A; color: #F5F5F7; }
     .wc, .form, .gate { background: #fff; color: #111315; }
     .me input[type=text], .me select,
-    .form input, .form select { background: #F1F2F5; color: #111315; }
-    .todo .t .x { background: #111315; color: #fff; }
-    .todo .t .go { background: #F1F2F5; color: #111315; }
-    #export { background: #111315; color: #fff; }
-    #copy { background: #F1F2F5; color: #111315; }
-    .me .acts .p { background: #111315; color: #fff; }
-    .me .acts .g { background: #F1F2F5; color: #111315; }
+    .form input, .form select { background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; }
+    .todo .t .x { background: #1E6B3A; color: #fff; }
+    .todo .t .go { background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; }
+    #export { background: #1E6B3A; color: #fff; }
+    #copy { background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; }
+    .me .acts .p { background: #1E6B3A; color: #fff; }
+    .me .acts .g { background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; }
   }
 </style>
 </head>
 <body>
 <div id="app">
   <header>
-    <span class="brand"><img src="icon48.png" alt="">돈나가요</span>
+    <a class="brand" href="https://donna.co.kr/" target="_blank" rel="noopener"><img src="icon48.png" alt=""><span><b>돈나가요</b><small>donna.co.kr</small></span></a>
     <span class="saved" id="total-saved"></span>
   </header>
 

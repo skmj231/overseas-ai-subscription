@@ -341,8 +341,15 @@
      한 달 뒤 빠져나갈 돈을 놓치는 것이므로 이 도구의 존재 이유가 무너진다. */
   const RE_UPSELL = /(절약|아끼|save|discount|할인|switch|바꾸|대신|포함된|instead)/i;
   const RE_BILLED = /((연간|월간|매년|매월)\s*청구|billed\s*(annually|yearly|monthly))/i;
-  const RE_Y_STRONG = /(매\s*년|billed\s*(annually|yearly)|annually|yearly|per\s*year)/i;
-  const RE_M_STRONG = /(매\s*월|billed\s*monthly|monthly|per\s*month)/i;
+  /* 판매자가 "앞으로 어떻게 될지"를 직접 적어 둔 문장. 화면에서 제일 믿을 만한 근거다.
+     플랜 고르는 줄에 붙은 '/month' 같은 표기보다 이 문장이 우선한다.
+     Envato는 연 구독인데 화면 위쪽 플랜 선택칸에 "Monthly $59.00/month"가 같이 떠 있어서,
+     그 줄에 걸리면 연 결제를 매달 결제로 읽는다. 실제로 그렇게 틀렸다. */
+  const RE_RENEW_Y = /(매\s*년\s*(자동\s*)?(갱신|연장|청구)|renews?\s+(automatically\s+)?(each|every)\s+year|automatically\s+renews?\w*\s+each\s+year|renew\w*\s+(each|every)\s+year|renew\w*\s+annually|annual\s+subscription|yearly\s+subscription|연간\s*구독)/i;
+  const RE_RENEW_M = /(매\s*(달|월)\s*(자동\s*)?(갱신|연장|청구)|renews?\s+(automatically\s+)?(each|every)\s+month|automatically\s+renews?\w*\s+each\s+month|renew\w*\s+(each|every)\s+month|renew\w*\s+monthly|monthly\s+subscription|월간\s*구독)/i;
+
+  const RE_Y_STRONG = /(매\s*년|billed\s*(annually|yearly)|annually|yearly|per\s*year|per\s*annum|\/\s*(year|yr)\b|\ba\s+year\b|\beach\s+year\b|\bannual\b)/i;
+  const RE_M_STRONG = /(매\s*월|billed\s*monthly|monthly|per\s*month|\/\s*(month|mo)\b|\ba\s+month\b|\beach\s+month\b)/i;
   const RE_Y_WEAK = /(연간|\/\s*년|년\s*청구)/;
   const RE_M_WEAK = /(월간|\/\s*월|월\s*청구)/;
 
@@ -355,8 +362,14 @@
     const billed = own.find(l => RE_BILLED.test(l));
     if (billed) return (/연간|매년|annually|yearly/i.test(billed)) ? "year" : "month";
 
+    /* 1-B) 판매자가 직접 적어 둔 갱신 문장. "each year unless you cancel" 같은 줄이다.
+       한쪽만 나오면 그게 답이다. 둘 다 나오면 근거가 못 되니 아래로 넘긴다. */
+    const joined = own.join("\n");
+    const ry = RE_RENEW_Y.test(joined), rm = RE_RENEW_M.test(joined);
+    if (ry !== rm) return ry ? "year" : "month";
+
     // 2) 없으면 반복 표기 — 연간 우선(연간 플랜이 '월 환산' 금액을 함께 쓰기 때문)
-    const rest = own.join("\n");
+    const rest = joined;
     if (RE_Y_STRONG.test(rest)) return "year";
     if (RE_M_STRONG.test(rest)) return "month";
 
@@ -491,7 +504,7 @@
       return {
         code: "overseas_simplified",
         short: "간이과세",
-        csv: "간이과세자 — 세무대리인 확인 필요",
+        csv: "간이과세자, 세무대리인 확인 필요",
         note: "간이과세자는 매입세액 공제 구조가 달라 세무대리인 확인이 필요합니다.",
         review: true
       };
@@ -500,7 +513,7 @@
     return {
       code: "overseas_exempt",
       short: "대리납부 검토",
-      csv: "면세사업자 — 대리납부(부가가치세법 §52) 대상 여부 확인 필요",
+      csv: "면세사업자, 대리납부(부가가치세법 §52) 대상 여부 확인 필요",
       note: "면세사업자가 해외에서 용역을 사면 부가세를 대신 납부해야 하는 경우가 있습니다. 세무대리인께 확인하세요.",
       review: true
     };

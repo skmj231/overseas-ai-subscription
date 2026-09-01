@@ -8,7 +8,7 @@ const R = require(path.join(root, "rules.js"));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, "1.2.0");
+assert.equal(manifest.version, "1.3.2");
 assert.match(manifest.name, /돈나가요/);
 for (const size of [16, 48, 128]) {
   assert.ok(fs.existsSync(path.join(root, `icon${size}.png`)), `icon${size}.png 누락`);
