@@ -687,7 +687,7 @@
     return `<div class="svst-head">
         ${o.back
           ? `<span class="svst-back" data-svst="back-${o.back}">← 뒤로</span>`
-          : `<span class="svst-title svst-brand"><img src="${chrome.runtime.getURL("icon48.png")}" alt=""><span>돈나가요<small>donna.co.kr</small></span></span>`}
+          : `<span class="svst-title svst-brand"><img src="${chrome.runtime.getURL("icon48.png")}" alt="돈나가요"></span>`}
         <span class="svst-close" id="svst-x">✕</span>
       </div>
       <div class="svst-top">

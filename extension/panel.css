@@ -419,7 +419,7 @@
 #svst-card .svst-head { margin:-30px -30px 22px; padding:18px 22px; min-height:70px; border-radius:18px 18px 0 0; background:linear-gradient(145deg,#06251D,#010D0A); color:#F9F4E9; }
 #svst-card .svst-title,#svst-card .svst-back,#svst-card .svst-close { color:#F9F4E9; }
 #svst-card .svst-brand { display:flex; align-items:center; gap:10px; }
-#svst-card .svst-brand img { width:34px; height:34px; object-fit:contain; border-radius:10px; }
+#svst-card .svst-brand img { width:42px; height:42px; object-fit:contain; }
 #svst-card .svst-brand span { display:flex; flex-direction:column; font-weight:700; line-height:1.15; }
 #svst-card .svst-brand small { margin-top:3px; color:#E1B44A; font-size:9px; font-weight:700; letter-spacing:.03em; }
 #svst-card .svst-btn,#svst-card .svst-seg-b.on,#svst-card .svst-compare .svst-later { background:#063E2F; color:#fff; }

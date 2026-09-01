@@ -100,10 +100,20 @@ func makeIcon(_ size: Int) -> NSImage {
   }
 }
 
+func makeToolbarIcon(_ size: Int) -> NSImage {
+  canvas(width: size, height: size) {
+    let inset = max(0, CGFloat(size) * 0.015)
+    drawBell(in: NSRect(x: inset, y: inset, width: CGFloat(size) - inset * 2, height: CGFloat(size) - inset * 2), shadow: false)
+  }
+}
+
 let icon1024 = makeIcon(1024)
 try save(icon1024, name: "donna-app-icon-1024.png")
 for size in [16, 32, 48, 128, 180, 256] {
   try save(makeIcon(size), name: "donna-app-icon-\(size).png")
+}
+for size in [16, 32, 48, 128, 180, 256] {
+  try save(makeToolbarIcon(size), name: "donna-toolbar-icon-\(size).png")
 }
 
 let og = canvas(width: 1200, height: 630) {
