@@ -18,7 +18,8 @@
     PENDING: "pending",   // '해지하러 가기'를 눌렀다 — 결과는 아직 모른다
     CANCELED: "canceled", // 해지 확인됨. 알리지 않는다
     STALE: "stale",       // 두 주기 무응답. 알리지 않고 '확인 필요'로만 남긴다
-    PAUSED: "paused"      // 사용자가 이 구독 알림만 껐다
+    PAUSED: "paused",     // 사용자가 이 구독 알림만 껐다
+    NEEDS_INFO: "needs-info" // 서비스는 기억하지만 주기·날짜를 아직 모른다
   };
 
   const GRACE_DAYS = 7;   // 물어본 뒤 이만큼 기다린다
@@ -181,8 +182,10 @@
 
   // ---------- 새 구독 ----------
   function makeWatch(input, today) {
-    const interval = input.interval === "year" ? "year" : "month";
+    const interval = input.interval === "year" ? "year"
+      : input.interval === "month" ? "month" : null;
     const anchor = input.nextDue || (input.lastPaid ? addInterval(input.lastPaid, interval) : null);
+    const due = dueFrom(anchor, interval, today);
     return {
       name: (input.name || "").trim() || "이름 없는 구독",
       amountOrig: input.amountOrig != null ? Number(input.amountOrig) : null,
@@ -191,11 +194,11 @@
       interval,
       auto: input.auto !== false,
       lastPaid: input.lastPaid || null,
-      due: dueFrom(anchor, interval, today),
+      due,
       manageUrl: input.manageUrl || null,
       sourceUrl: input.sourceUrl || null,   // 등록할 때 보고 있던 화면
       source: input.source || "manual",
-      status: STATUS.ACTIVE,
+      status: interval && due ? STATUS.ACTIVE : STATUS.NEEDS_INFO,
       misses: 0,
       ackedFor: null,
       createdAt: today,

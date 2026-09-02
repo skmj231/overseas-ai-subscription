@@ -428,11 +428,12 @@ const STATE_CHIP = {
   [WT.STATUS.CANCELED]: { cls: "off", label: "해지함" },
   [WT.STATUS.PAUSED]:   { cls: "off", label: "알림 끔" },
   [WT.STATUS.STALE]:    { cls: "wait", label: "확인 필요" },
-  [WT.STATUS.PENDING]:  { cls: "wait", label: "해지 확인 중" }
+  [WT.STATUS.PENDING]:  { cls: "wait", label: "해지 확인 중" },
+  [WT.STATUS.NEEDS_INFO]: { cls: "wait", label: "확인 필요" }
 };
 
 function watchLine(w, today) {
-  const cyc = w.interval === "year" ? "연 구독" : "월 구독";
+  const cyc = w.interval === "year" ? "연 구독" : w.interval === "month" ? "월 구독" : "결제 주기 확인 필요";
   const pay = w.auto === false ? "직접 결제" : "자동결제";
   /* 금액을 못 읽은 구독은 금액 칸이 빈 문자열로 온다.
      그대로 이어 붙이면 "월 구독 · 자동결제 · "처럼 가운뎃점이 허공에 남는다. */
@@ -441,6 +442,8 @@ function watchLine(w, today) {
   if (w.status === WT.STATUS.CANCELED) return join(cyc, amt, "더 이상 알리지 않습니다");
   if (w.status === WT.STATUS.STALE)
     return join(cyc, amt, "결제 여부를 확인하지 못해 <b>알림을 멈췄습니다</b>");
+  if (!w.interval || !w.due || w.status === WT.STATUS.NEEDS_INFO)
+    return join(cyc, amt || "금액 미확인") + `<br><b>다음 결제일 확인 필요</b> · 수정하면 바로 알림을 예약합니다`;
   const left = WT.daysBetween(today, w.due);
   const when = left < 0 ? "예정일 지남" : left === 0 ? "<b>오늘</b>" : `<b>${left}일 뒤</b>`;
   /* 자동 결제는 화면을 남기지 않는다. 그래서 여기 적힌 금액은 늘 "마지막으로 본 금액"이다.
@@ -470,15 +473,16 @@ function renderWatch() {
   const keys = Object.keys(WATCH);
   if (!keys.length) {
     box.innerHTML = `<div class="empty"><b>아직 등록된 구독이 없어요</b>
-      Stripe·Paddle 결제창은 열기만 하면 자동으로 담깁니다.<br>
-      서비스가 직접 만든 결제창이면 그 화면을 연 채<br>
-      위의 <b style="display:inline;font-size:inherit">이 결제창에서 켜기</b>를 눌러 주세요.</div>`;
+      기억나는 서비스 이름부터 직접 등록할 수 있습니다.<br>
+      결제 화면을 보고 있다면 위의 <b style="display:inline;font-size:inherit">이 결제창에서 켜기</b>를 눌러 주세요.<br>
+      <button class="confirm" id="w-empty-add" style="margin-top:16px">첫 구독 직접 등록</button></div>`;
+    document.getElementById("w-empty-add").addEventListener("click", () => openForm(null));
     return;
   }
   const today = todayISO();
   const rank = { active: 0, pending: 1, stale: 2, paused: 3, canceled: 4 };
-  keys.sort((a, b) => (rank[WATCH[a].status] - rank[WATCH[b].status])
-    || String(WATCH[a].due).localeCompare(String(WATCH[b].due)));
+  keys.sort((a, b) => ((rank[WATCH[a].status] ?? -1) - (rank[WATCH[b].status] ?? -1))
+    || String(WATCH[a].due || "").localeCompare(String(WATCH[b].due || "")));
 
   box.innerHTML = keys.map(k => {
     const w = WATCH[k];
@@ -488,6 +492,7 @@ function renderWatch() {
       || (left >= 0 && left <= (w.interval === "year" ? 14 : 5)
           ? { cls: "due", label: "곧 결제" } : { cls: "ok", label: "예정" });
     const live = w.status === WT.STATUS.ACTIVE || w.status === WT.STATUS.PENDING;
+    const needsInfo = w.status === WT.STATUS.NEEDS_INFO || !w.interval || !w.due;
     return `<div class="wc">
       <div class="t"><span>${esc(w.name)}</span><span class="st ${chip.cls}">${chip.label}</span></div>
       <div class="b">${watchLine(w, today)}</div>
@@ -500,7 +505,7 @@ function renderWatch() {
         ${w.status === WT.STATUS.STALE || w.status === WT.STATUS.CANCELED || w.status === WT.STATUS.PAUSED
           ? `<button class="p" data-w="resume" data-k="${esc(k)}">알림 다시 받기</button>` : ""}
         ${live ? `<button data-w="pause" data-k="${esc(k)}">알림 끄기</button>` : ""}
-        <button data-w="edit" data-k="${esc(k)}">수정</button>
+        <button class="${needsInfo ? "p" : ""}" data-w="edit" data-k="${esc(k)}">${needsInfo ? "정보 완성하기" : "수정"}</button>
         <button class="sp" data-w="del" data-k="${esc(k)}">삭제</button>
       </div></div>`;
   }).join("");
@@ -526,21 +531,23 @@ function renderWatch() {
 }
 
 // ---------- 수정 폼 ----------
-/* 손으로 새 구독을 만들게 하지 않는다.
-   결제창에서 자동으로 잡히거나, 열어 둔 페이지에서 읽어 오거나 — 둘 중 하나다.
-   사람이 처음부터 타이핑해 넣은 금액과 날짜는 대개 틀리고, 틀린 날짜로 가는 알림은
-   있으나 마나 하기 때문이다. 이 폼은 이미 있는 항목을 고치는 데만 쓴다. */
+/* 설치 직후 사용자는 금액과 날짜를 모를 수 있다. 서비스 이름만 먼저 적어 두고
+   나머지는 확인 필요로 남길 수 있게 한다. 모르는 값을 추측해서 알림으로 만들지는 않는다. */
 const $w = (id) => document.getElementById(id);
 let EDIT_KEY = null;
 
 function openForm(key) {
   EDIT_KEY = key || null;
   const w = key ? WATCH[key] : null;
+  $w("w-form-title").textContent = w ? "구독 수정" : "구독 직접 등록";
+  $w("w-form-lead").textContent = w
+    ? "아는 내용만 고쳐 주세요. 모르는 내용은 비워도 됩니다."
+    : "서비스 이름만 먼저 적어도 됩니다. 주기와 날짜를 확인하면 알림이 시작됩니다.";
   $w("w-err").textContent = "";
   $w("w-name").value = w ? (w.name || "") : "";
   $w("w-amt").value = w && w.amountOrig != null ? w.amountOrig : "";
   $w("w-cur").value = (w && w.currency) || "KRW";
-  $w("w-int").value = (w && w.interval) || "month";
+  $w("w-int").value = (w && w.interval) || "";
   $w("w-due").value = (w && w.due) || "";
   $w("w-auto").checked = !w || w.auto !== false;
   $w("w-url").value = (w && w.manageUrl) || "";
@@ -691,7 +698,6 @@ async function saveWatch() {
   const name = $w("w-name").value.trim();
   const due = $w("w-due").value;
   if (!name) { $w("w-err").textContent = "서비스 이름을 넣어 주세요."; return; }
-  if (!due) { $w("w-err").textContent = "다음 결제일을 넣어 주세요. 이게 있어야 알릴 수 있습니다."; return; }
   const amt = parseFloat(String($w("w-amt").value).replace(/[^\d.\-]/g, ""));
   const cur = $w("w-cur").value;
   const rates = ST.rates || null;
@@ -716,6 +722,9 @@ async function saveWatch() {
   ["w-name", "w-amt", "w-due", "w-url"].forEach(id => { $w(id).value = ""; });
   closeForm();
   renderWatch();
+  grabNote(w.status === WT.STATUS.NEEDS_INFO
+    ? `${name}을(를) 확인 필요로 저장했습니다.`
+    : `${name} 알림을 등록했습니다.`);
 }
 
 /* ── 내 정보 ──
@@ -856,6 +865,7 @@ function bindWatch() {
   $w("tab-watch").addEventListener("click", () => switchView("watch"));
   $w("w-cancel").addEventListener("click", closeForm);
   $w("w-save").addEventListener("click", saveWatch);
+  $w("w-add").addEventListener("click", () => openForm(null));
   $w("w-enable").addEventListener("click", enableHere);
   $w("w-all").addEventListener("click", toggleAllSites);
   renderAllSites();

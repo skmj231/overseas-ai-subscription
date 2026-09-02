@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>돈나가요 Donna 시작하기</title>
+  <link rel="stylesheet" href="onboarding.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="brand">
+      <img src="icon48.png" alt="돈나가요 Donna">
+      <span>돈나가요</span>
+    </header>
+
+    <section class="step on" id="demo" aria-labelledby="demo-title">
+      <p class="kicker">설치 완료</p>
+      <h1 id="demo-title">결제 전에<br>이렇게 알려드려요.</h1>
+      <p class="lead">먼저 예시를 확인하세요. 아래 내용은 실제 구독으로 저장되지 않습니다.</p>
+
+      <article class="demo-card" aria-label="결제 전 알림 예시">
+        <div class="demo-label">예시 화면</div>
+        <div class="demo-head"><strong>ChatGPT Plus</strong><span>예정</span></div>
+        <p>USD 20 · 매달 자동결제</p>
+        <div class="demo-date"><span>다음 결제</span><b id="demo-due"></b></div>
+        <div class="notice"><i></i><span id="demo-notice"></span></div>
+      </article>
+
+      <div class="actions">
+        <button class="primary" id="start">내 구독 등록하기</button>
+        <button class="text" id="skip">예시만 보고 닫기</button>
+      </div>
+    </section>
+
+    <section class="step" id="register" aria-labelledby="register-title">
+      <button class="back" id="back" aria-label="예시 화면으로 돌아가기">← 예시로 돌아가기</button>
+      <p class="kicker">첫 구독 등록</p>
+      <h1 id="register-title">기억나는 것만<br>알려주세요.</h1>
+      <p class="lead">모르는 내용은 비워도 됩니다. 나중에 결제 관리 화면에서 확인할 수 있어요.</p>
+
+      <form id="form" novalidate>
+        <label for="service">어떤 서비스를 쓰고 있나요?</label>
+        <input id="service" name="service" type="text" maxlength="60" autocomplete="off" placeholder="서비스 이름 검색 또는 직접 입력" required>
+        <div class="services" id="services" aria-label="자주 쓰는 서비스"></div>
+
+        <fieldset>
+          <legend>매달 결제인가요, 매년 결제인가요?</legend>
+          <div class="segments" id="intervals">
+            <button type="button" data-interval="month">매달</button>
+            <button type="button" data-interval="year">매년</button>
+            <button type="button" data-interval="">잘 모르겠어요</button>
+          </div>
+        </fieldset>
+
+        <label for="due">다음 결제일 <small>선택</small></label>
+        <input id="due" name="due" type="date">
+
+        <details>
+          <summary>금액도 알고 있어요 <span>선택</span></summary>
+          <div class="money">
+            <select id="currency" aria-label="통화">
+              <option value="KRW">KRW</option><option value="USD">USD</option>
+              <option value="EUR">EUR</option><option value="GBP">GBP</option><option value="JPY">JPY</option>
+            </select>
+            <input id="amount" inputmode="decimal" placeholder="금액">
+          </div>
+        </details>
+
+        <p class="error" id="error" role="alert"></p>
+        <button class="primary" type="submit">이 내용으로 등록하기</button>
+      </form>
+    </section>
+
+    <section class="step" id="done" aria-labelledby="done-title">
+      <p class="kicker">등록 완료</p>
+      <h1 id="done-title">첫 구독을<br>등록했습니다.</h1>
+      <article class="result" id="result"></article>
+      <div class="actions">
+        <button class="primary" id="open-list">내 구독 목록 보기</button>
+        <button class="text" id="add-another">하나 더 등록하기</button>
+      </div>
+      <p class="privacy">등록한 내용은 이 브라우저에만 저장됩니다.</p>
+    </section>
+  </main>
+  <script src="watch.js"></script>
+  <script src="onboarding.js"></script>
+</body>
+</html>

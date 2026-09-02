@@ -90,7 +90,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             amountKrw: made.amountKrw, interval: made.interval, due: made.due,
             manageUrl: made.manageUrl || watch[key].manageUrl,
             sourceUrl: made.sourceUrl || watch[key].sourceUrl,
-            status: WATCH.STATUS.ACTIVE, misses: 0 }
+            status: made.status, misses: 0 }
         : made;
       await chrome.storage.local.set({ watch });
       sendResponse({ ok: true, key });
@@ -422,9 +422,14 @@ async function tick() {
   await checkMonthly();
 }
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
   chrome.alarms.create("svst-daily", { periodInMinutes: 60 * 12 });
   tick();
+  /* 업데이트 때마다 띄우면 기존 사용자를 방해한다. 처음 설치한 사람에게만
+     예시 체험과 첫 구독 등록 화면을 연다. */
+  if (details && details.reason === "install") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("onboarding.html") });
+  }
 });
 chrome.runtime.onStartup.addListener(tick);
 chrome.alarms.onAlarm.addListener(a => { if (a.name === "svst-daily") tick(); });

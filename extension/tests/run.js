@@ -8,10 +8,13 @@ const R = require(path.join(root, "rules.js"));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, "1.3.2");
+assert.equal(manifest.version, "1.3.3");
 assert.match(manifest.name, /돈나가요/);
 for (const size of [16, 48, 128]) {
   assert.ok(fs.existsSync(path.join(root, `icon${size}.png`)), `icon${size}.png 누락`);
+}
+for (const file of ["onboarding.html", "onboarding.css", "onboarding.js"]) {
+  assert.ok(fs.existsSync(path.join(root, file)), `${file} 누락`);
 }
 
 assert.equal(W.addInterval("2026-01-31", "month"), "2026-02-28");
@@ -23,6 +26,22 @@ const yearly = W.makeWatch({
   interval: "year", nextDue: "2026-09-05", auto: true
 }, "2026-09-01");
 assert.equal(yearly.due, "2026-09-05");
+
+const incomplete = W.makeWatch({ name: "Claude", interval: null, nextDue: null }, "2026-09-01");
+assert.equal(incomplete.interval, null);
+assert.equal(incomplete.due, null);
+assert.equal(incomplete.status, W.STATUS.NEEDS_INFO);
+assert.equal(W.planTick({ c: incomplete }, "2026-09-01", {}, W.LEAD_DEFAULT).notifications.length, 0,
+  "날짜를 모르는 구독에 잘못된 알림을 보내면 안 됨");
+
+const firstComplete = W.makeWatch({
+  name: "Cursor", interval: "month", nextDue: "2026-09-06", auto: true
+}, "2026-09-01");
+assert.equal(firstComplete.status, W.STATUS.ACTIVE);
+const firstPlan = W.planTick({ cursor: firstComplete }, "2026-09-01", {}, W.LEAD_DEFAULT);
+assert.equal(firstPlan.notifications.length, 1, "주기와 날짜를 입력하면 알림이 예약되어야 함");
+assert.equal(firstPlan.notifications[0].left, 5);
+assert.equal(firstPlan.notifications[0].kind, "pre");
 
 let planned = W.planTick({ h: yearly }, "2026-09-01", {}, W.LEAD_DEFAULT);
 assert.equal(planned.notifications.length, 1);

@@ -1,0 +1,38 @@
+:root{--forest:#052b21;--forest2:#0c3f2e;--cream:#fbf8f0;--paper:#fffdf8;--gold:#d6ac49;--ink:#151716;--muted:#777870;--line:#dedbd2}
+*{box-sizing:border-box}
+html{background:var(--cream)}
+body{margin:0;color:var(--ink);background:var(--cream);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;letter-spacing:-.025em}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.shell{width:min(100% - 32px,680px);margin:0 auto;padding:32px 0 72px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:64px;font-size:14px;font-weight:750}
+.brand img{width:30px;height:30px;border-radius:8px}
+.step{display:none}.step.on{display:block}
+.kicker{margin:0 0 16px;color:var(--forest2);font-size:13px;font-weight:750;letter-spacing:.04em}
+h1{max-width:520px;margin:0;font-size:clamp(38px,7vw,62px);line-height:1.06;letter-spacing:-.065em;text-wrap:balance}
+.lead{max-width:510px;margin:22px 0 36px;color:var(--muted);font-size:16px;line-height:1.75;letter-spacing:-.02em}
+.demo-card{position:relative;margin:0 0 30px;padding:30px;border-radius:22px;background:var(--forest);color:#f9f4e9;box-shadow:0 24px 48px -34px rgba(5,43,33,.8)}
+.demo-label{position:absolute;top:20px;right:20px;color:var(--gold);font-size:12px;font-weight:700}
+.demo-head{display:flex;align-items:center;gap:10px;margin:15px 0 8px}.demo-head strong{font-size:24px}.demo-head span{color:#b7beb8;font-size:13px}
+.demo-card>p{margin:0 0 32px;color:#b9c3bd;font-size:14px}
+.demo-date{display:flex;justify-content:space-between;align-items:baseline;padding-top:20px;border-top:1px solid rgba(255,255,255,.15)}
+.demo-date span{color:#b9c3bd}.demo-date b{font-size:19px;font-variant-numeric:tabular-nums}
+.notice{display:flex;gap:10px;align-items:center;margin-top:18px;color:#e6dfcf;font-size:14px}.notice i{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+.actions{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.primary{min-height:54px;padding:0 24px;border:0;border-radius:12px;background:var(--forest);color:#fff;font-weight:750;transition:transform .18s ease,background .18s ease}.primary:hover{background:var(--forest2)}.primary:active{transform:translateY(1px) scale(.99)}
+.text,.back{padding:10px 0;border:0;background:transparent;color:var(--muted);font-weight:650}.text:hover,.back:hover{color:var(--ink)}
+.back{margin-bottom:28px}
+form{display:grid;gap:14px;padding:28px;border:1px solid var(--line);border-radius:20px;background:var(--paper)}
+label,legend{font-size:14px;font-weight:750}label small{color:var(--muted);font-weight:550}
+input,select{width:100%;height:52px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);outline:none}
+input:focus,select:focus,button:focus-visible{border-color:var(--forest2);box-shadow:0 0 0 3px rgba(12,63,46,.12);outline:none}
+.services{display:flex;gap:8px;flex-wrap:wrap;margin:-2px 0 12px}.services button{padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:transparent;color:#555750;font-size:13px}.services button:hover{border-color:#a9aaa3;color:var(--ink)}
+fieldset{margin:10px 0 6px;padding:0;border:0}legend{margin-bottom:12px}
+.segments{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:7px}.segments button{min-height:46px;border:1px solid var(--line);border-radius:9px;background:#fff;color:#666860;font-weight:650}.segments button.on{border-color:var(--forest);background:var(--forest);color:#fff}
+details{margin:8px 0 2px}summary{cursor:pointer;color:var(--muted);font-size:14px;font-weight:650}summary span{font-weight:500}.money{display:grid;grid-template-columns:110px 1fr;gap:8px;margin-top:12px}
+.error{min-height:20px;margin:0;color:#a83b2f;font-size:13px}
+form>.primary{width:100%;margin-top:2px}
+.result{margin:34px 0 30px;padding:28px;border-radius:18px;background:var(--forest);color:#f9f4e9}.result strong{display:block;font-size:24px}.result p{margin:8px 0 0;color:#b9c3bd;line-height:1.6}.result .schedule{margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.15);color:#fff;font-weight:650}
+.privacy{margin-top:34px;color:#96978f;font-size:12px}
+@media(max-width:560px){.shell{width:min(100% - 24px,680px);padding-top:22px}.brand{margin-bottom:44px}h1{font-size:40px}.demo-card,form,.result{padding:22px}.segments{grid-template-columns:1fr 1fr}.segments button:last-child{grid-column:1/-1}.actions{align-items:flex-start;flex-direction:column;gap:5px}.primary{width:100%}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
