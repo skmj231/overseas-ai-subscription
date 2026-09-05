@@ -89,8 +89,7 @@ function applyPreset(p) {
   $("amount").value = p.amount;
   $("currency").value = p.currency;
   seg("intervals", "interval", p.interval);
-  $("preset-note").textContent = `기본 요금을 넣었습니다. 실제 결제액이 다르면 고쳐 주세요.`
-    + (p.appStore ? " 앱에서 결제했다면 아래에서 App Store·Google Play를 골라 주세요." : "");
+  $("preset-note").textContent = "기본 요금을 넣었어요. 실제와 다르면 고쳐 주세요.";
   krwPreview();
   $("due").focus();
 }
@@ -101,7 +100,7 @@ function krwPreview() {
   if (isNaN(amt) || cur === "KRW") { $("krw").textContent = ""; return; }
   const k = WT.estimateKrw(amt, cur, RATES, { vat: vatApplies() });
   $("krw").innerHTML = k == null ? "" :
-    `카드에는 약 <b>${won(k)}</b>이 찍힙니다 · 환율 + 해외수수료 1.3%${vatApplies() ? " + 부가세 10%" : ""}`;
+    `카드에는 약 <b>${won(k)}</b> · 환율·해외수수료${vatApplies() ? "·부가세 10%" : ""} 포함`;
 }
 
 $("start").addEventListener("click", () => show("register"));

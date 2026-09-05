@@ -433,32 +433,28 @@ const STATE_CHIP = {
 };
 
 function watchLine(w, today) {
-  const cyc = w.interval === "year" ? "연 구독" : w.interval === "month" ? "월 구독" : "결제 주기 확인 필요";
-  const pay = w.auto === false ? "직접 결제" : "자동결제";
-  const ch = w.channel && w.channel !== "web" && PS.CHANNEL[w.channel] ? PS.CHANNEL[w.channel].label : "";
-  /* 금액을 못 읽은 구독은 금액 칸이 빈 문자열로 온다.
-     그대로 이어 붙이면 "월 구독 · 자동결제 · "처럼 가운뎃점이 허공에 남는다. */
-  const amt = WT.amountText(w);
+  const cyc = w.interval === "year" ? "매년" : w.interval === "month" ? "매달" : "";
   const join = (...xs) => xs.filter(Boolean).join(" · ");
-  if (w.status === WT.STATUS.CANCELED) return join(cyc, amt, "더 이상 알리지 않습니다");
-  if (w.status === WT.STATUS.STALE)
-    return join(cyc, amt, "결제 여부를 확인하지 못해 <b>알림을 멈췄습니다</b>");
+  if (w.status === WT.STATUS.CANCELED) return join(`<span class="st off">해지함</span>`, cyc);
+  if (w.status === WT.STATUS.PAUSED) return join(`<span class="st off">알림 끔</span>`, cyc);
+  if (w.status === WT.STATUS.STALE) return join(`<span class="st wait">확인 필요</span>`, "결제 여부를 몰라 알림을 멈췄어요");
   if (!w.interval || !w.due || w.status === WT.STATUS.NEEDS_INFO)
-    return join(cyc, amt || "금액 미확인") + `<br><b>다음 결제일 확인 필요</b> · 수정하면 바로 알림을 예약합니다`;
+    return join(`<span class="st wait">확인 필요</span>`, "주기와 날짜를 채우면 알림이 시작돼요");
   const left = WT.daysBetween(today, w.due);
-  const when = left < 0 ? "예정일 지남" : left === 0 ? "<b>오늘</b>" : `<b>${left}일 뒤</b>`;
-  /* 무료 체험: 종료일이 첫 결제일이다. 끝나는 날과 그 뒤 나갈 돈을 한 줄로. */
+  const when = left < 0 ? "예정일 지남" : left === 0 ? "오늘" : `${left}일 뒤`;
+  const soon = left >= 0 && left <= (w.kind === "trial" ? 2 : w.interval === "year" ? 14 : 5);
   if (w.kind === "trial")
-    return join("무료 체험", ch, amt ? `끝나면 ${cyc === "연 구독" ? "매년" : "매달"} ${amt}` : "")
-      + `<br>체험 종료 ${when} · ${w.due}`;
-  /* 자동 결제는 화면을 남기지 않는다. 그래서 여기 적힌 금액은 늘 "마지막으로 본 금액"이다.
-     언제 본 것인지 밝히지 않으면 오래된 값을 오늘 값으로 읽게 된다. */
-  const fresh = amt ? WT.freshness(w, today) : null;
-  const ago = fresh === WT.FRESH.STALE ? WT.seenAgo(w, today) : "";
-  const note = fresh === WT.FRESH.STALE
-    ? `<br><span class="old">${ago ? ago + " 확인한 금액입니다" : "언제 확인한 금액인지 모릅니다"}</span>`
-    : "";
-  return join(cyc, pay, ch, amt || "금액 미확인") + `<br>다음 결제 ${when} · ${w.due}` + note;
+    return join(`<span class="st ${soon ? "trial" : "ok"}">체험 종료 ${when}</span>`, cyc ? `그 뒤 ${cyc} 결제` : "");
+  const fresh = WT.amountText(w) ? WT.freshness(w, today) : null;
+  const old = fresh === WT.FRESH.STALE ? `<span class="old">${WT.seenAgo(w, today) || "예전"} 금액</span>` : "";
+  return join(`<span class="st ${soon ? "soon" : "ok"}">${when}</span>`, cyc ? cyc + (w.auto === false ? " 직접 결제" : " 자동결제") : "", old);
+}
+
+/* 오른쪽 금액: 원화 예상액을 크게, 원래 통화를 작게. 둘 다 모르면 비운다. */
+function amountCell(w) {
+  if (w.amountOrig == null && w.amountKrw == null) return "";
+  if (!w.currency || w.currency === "KRW") return won(w.amountKrw != null ? w.amountKrw : w.amountOrig);
+  return (w.amountKrw != null ? `≈${won(w.amountKrw)}` : "") + `<small>${esc(w.currency)} ${w.amountOrig}</small>`;
 }
 
 /* 채널이 스토어면 해지 경로가 다르다는 것을, 환불 규정이 있으면 그 한 줄을 카드에 남긴다.
@@ -466,39 +462,32 @@ function watchLine(w, today) {
 function metaLine(w) {
   const parts = [];
   if (w.channel && w.channel !== "web" && PS.CHANNEL[w.channel]) parts.push(esc(PS.CHANNEL[w.channel].cancelHint));
-  if (w.refundNote) parts.push(`환불: ${esc(w.refundNote)}` +
-    (w.refundUrl ? ` <span class="lnk3" data-w="refund" data-k="${esc(w.__k)}">규정 보기 ↗</span>` : ""));
+  if (w.refundNote) parts.push(`환불 · ${esc(w.refundNote)}` +
+    (w.refundUrl ? ` <span class="lnk3" data-w="refund" data-k="${esc(w.__k)}">규정 ↗</span>` : ""));
+  const url = w.manageUrl || w.sourceUrl;
+  if (url) { try { parts.push(`<span class="lnk3" data-w="site" data-k="${esc(w.__k)}">${esc(new URL(url).host.replace(/^www\./, ""))} ↗</span>`); } catch (e) { /* 주소 아님 */ } }
   return parts.length ? `<div class="meta">${parts.join("<br>")}</div>` : "";
 }
 
-/* ── 맨 위 요약. 화면의 첫 문장은 "이번 달 나갈 돈"이다. */
 function renderHero() {
   const box = document.getElementById("hero");
   const today = todayISO();
   const live = Object.keys(WATCH).filter(k => WT.isLive(WATCH[k]));
   if (!live.length) {
     box.innerHTML = `<div class="k">결제 전 알림</div>
-      <div class="v" style="font-size:17px">카드 문자보다 먼저 알려드려요</div>
-      <div class="sub">구독을 등록하면 결제 며칠 전에 <b>원화 예상액</b>과 함께 알림이 옵니다.
-      해외 서비스는 결제되고 나면 환불이 거의 안 됩니다.</div>`;
+      <div class="v text">카드 문자보다 먼저 알려드려요</div>
+      <div class="sub">등록하면 결제 며칠 전에 원화 예상액과 함께 알림이 옵니다.</div>`;
     return;
   }
   const up = WT.upcoming(WATCH, today, 30);
   const sum = up.reduce((a, u) => a + (u.w.amountKrw || 0), 0);
   const unknownUp = up.filter(u => u.w.amountKrw == null).length;
   const mt = WT.monthlyTotal(WATCH);
-  const next = up[0];
-  const nextAmt = next ? (WT.amountText(next.w) || "금액 미확인") : "";
   box.innerHTML = `<div class="k">앞으로 30일 안에 나갈 돈</div>
-    <div class="v">${won(sum)}${unknownUp ? `<small>+ 금액 미확인 ${unknownUp}건</small>` : ""}</div>
-    <div class="sub">구독 <b>${mt.count}개</b> · 월 환산 <b>${won(mt.monthly)}</b>${mt.unknown ? ` · 금액 미확인 ${mt.unknown}건` : ""}</div>`
-    + (next ? `<div class="next"><span class="n">${esc(next.w.name)}</span>
-        <span class="w">${next.left === 0 ? "오늘" : next.left + "일 뒤"} · ${next.w.kind === "trial" ? "체험 종료" : "자동결제"}</span>
-        <span class="a">${esc(nextAmt)}</span></div>` : "");
+    <div class="v">${won(sum)}${unknownUp ? `<small>+ 미확인 ${unknownUp}건</small>` : ""}</div>
+    <div class="sub">구독 <b>${mt.count}개</b> · 월 환산 <b>${won(mt.monthly)}</b></div>`;
 }
 
-/* 등록할 때 보고 있던 화면. "그 사이트가 어디였더라"를 없애는 한 줄이다.
-   해지 주소가 따로 잡힌 곳은 그쪽이 더 쓸모 있으므로 그걸 먼저 쓴다. */
 function siteLine(w) {
   const url = w.manageUrl || w.sourceUrl;
   if (!url) return "";
@@ -515,11 +504,10 @@ function renderWatch() {
   renderHero();
   if (!keys.length) {
     box.innerHTML = `<div class="empty"><b>쓰고 있는 서비스를 눌러 주세요</b>
-      금액·주기·해지 화면은 채워 드립니다. 다음 결제일만 알려주시면 됩니다.
-      <div class="chips" id="w-empty-chips">${PS.search("", 10).map(p =>
+      금액과 주기는 채워 드려요. 다음 결제일만 알려주시면 됩니다.
+      <div class="chips" id="w-empty-chips">${PS.search("", 8).map(p =>
         `<button type="button" data-preset="${esc(p.id)}">${esc(p.name)}</button>`).join("")}</div>
-      <span class="or">목록에 없나요? <span class="lnk" id="w-empty-add" style="display:inline">직접 입력</span>
-      · 결제창을 보고 있다면 위의 <b style="display:inline;font-size:inherit">이 결제창에서 켜기</b></span></div>`;
+      <span class="or">목록에 없나요? <span class="lnk" id="w-empty-add">직접 입력</span></span></div>`;
     document.getElementById("w-empty-add").addEventListener("click", () => openForm(null));
     box.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => openForm(null, b.dataset.preset)));
     return;
@@ -540,31 +528,29 @@ function renderWatch() {
           ? { cls: "due", label: "곧 결제" } : { cls: "ok", label: "예정" });
     const live = w.status === WT.STATUS.ACTIVE || w.status === WT.STATUS.PENDING;
     const needsInfo = w.status === WT.STATUS.NEEDS_INFO || !w.interval || !w.due;
-    return `<div class="wc">
-      <div class="t"><span>${esc(w.name)}</span><span class="st ${chip.cls}">${chip.label}</span></div>
+    return `<div class="wc" data-row="${esc(k)}">
+      <div class="t"><span class="nm">${esc(w.name)}</span><span class="amt">${amountCell(w)}</span></div>
       <div class="b">${watchLine(w, today)}</div>
-      ${siteLine(w)}
-      ${metaLine(w)}
-      <div class="btns">
-        ${live && w.manageUrl && WT.amountText(w) && WT.freshness(w, today) === WT.FRESH.STALE
-          ? `<button class="p" data-w="verify" data-k="${esc(k)}">지금 금액 확인</button>` : ""}
-        ${live && WT.cancelUrl(w) ? `<button data-w="open" data-k="${esc(k)}">해지하러 가기</button>` : ""}
-        ${w.status === WT.STATUS.STALE || w.status === WT.STATUS.CANCELED || w.status === WT.STATUS.PAUSED
-          ? `<button class="p" data-w="resume" data-k="${esc(k)}">알림 다시 받기</button>` : ""}
-        <button class="${needsInfo ? "p" : ""}" data-w="edit" data-k="${esc(k)}">${needsInfo ? "정보 완성하기" : "수정"}</button>
-        <button class="sp more" data-more="${esc(k)}" aria-label="더 보기">···</button>
-      </div>
-      <div class="btns extra" data-extra="${esc(k)}" hidden>
-        ${live ? `<button data-w="canceled" data-k="${esc(k)}">해지했어요</button>` : ""}
-        ${live ? `<button data-w="pause" data-k="${esc(k)}">알림 끄기</button>` : ""}
-        <button class="sp" data-w="del" data-k="${esc(k)}">삭제</button>
+      <div class="detail" hidden>
+        ${metaLine(w)}
+        <div class="btns">
+          ${live && w.manageUrl && WT.amountText(w) && WT.freshness(w, today) === WT.FRESH.STALE
+            ? `<button class="p" data-w="verify" data-k="${esc(k)}">지금 금액 확인</button>` : ""}
+          ${live && WT.cancelUrl(w) ? `<button class="${needsInfo ? "" : "p"}" data-w="open" data-k="${esc(k)}">해지하러 가기</button>` : ""}
+          ${w.status === WT.STATUS.STALE || w.status === WT.STATUS.CANCELED || w.status === WT.STATUS.PAUSED
+            ? `<button class="p" data-w="resume" data-k="${esc(k)}">알림 다시 받기</button>` : ""}
+          <button class="${needsInfo ? "p" : ""}" data-w="edit" data-k="${esc(k)}">${needsInfo ? "정보 완성하기" : "수정"}</button>
+          ${live ? `<button data-w="canceled" data-k="${esc(k)}">해지했어요</button>` : ""}
+          ${live ? `<button data-w="pause" data-k="${esc(k)}">알림 끄기</button>` : ""}
+          <button class="sp" data-w="del" data-k="${esc(k)}">삭제</button>
+        </div>
       </div></div>`;
   }).join("");
 
-  /* 해지함·알림 끄기·삭제는 한 달에 한 번 누를까 말까 한 버튼이다. 늘 보이면 카드가 버튼으로 가득 찬다. */
-  box.querySelectorAll("[data-more]").forEach(b => b.addEventListener("click", () => {
-    const ex = box.querySelector(`[data-extra="${CSS.escape(b.dataset.more)}"]`);
-    if (ex) ex.hidden = !ex.hidden;
+  /* 버튼은 줄을 눌렀을 때만. 늘 보이면 목록이 버튼으로 가득 찬다. */
+  box.querySelectorAll(".wc .t, .wc .b").forEach(el => el.addEventListener("click", () => {
+    const d = el.closest(".wc").querySelector(".detail");
+    if (d) d.hidden = !d.hidden;
   }));
   box.querySelectorAll("[data-w]").forEach(b => b.addEventListener("click", async () => {
     const k = b.dataset.k, act = b.dataset.w;
@@ -612,7 +598,7 @@ function krwPreview() {
   if (isNaN(amt) || cur === "KRW") { el.innerHTML = ""; return; }
   const krw = WT.estimateKrw(amt, cur, ST.rates, { vat: vatApplies() });
   el.innerHTML = krw == null ? "환율을 아직 못 받았습니다. 원화 예상액은 나중에 채워집니다."
-    : `카드에는 약 <b>${won(krw)}</b>이 찍힙니다 · 환율 + 해외수수료 1.3%${vatApplies() ? " + 부가세 10%" : ""}`;
+    : `카드에는 약 <b>${won(krw)}</b> · 환율·해외수수료${vatApplies() ? "·부가세 10%" : ""} 포함`;
 }
 
 function applyPreset(p) {
@@ -624,8 +610,7 @@ function applyPreset(p) {
   $w("w-cur").value = p.currency;
   segSet("w-int", p.interval);
   if (!$w("w-url").value) $w("w-url").value = p.manageUrl || "";
-  $w("w-preset-note").textContent = `${p.name} 기본 요금(${p.currency} ${p.amount}/${p.interval === "year" ? "년" : "월"})을 넣었습니다. 실제 결제액이 다르면 고쳐 주세요.`
-    + (p.appStore ? " 앱에서 결제했다면 아래 채널을 App Store·Google Play로 바꿔 주세요." : "");
+  $w("w-preset-note").textContent = "기본 요금을 넣었어요. 실제와 다르면 고쳐 주세요.";
   krwPreview();
   $w("w-due").focus();
 }
