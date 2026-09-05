@@ -425,60 +425,57 @@ let WATCH = {};
 
 const PS = self.SVSTPresets;
 const $w = (id) => document.getElementById(id);
+const DOW = ["일", "월", "화", "수", "목", "금", "토"];
+const koDate = (iso) => { if (!iso) return ""; const [y, m, d] = iso.split("-").map(Number); return `${m}월 ${d}일 ${DOW[new Date(y, m - 1, d).getDay()]}요일`; };
+const mdText = (iso) => { if (!iso) return ""; const [, m, d] = iso.split("-").map(Number); return `${m}월 ${d}일`; };
 
 /* 서비스 로고. 프리셋에서 왔으면 그 색과 로고, 아니면 이름 첫 글자. */
+function presetOf(w) { return (w && w.presetId && PS.LIST.find(x => x.id === w.presetId)) || (w && PS.find(w.name)) || null; }
 function avatarOf(w, size) {
-  const p = (w && w.presetId && PS.LIST.find(x => x.id === w.presetId)) || (w && PS.find(w.name)) || null;
-  return PS.avatarHtml(p || { name: w && w.name, color: "#8A8A91" }, size);
+  return PS.avatarHtml(presetOf(w) || { name: w && w.name, color: "#8A8A91" }, size);
 }
 
-/* 오른쪽 금액: 원화 예상액을 크게, 원래 통화를 작게. 둘 다 모르면 비운다. */
+/* 오른쪽 금액: 원화를 크게, 원래 통화를 작게. 둘 다 모르면 비운다. */
 function amountCell(w) {
   if (w.amountOrig == null && w.amountKrw == null) return "";
   const krw = w.amountKrw != null ? won(w.amountKrw) : (!w.currency || w.currency === "KRW" ? won(w.amountOrig) : "");
   const orig = w.currency && w.currency !== "KRW" && w.amountOrig != null
-    ? `${esc(w.currency)} ${w.amountOrig}${w.interval === "year" ? " / 년" : w.interval === "month" ? " / 월" : ""}` : "";
+    ? `${esc(w.currency)} ${w.amountOrig}${w.interval === "year" ? " / 년" : ""}` : "";
   return `<div class="amt"><div class="krw">${krw}</div>${orig ? `<div class="orig">${orig}</div>` : ""}</div>`;
 }
 
-/* 상태 한 줄: 색 필 + 짧은 말. 초록=예정대로, 주황=곧 나간다. */
+/* 상태: 색 필 + 짧은 말. 초록=예정대로, 주황=곧 나간다. */
 function statusOf(w, today) {
-  if (w.status === WT.STATUS.CANCELED) return { tag: `<span class="tag soft">해지함</span>`, text: "" };
-  if (w.status === WT.STATUS.PAUSED) return { tag: `<span class="tag soft">알림 끔</span>`, text: "" };
+  const cyc = w.interval === "year" ? "매년" : "매달";
+  const chan = w.channel && w.channel !== "web" && PS.CHANNEL[w.channel] ? PS.CHANNEL[w.channel].label : "";
+  if (w.status === WT.STATUS.CANCELED) return { tag: `<span class="tag soft">해지함</span>`, text: cyc + " 자동결제" };
+  if (w.status === WT.STATUS.PAUSED) return { tag: `<span class="tag soft">알림 끔</span>`, text: cyc + " 자동결제" };
   if (w.status === WT.STATUS.STALE) return { tag: `<span class="tag soft">확인 필요</span>`, text: "결제 여부를 몰라 멈췄어요" };
   if (!w.interval || !w.due || w.status === WT.STATUS.NEEDS_INFO) return { tag: "", text: "결제일을 알려주면 알림이 시작돼요", needs: true };
   const left = WT.daysBetween(today, w.due);
   const when = left < 0 ? "예정일 지남" : left === 0 ? "오늘" : `${left}일 뒤`;
-  const cyc = w.interval === "year" ? "매년" : "매달";
-  const chan = w.channel && w.channel !== "web" && PS.CHANNEL[w.channel] ? PS.CHANNEL[w.channel].label : "";
   if (w.kind === "trial") {
     const hot = left >= 0 && left <= 2;
-    return { tag: `<span class="tag ${hot ? "orange" : "yellow"}">${when} 종료</span>`, text: ["무료 체험", chan].filter(Boolean).join(" · "), hot, left };
+    return { tag: `<span class="tag ${hot ? "orange" : "yellow"}">${when} 종료</span>`, text: ["무료 체험", chan].filter(Boolean).join(" · "), hot, left, sub: "끝나면 바로 결제돼요" };
   }
-  const hot = left >= 0 && left <= (w.interval === "year" ? 7 : 3);
-  return { tag: `<span class="tag ${hot ? "orange" : left <= (w.interval === "year" ? 30 : 7) ? "green" : "soft"}">${when}</span>`,
-    text: [cyc + (w.auto === false ? " 직접 결제" : " 자동결제"), chan].filter(Boolean).join(" · "), hot, left };
+  /* 마지막 알림 단계에 들어오면 카드가 펼쳐진다 — 지금 결정해야 하는 것이라서. */
+  const lead = WT.alertDaysBefore(w, ST.settings && ST.settings.lead).filter(d => d > 0);
+  const hot = left >= 0 && left <= (lead.length ? Math.min(...lead) : 1);
+  return { tag: `<span class="tag ${left <= (w.interval === "year" ? 30 : 7) ? "green" : "soft"}">${when}</span>`,
+    text: [cyc + (w.auto === false ? " 직접 결제" : " 자동결제"), chan].filter(Boolean).join(" · "), hot, left, sub: `${koDate(w.due)}에 빠져나가요` };
 }
 
 /* 진행 바: 시작 → 알림 단계들 → 결제. 지난 단계는 색을 채운다. */
-function stepsHtml(w, today, hot) {
+function stepsHtml(w, today, hot, longLabels) {
   if (!w.due || !w.interval) return "";
   const days = WT.alertDaysBefore(w, ST.settings && ST.settings.lead).filter(d => d > 0);
   const left = WT.daysBetween(today, w.due);
-  const labels = [w.kind === "trial" ? "시작" : "지난 결제", ...days.map(d => `${d}일 전`), w.kind === "trial" ? "종료" : "결제"];
+  const first = w.kind === "trial" ? (longLabels ? "시작" : "등록") : "지난 결제";
+  const last = w.kind === "trial" ? (longLabels ? "종료일" : "종료") : (longLabels ? "결제일" : "결제");
+  const labels = [first, ...days.map(d => `${d}일 전${longLabels ? " 알림" : ""}`), last];
   const passed = [true, ...days.map(d => left <= d), left <= 0];
   return `<div class="steps"><div class="bars">${passed.map(p => `<i class="${p ? "on" : ""}${p && hot ? " hot" : ""}"></i>`).join("")}</div>
     <div class="lbl">${labels.map((l, i) => `<span class="${passed[i] ? "on" : ""}">${l}</span>`).join("")}</div></div>`;
-}
-
-function metaHtml(w) {
-  const parts = [];
-  if (w.channel && w.channel !== "web" && PS.CHANNEL[w.channel]) parts.push(`<div>${esc(PS.CHANNEL[w.channel].cancelHint)}</div>`);
-  if (w.refundNote) parts.push(`<div>환불 · ${esc(w.refundNote)}${w.refundUrl ? ` <span class="lnk3" data-w="refund" data-k="${esc(w.__k)}">규정 보기 ↗</span>` : ""}</div>`);
-  const url = w.manageUrl || w.sourceUrl;
-  if (url) { try { parts.push(`<div>관리 화면 · <span class="lnk3" data-w="site" data-k="${esc(w.__k)}">${esc(new URL(url).host.replace(/^www\./, ""))} ↗</span></div>`); } catch (e) { /* 주소 아님 */ } }
-  if (w.priceLog && w.priceLog.length) { const l = w.priceLog[w.priceLog.length - 1]; parts.push(`<div>지난 확인 · ${esc(l.d)} · ${esc(l.currency)} ${l.amountOrig}</div>`); }
-  return parts.length ? `<div class="meta">${parts.join("")}</div>` : "";
 }
 
 /* ── 히어로 위젯. 화면의 첫 문장은 "앞으로 30일 안에 나갈 돈"이다. */
@@ -496,11 +493,14 @@ function renderHero() {
   const sum = up.reduce((a, u) => a + (u.w.amountKrw || 0), 0);
   const unknownUp = up.filter(u => u.w.amountKrw == null).length;
   const mt = WT.monthlyTotal(WATCH);
-  const next = up[0];
+  /* 바: 30일 안의 결제 중 이미 답한 것(계속 씁니다·해지)의 비율. 아무것도 안 했으면 0. */
+  const done = up.filter(u => u.w.ackedFor === u.w.due).length;
+  const pct = up.length ? Math.round(done / up.length * 100) : 0;
+  const end = WT.addInterval(today, "month");
   box.innerHTML = `<div class="row"><span class="k">앞으로 30일</span><span class="cnt">구독 ${mt.count}개</span></div>
     <div class="v">${won(sum)}${unknownUp ? `<small>+ 미확인 ${unknownUp}건</small>` : ""}</div>
     <div class="sub">이 돈이 카드에서 빠져나가요 · 월 환산 ${won(mt.monthly)}</div>
-    <div class="next">${next ? `<span class="n">${esc(next.w.name)}</span><span class="w">${next.left === 0 ? "오늘" : next.left + "일 뒤"}${next.w.kind === "trial" ? " 종료" : ""}</span><span class="a">${next.w.amountKrw != null ? won(next.w.amountKrw) : esc(WT.amountText(next.w) || "금액 미확인")}</span>` : ""}</div>`;
+    <div class="bar"><div class="track"><i style="width:${pct}%"></i></div><span>${mdText(today)} → ${mdText(end)}</span></div>`;
 }
 
 function renderWatch() {
@@ -509,66 +509,58 @@ function renderWatch() {
   renderHero();
   if (!keys.length) {
     box.innerHTML = `<div class="empty"><b>쓰고 있는 서비스를 눌러 주세요</b>
-      <div class="tiles" id="w-empty-chips">${PS.search("", 8).map(p =>
-        `<button type="button" data-preset="${esc(p.id)}">${PS.avatarHtml(p, 52)}<span>${esc(p.name.split(" ")[0])}</span></button>`).join("")}</div>
-      <span class="or">목록에 없나요? <span class="lnk" id="w-empty-add">직접 입력</span></span></div>`;
-    document.getElementById("w-empty-add").addEventListener("click", () => openForm(null));
+      <div class="tiles" id="w-empty-chips">${PS.search("", 7).map(p =>
+        `<button type="button" data-preset="${esc(p.id)}">${PS.avatarHtml(p, 56)}<span>${esc(p.name.split(" ")[0])}</span></button>`).join("")}
+        <button type="button" class="plus" id="w-empty-add"><span class="avatar">+</span><span>직접 입력</span></button></div></div>`;
+    document.getElementById("w-empty-add").addEventListener("click", () => openForm(null, null, true));
     box.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => openForm(null, b.dataset.preset)));
     return;
   }
   const today = todayISO();
-  /* 가장 가까운 결제가 맨 위. '확인 필요'는 그 아래 — 이 화면의 첫 줄은 "다음에 나갈 돈"이어야 한다. */
   const rank = { active: 0, pending: 1, "needs-info": 2, stale: 3, paused: 4, canceled: 5 };
   keys.sort((a, b) => ((rank[WATCH[a].status] ?? 2) - (rank[WATCH[b].status] ?? 2))
     || String(WATCH[a].due || "").localeCompare(String(WATCH[b].due || "")));
 
   box.innerHTML = keys.map(k => {
     const w = WATCH[k];
-    w.__k = k;
     const st = statusOf(w, today);
     const live = w.status === WT.STATUS.ACTIVE || w.status === WT.STATUS.PENDING;
-    const needsInfo = !!st.needs;
-    /* 곧 결제되는 건은 카드가 스스로 펼쳐진다 — 지금 결정해야 하는 것이기 때문이다. */
-    const open = !!st.hot;
-    if (needsInfo) {
-      return `<div class="wc needs" data-row="${esc(k)}">
-        <div class="t" data-w="edit" data-k="${esc(k)}">${avatarOf({ ...w, presetId: null, name: w.name }, 44).replace('class="avatar"', 'class="avatar ghost"')}
-          <div class="m"><div class="nm" style="margin-top:0">${esc(w.name)}</div><div class="st">${esc(st.text)}</div></div>
+    if (st.needs) {
+      return `<div class="wc needs" data-open="${esc(k)}">
+        <div class="t"><span class="avatar ghost">${esc(String(w.name || "?").charAt(0).toUpperCase())}</span>
+          <div class="m"><div class="nm">${esc(w.name)}</div><div class="st">${esc(st.text)}</div></div>
           <button class="pill gray" style="height:34px;padding:0 12px;font-size:13px" data-w="edit" data-k="${esc(k)}">날짜 넣기</button></div></div>`;
     }
-    return `<div class="wc card" data-row="${esc(k)}">
+    /* 곧 결제되는 카드는 상태 줄·진행 바·버튼까지 펼쳐서 보여 준다 — 지금 결정해야 하는 것이라서. */
+    if (st.hot && live) {
+      return `<div class="wc card hot" data-open="${esc(k)}">
+        <div class="t">${avatarOf(w, 44)}
+          <div class="m"><div class="st">${esc(st.text)}</div><div class="nm">${esc(w.name)}</div></div>${amountCell(w)}</div>
+        <div class="line">${st.tag}<span>${esc(st.sub)}</span></div>
+        ${stepsHtml(w, today, true)}
+        <div class="btns">
+          ${WT.cancelUrl(w) ? `<button class="pill black" data-w="open" data-k="${esc(k)}">해지하러 가기</button>` : ""}
+          <button class="pill gray" data-w="keep" data-k="${esc(k)}">계속 쓸래요</button>
+        </div></div>`;
+    }
+    return `<div class="wc card" data-open="${esc(k)}">
       <div class="t">${avatarOf(w, 44)}
-        <div class="m"><div class="st">${st.tag}<span>${esc(st.text)}</span></div><div class="nm">${esc(w.name)}</div></div>
-        ${amountCell(w)}</div>
-      ${st.hot && w.kind === "trial" ? `<div class="line">끝나면 바로 결제돼요</div>` : ""}
-      ${live && st.hot ? stepsHtml(w, today, true) : ""}
-      <div class="detail" ${open ? "" : "hidden"}>
-        ${live && !st.hot ? stepsHtml(w, today, false) : ""}
-        ${metaHtml(w)}
-        <div class="btns">
-          ${live && WT.cancelUrl(w) ? `<button class="p" data-w="open" data-k="${esc(k)}">해지하러 가기</button>` : ""}
-          ${live ? `<button data-w="keep" data-k="${esc(k)}">계속 쓸래요</button>` : ""}
-          ${w.status === WT.STATUS.STALE || w.status === WT.STATUS.CANCELED || w.status === WT.STATUS.PAUSED
-            ? `<button class="p" data-w="resume" data-k="${esc(k)}">알림 다시 받기</button>` : ""}
-        </div>
-        <div class="btns">
-          <button data-w="edit" data-k="${esc(k)}">수정</button>
-          ${live ? `<button data-w="canceled" data-k="${esc(k)}">해지했어요</button>` : ""}
-          ${live ? `<button data-w="pause" data-k="${esc(k)}">알림 끄기</button>` : ""}
-          <button class="sp" data-w="del" data-k="${esc(k)}">삭제</button>
-        </div>
-      </div></div>`;
+        <div class="m"><div class="st">${st.tag}<span>${esc(st.text)}</span></div><div class="nm">${esc(w.name)}</div></div>${amountCell(w)}</div></div>`;
   }).join("");
 
-  /* 카드를 누르면 펼쳐진다. 버튼은 펼쳤을 때만 — 늘 보이면 목록이 버튼으로 가득 찬다. */
-  box.querySelectorAll(".wc.card > .t").forEach(el => el.addEventListener("click", (e) => {
+  box.querySelectorAll("[data-open]").forEach(el => el.addEventListener("click", (e) => {
     if (e.target.closest("[data-w]")) return;
-    const d = el.closest(".wc").querySelector(".detail");
-    if (d) d.hidden = !d.hidden;
+    openDetail(el.dataset.open);
   }));
-  box.querySelectorAll("[data-w]").forEach(b => b.addEventListener("click", async (e) => {
+  bindActions(box);
+}
+
+/* 카드·상세 화면의 버튼 처리. 한 곳에서. */
+function bindActions(root) {
+  root.querySelectorAll("[data-w]").forEach(b => b.addEventListener("click", async (e) => {
     e.stopPropagation();
     const k = b.dataset.k, act = b.dataset.w;
+    if (!WATCH[k]) return;
     if (act === "edit") return openForm(k);
     if (act === "site") { const u = WATCH[k].manageUrl || WATCH[k].sourceUrl; if (u) chrome.tabs.create({ url: u }); return; }
     if (act === "refund") { if (WATCH[k].refundUrl) chrome.tabs.create({ url: WATCH[k].refundUrl }); return; }
@@ -577,22 +569,60 @@ function renderWatch() {
     else if (act === "del") { delete WATCH[k]; }
     else { WATCH[k] = WT.applyAction(WATCH[k], act, todayISO()); }
     await chrome.storage.local.set({ watch: WATCH });
-    renderWatch();
+    if (VIEW === "detail" && WATCH[k]) renderDetail(k); else switchView("watch");
   }));
 }
 
-// ---------- 등록·수정 시트 ----------
-/* 설치 직후 사용자는 금액과 날짜를 모를 수 있다. 서비스 이름만 먼저 적어 두고
-   나머지는 확인 필요로 남길 수 있게 한다. 모르는 값을 추측해서 알림으로 만들지는 않는다.
-   자주 쓰는 서비스는 로고 하나로 금액·주기·해지 화면을 채운다 — 기본값이라고 밝히고. */
+// ---------- 상세 화면 (시안 Detail) ----------
+let DETAIL_KEY = null;
+function openDetail(k) { DETAIL_KEY = k; switchView("detail"); }
+function renderDetail(k) {
+  const w = WATCH[k]; if (!w) return switchView("watch");
+  const today = todayISO();
+  const st = statusOf(w, today);
+  const live = w.status === WT.STATUS.ACTIVE || w.status === WT.STATUS.PENDING;
+  const chan = w.channel && PS.CHANNEL[w.channel] ? PS.CHANNEL[w.channel].label : "웹사이트";
+  const cyc = w.interval === "year" ? "매년" : w.interval === "month" ? "매달" : "주기 미정";
+  $w("dt-title").textContent = w.name;
+  const krw = w.amountKrw != null ? won(w.amountKrw) : (!w.currency || w.currency === "KRW" ? won(w.amountOrig) : "");
+  const orig = w.currency && w.currency !== "KRW" && w.amountOrig != null ? `${esc(w.currency)} ${w.amountOrig}` : "";
+  $w("dt-main").innerHTML = `<div class="head">${avatarOf(w, 56)}<div><div class="s">${esc(w.kind === "trial" ? "무료 체험" : cyc + (w.auto === false ? " 직접 결제" : " 자동결제"))} · ${esc(chan)}</div><div class="nm">${esc(w.name)}</div></div></div>
+    ${krw || orig ? `<div class="big"><span class="krw">${krw || orig}</span>${krw && orig ? `<span class="orig">${orig}</span>` : ""}</div>` : ""}
+    ${st.needs ? `<div class="when"><span>${esc(st.text)}</span></div>` : `<div class="when">${st.tag}<span>${esc(st.sub || "")}</span></div>`}
+    ${live ? stepsHtml(w, today, !!st.hot, true) : ""}
+    <div class="btns">
+      ${live && WT.cancelUrl(w) ? `<button class="pill black" data-w="open" data-k="${esc(k)}">해지하러 가기</button>` : ""}
+      ${live && w.status === WT.STATUS.PENDING ? `<button class="pill gray" data-w="canceled" data-k="${esc(k)}">해지했어요</button>` : live ? `<button class="pill gray" data-w="keep" data-k="${esc(k)}">계속 쓸래요</button>` : ""}
+      ${!live && w.status !== WT.STATUS.NEEDS_INFO ? `<button class="pill black" data-w="resume" data-k="${esc(k)}">알림 다시 받기</button>` : ""}
+      ${st.needs ? `<button class="pill black" data-w="edit" data-k="${esc(k)}">날짜 넣기</button>` : ""}
+    </div>`;
+  const rows = [];
+  if (w.refundNote) rows.push(`<div class="r"><span>환불</span><b class="${w.refundUrl ? "lnk" : ""}" ${w.refundUrl ? `data-w="refund" data-k="${esc(k)}"` : ""}>${esc(w.refundNote)}</b></div>`);
+  const url = w.manageUrl || w.sourceUrl;
+  if (url) { let host = url; try { host = new URL(url).host.replace(/^www\./, "") + new URL(url).pathname.replace(/\/$/, ""); } catch (e) { /* 그대로 */ }
+    rows.push(`<div class="r"><span>해지 화면</span><b class="lnk" data-w="site" data-k="${esc(k)}">${esc(host)} ↗</b></div>`); }
+  if (w.channel && w.channel !== "web" && PS.CHANNEL[w.channel]) rows.push(`<div class="r"><span>해지 방법</span><b>${esc(PS.CHANNEL[w.channel].cancelHint)}</b></div>`);
+  if (w.lastPaid) rows.push(`<div class="r"><span>지난 결제</span><b>${esc(mdText(w.lastPaid))}${w.amountKrw != null ? " · " + won(w.amountKrw) : ""}</b></div>`);
+  if (w.priceLog && w.priceLog.length) { const l = w.priceLog[w.priceLog.length - 1]; rows.push(`<div class="r"><span>확인한 금액</span><b>${esc(mdText(l.d))} · ${esc(l.currency)} ${l.amountOrig}</b></div>`); }
+  $w("dt-info").innerHTML = rows.join("<hr>");
+  $w("dt-info").style.display = rows.length ? "" : "none";
+  $w("dt-acts").innerHTML = `<button class="pill" data-w="edit" data-k="${esc(k)}">수정</button>
+    ${live ? `<button class="pill" data-w="pause" data-k="${esc(k)}">알림 끄기</button>` : w.status === WT.STATUS.PAUSED ? `<button class="pill" data-w="resume" data-k="${esc(k)}">알림 켜기</button>` : ""}
+    <button class="pill danger" data-w="del" data-k="${esc(k)}">삭제</button>`;
+  bindActions($w("view-detail"));
+}
+
+// ---------- 등록·수정 시트 (시안 Register) ----------
+/* 로고 하나로 금액·주기·해지 화면이 채워지고, 사용자는 날짜 하나만 고른다.
+   금액·주기를 고치고 싶으면 요약 줄을 누른다. 모르는 값을 추측해서 알림으로 만들지는 않는다. */
 let EDIT_KEY = null;
-const F = { kind: "sub", interval: "", channel: "web", preset: null };
+const F = { kind: "sub", interval: "", channel: "web", preset: null, due: "" };
 
 function segSet(id, v) {
   F[{ "w-kind": "kind", "w-int": "interval", "w-channel": "channel" }[id]] = v;
   $w(id).querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
   if (id === "w-kind") $w("w-due-label").textContent = v === "trial" ? "무료 체험이 끝나는 날" : "다음 결제일";
-  if (id === "w-int" || id === "w-kind") saveLabel();
+  renderPicked(); saveLabel();
 }
 
 /* 사업자번호를 넣은 사람은 결제창에서 부가세가 빠진다. 그 외에는 10%가 붙는 것이 기본이다. */
@@ -600,9 +630,8 @@ function vatApplies() { return !(ST.profile && ST.profile.brn); }
 
 function currentKrw() {
   const amt = parseFloat(String($w("w-amt").value).replace(/[^\d.]/g, ""));
-  const cur = $w("w-cur").value;
   if (isNaN(amt)) return null;
-  return WT.estimateKrw(amt, cur, ST.rates, { vat: vatApplies() });
+  return WT.estimateKrw(amt, $w("w-cur").value, ST.rates, { vat: vatApplies() });
 }
 
 function krwPreview() {
@@ -614,80 +643,118 @@ function krwPreview() {
   renderPicked();
 }
 
-/* 고른 서비스 요약 한 장: 로고 · 이름 · 기본 요금 · 원화. 상세 칸은 접어 둔다. */
+/* 요약 한 줄: 로고 · 이름 · 기본 요금 · 원화. 이름이 없으면 상자 전체를 숨긴다. */
 function renderPicked() {
-  const el = $w("w-picked");
   const name = $w("w-name").value.trim();
+  const box = $w("w-picked");
+  if (!name) { box.style.display = "none"; return; }
+  box.style.display = "";
   const p = F.preset ? PS.LIST.find(x => x.id === F.preset) : null;
-  if (!name) { el.innerHTML = ""; return; }
   const amt = parseFloat(String($w("w-amt").value).replace(/[^\d.]/g, ""));
   const cur = $w("w-cur").value;
   const krw = currentKrw();
   const cyc = F.interval === "year" ? "매년" : F.interval === "month" ? "매달" : "주기 미정";
-  el.innerHTML = `${PS.avatarHtml(p || { name, color: "#8A8A91" }, 44)}
+  $w("w-picked-row").innerHTML = `${PS.avatarHtml(p || { name, color: "#8A8A91" }, 44)}
     <div class="m"><div class="nm">${esc(name)}</div><div class="s">${isNaN(amt) ? "금액 미정" : `${esc(cur)} ${amt}`} · ${cyc}${p ? " · 기본 요금" : ""}</div></div>
-    <div class="krw">${krw != null ? `<b>≈ ${won(krw)}</b><small>환율·수수료${vatApplies() ? "·부가세" : ""} 포함</small>` : ""}</div>`;
+    <div class="krw">${krw != null ? `<b>≈ ${won(krw)}</b><small>환율·수수료${vatApplies() ? "·부가세" : ""} 포함</small>` : `<small>눌러서 금액 입력</small>`}</div>`;
 }
 
-/* 저장 버튼 글자에 "언제 알릴지"를 미리 적는다. 누르기 전에 결과를 안다. */
+/* 등록 버튼 글자에 "언제 알릴지"를 미리 적는다. 누르기 전에 결과를 안다. */
 function saveLabel() {
-  const due = $w("w-due").value;
-  const b = $w("w-save");
-  if (EDIT_KEY) { b.textContent = "저장"; return; }
-  if (!due || !F.interval) { b.textContent = F.kind === "trial" && !due ? "종료일을 넣어 주세요" : "등록하기"; return; }
+  const due = F.due;
+  const t = $w("w-save-text");
+  if (EDIT_KEY && (!due || !F.interval)) { t.textContent = "저장"; return; }
+  if (!due || !F.interval) { t.textContent = F.kind === "trial" && !due ? "종료일을 골라 주세요" : "등록하기"; return; }
   const days = WT.alertDaysBefore({ interval: F.interval, kind: F.kind, auto: $w("w-auto").checked }, ST.settings && ST.settings.lead);
-  const [y, m, d] = due.split("-").map(Number);
-  const words = days.map(x => x === 0 ? "당일" : `${x}일 전`).join(" · ");
-  b.textContent = `${m}월 ${d}일 ${F.kind === "trial" ? "종료" : "결제"} · ${words} 알림`;
+  const words = days.map(x => x === 0 ? "당일" : `${x}일 전`);
+  const when = words.length > 1 ? words.slice(0, -1).join(", ") + "과 " + words[words.length - 1] : words[0];
+  t.textContent = `${mdText(due)} ${F.kind === "trial" ? "종료" : "결제"} · ${when}에 알림`;
+}
+
+/* 날짜 띠: 오늘이 있는 주부터 12주. 가로로 넘긴다. */
+function renderWeeks() {
+  const box = $w("w-week");
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const start = new Date(today); start.setDate(today.getDate() - today.getDay());
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const tIso = iso(today);
+  let html = "";
+  for (let wk = 0; wk < 12; wk++) {
+    html += `<div class="w7">${DOW.map((d, i) => `<div class="dow ${i === 0 ? "sun" : ""}">${d}</div>`).join("")}`;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start); d.setDate(start.getDate() + wk * 7 + i);
+      const v = iso(d);
+      const past = v < tIso;
+      html += `<button type="button" class="d ${v === F.due ? "on" : ""} ${past ? "past" : ""} ${v === tIso ? "today" : ""}" data-d="${v}" ${past ? "disabled" : ""}>${d.getDate()}</button>`;
+    }
+    html += `</div>`;
+  }
+  box.innerHTML = html;
+  box.querySelectorAll("[data-d]").forEach(b => b.addEventListener("click", () => setDue(b.dataset.d)));
+  /* 고른 날이 있으면 그 주로 넘긴다 */
+  const sel = box.querySelector(".d.on");
+  if (sel) box.scrollLeft = sel.closest(".w7").offsetLeft - box.offsetLeft;
+}
+function setDue(v) {
+  F.due = v || "";
+  $w("w-due").value = F.due;
+  $w("w-due-text").textContent = F.due ? koDate(F.due) : "달력에서 고르기";
+  $w("w-week").querySelectorAll("[data-d]").forEach(b => b.classList.toggle("on", b.dataset.d === F.due));
+  saveLabel();
 }
 
 function applyPreset(p) {
   F.preset = p ? p.id : null;
   $w("w-sugg").querySelectorAll("button").forEach(b => b.classList.toggle("on", !!p && b.dataset.preset === p.id));
-  if (!p) { $w("w-preset-note").textContent = ""; renderPicked(); return; }
+  if (!p) { renderPicked(); return; }
   $w("w-name").value = p.name;
   $w("w-amt").value = p.amount;
   $w("w-cur").value = p.currency;
   segSet("w-int", p.interval);
   if (!$w("w-url").value) $w("w-url").value = p.manageUrl || "";
-  $w("w-preset-note").textContent = "기본 요금을 넣었어요. 실제와 다르면 아래에서 고쳐 주세요.";
+  $w("w-name-wrap").classList.remove("on");
   krwPreview();
-  $w("w-due").focus();
 }
 
 function renderSugg(q) {
-  const list = PS.search(q, 8);
+  const list = PS.search(q, 7);
   $w("w-sugg").innerHTML = list.map(p =>
-    `<button type="button" data-preset="${esc(p.id)}" class="${F.preset === p.id ? "on" : ""}">${PS.avatarHtml(p, 52)}<span>${esc(p.name.split(" ")[0])}</span></button>`).join("");
-  $w("w-sugg").querySelectorAll("button").forEach(b =>
+    `<button type="button" data-preset="${esc(p.id)}" class="${F.preset === p.id ? "on" : ""}">${PS.avatarHtml(p, 56)}<span>${esc(p.name.split(" ")[0])}</span></button>`).join("")
+    + `<button type="button" class="plus" id="w-plus"><span class="avatar">+</span><span>직접 입력</span></button>`;
+  $w("w-sugg").querySelectorAll("[data-preset]").forEach(b =>
     b.addEventListener("click", () => applyPreset(PS.LIST.find(x => x.id === b.dataset.preset))));
+  $w("w-plus").addEventListener("click", () => {
+    F.preset = null; $w("w-sugg").querySelectorAll("button").forEach(b => b.classList.remove("on"));
+    $w("w-name").value = ""; $w("w-amt").value = ""; $w("w-url").value = ""; segSet("w-int", "");
+    $w("w-name-wrap").classList.add("on"); $w("w-adv").classList.add("on"); renderPicked(); $w("w-name").focus();
+  });
 }
 
-function openForm(key, presetId) {
+function openForm(key, presetId, manual) {
   EDIT_KEY = key || null;
   const w = key ? WATCH[key] : null;
   $w("w-form-title").textContent = w ? "구독 수정" : "무엇을 쓰고 있나요?";
-  $w("w-form-lead").textContent = w ? "아는 내용만 고쳐 주세요. 모르는 내용은 비워도 됩니다." : "이름을 누르면 금액과 주기는 채워 드려요.";
+  $w("w-form-lead").textContent = w ? "아는 내용만 고쳐 주세요." : "이름을 누르면 금액과 주기는 채워 드려요.";
   $w("w-err").textContent = "";
-  $w("w-preset-note").textContent = "";
   $w("w-name").value = w ? (w.name || "") : "";
   $w("w-amt").value = w && w.amountOrig != null ? w.amountOrig : "";
   $w("w-cur").value = (w && w.currency) || "USD";
-  $w("w-due").value = (w && w.due) || "";
   $w("w-auto").checked = !w || w.auto !== false;
   $w("w-url").value = (w && w.manageUrl) || "";
-  $w("w-more").open = !!w;
-  F.preset = (w && w.presetId) || null;
+  $w("w-name-wrap").classList.toggle("on", !!manual || (!!w && !presetOf(w)));
+  $w("w-adv").classList.toggle("on", !!manual);
+  F.preset = (w && w.presetId) || (w && presetOf(w) ? presetOf(w).id : null);
   segSet("w-kind", (w && w.kind) || "sub");
   segSet("w-int", (w && w.interval) || "");
   segSet("w-channel", (w && w.channel) || "web");
-  renderSugg(w ? w.name : "");
+  F.due = (w && w.due) || "";
+  renderSugg("");
+  renderWeeks();
+  setDue(F.due);
   krwPreview();
-  saveLabel();
   $w("w-form").classList.add("on");
   $w("sheet-bg").classList.add("on");
   if (presetId) applyPreset(PS.LIST.find(x => x.id === presetId));
-  else if (!w) $w("w-sugg").scrollIntoView({ block: "nearest" });
 }
 function closeForm() { EDIT_KEY = null; $w("w-form").classList.remove("on"); $w("sheet-bg").classList.remove("on"); }
 
@@ -697,13 +764,15 @@ function bindForm() {
   }));
   $w("w-name").addEventListener("input", () => {
     const q = $w("w-name").value;
-    if (F.preset) { const p = PS.LIST.find(x => x.id === F.preset); if (p && p.name !== q.trim()) { F.preset = null; $w("w-preset-note").textContent = ""; } }
-    renderSugg(q); renderPicked();
+    if (F.preset) { const p = PS.LIST.find(x => x.id === F.preset); if (p && p.name !== q.trim()) F.preset = null; }
+    renderPicked();
   });
+  $w("w-picked-row").addEventListener("click", () => $w("w-adv").classList.toggle("on"));
   $w("w-amt").addEventListener("input", krwPreview);
   $w("w-cur").addEventListener("change", krwPreview);
-  $w("w-due").addEventListener("input", saveLabel);
   $w("w-auto").addEventListener("change", saveLabel);
+  $w("w-due").addEventListener("input", () => setDue($w("w-due").value));
+  $w("w-due-text").addEventListener("click", () => { try { $w("w-due").showPicker(); } catch (e) { $w("w-due").focus(); } });
   $w("sheet-bg").addEventListener("click", closeForm);
   $w("w-fab").addEventListener("click", () => openForm(null));
 }
@@ -747,8 +816,7 @@ async function renderAllSites() {
   let on = false;
   try { on = await chrome.permissions.contains(ALL_ORIGINS); } catch (e) { /* 확인 불가 */ }
   el.dataset.on = on ? "1" : "";
-  el.textContent = on ? "모든 결제창에서 자동으로 켜져 있습니다 · 끄기"
-                      : "모든 결제창에서 자동으로 켜기";
+  $w("w-all-state").textContent = on ? "켜짐 · 끄기" : "끔";
 }
 
 async function toggleAllSites() {
@@ -844,9 +912,9 @@ function krwOf(amt, cur) {
 
 async function saveWatch() {
   const name = $w("w-name").value.trim();
-  const due = $w("w-due").value;
-  if (!name) { $w("w-err").textContent = "서비스 이름을 넣어 주세요."; return; }
-  if (F.kind === "trial" && !due) { $w("w-err").textContent = "무료 체험이 끝나는 날을 넣어 주세요. 그날부터 돈이 나갑니다."; return; }
+  const due = F.due;
+  if (!name) { $w("w-err").textContent = "서비스를 누르거나 이름을 적어 주세요."; return; }
+  if (F.kind === "trial" && !due) { $w("w-err").textContent = "무료 체험이 끝나는 날을 골라 주세요. 그날부터 돈이 나갑니다."; return; }
   const amt = parseFloat(String($w("w-amt").value).replace(/[^\d.\-]/g, ""));
   const cur = $w("w-cur").value;
   const krw = isNaN(amt) ? null : WT.estimateKrw(amt, cur, ST.rates, { vat: vatApplies() });
@@ -866,7 +934,7 @@ async function saveWatch() {
   await chrome.storage.local.set({ watch: WATCH });
   ["w-name", "w-amt", "w-due", "w-url"].forEach(id => { $w(id).value = ""; });
   closeForm();
-  renderWatch();
+  switchView("watch");
   const lead = alertsText(w);
   grabNote(w.status === WT.STATUS.NEEDS_INFO
     ? `${name}을(를) 확인 필요로 저장했습니다. 주기와 날짜를 채우면 알림이 시작됩니다.`
@@ -1016,15 +1084,16 @@ function downloadIcs() {
 }
 
 function bindWatch() {
-  $w("tab-book").addEventListener("click", () => switchView("book"));
-  $w("tab-watch").addEventListener("click", () => switchView("watch"));
   $w("w-cancel").addEventListener("click", closeForm);
   $w("w-save").addEventListener("click", saveWatch);
-  $w("w-add").addEventListener("click", () => openForm(null));
   $w("w-enable").addEventListener("click", enableHere);
   $w("w-all").addEventListener("click", toggleAllSites);
   renderAllSites();
   $w("tab-me").addEventListener("click", () => switchView("me"));
+  $w("me-back").addEventListener("click", () => switchView("watch"));
+  $w("dt-back").addEventListener("click", () => switchView("watch"));
+  $w("book-back").addEventListener("click", () => switchView("me"));
+  $w("go-book").addEventListener("click", () => switchView("book"));
   $w("me-save").addEventListener("click", saveMe);
   $w("me-noti-save").addEventListener("click", saveNoti);
   $w("me-ics").addEventListener("click", downloadIcs);
@@ -1047,16 +1116,14 @@ async function backfillKrw() {
 
 let VIEW = "watch";
 function switchView(which) {
-  /* 설정은 톱니 버튼으로 드나든다. 한 번 더 누르면 구독 화면으로 돌아온다. */
-  if (which === "me" && VIEW === "me") which = "watch";
   VIEW = which;
-  for (const v of ["watch", "book", "me"]) {
-    $w("tab-" + v).classList.toggle("on", which === v);
-    $w("view-" + v).classList.toggle("on", which === v);
-  }
+  for (const v of ["watch", "detail", "me", "book"]) $w("view-" + v).classList.toggle("on", which === v);
   $w("fab").hidden = which !== "watch";
   if (which === "watch") renderWatch();
+  if (which === "detail") renderDetail(DETAIL_KEY);
   if (which === "me") renderMe();
+  if (which === "book") render();
+  scrollTo(0, 0);
 }
 
 async function init() {
@@ -1087,7 +1154,7 @@ async function init() {
      여기서 새로고침 없이 바로 보이도록, 저장소가 바뀌면 그 부분만 다시 그린다. */
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
-    if (changes.watch) { WATCH = changes.watch.newValue || {}; if (!$w("w-form").classList.contains("on")) renderWatch(); }
+    if (changes.watch) { WATCH = changes.watch.newValue || {}; if (!$w("w-form").classList.contains("on")) { if (VIEW === "detail") renderDetail(DETAIL_KEY); else if (VIEW === "watch") renderWatch(); } }
     if (changes.ledger) ST.ledger = changes.ledger.newValue || [];
     if (changes.subs) ST.subs = changes.subs.newValue || {};
     if (changes.tasks) ST.tasks = changes.tasks.newValue || [];

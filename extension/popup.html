@@ -4,182 +4,223 @@
 <meta charset="UTF-8">
 <meta name="color-scheme" content="light">
 <style>
-  /* ── Donna 1.4 · 사이드패널
-     연회색 바탕 위 흰 카드(24px 라운드, 부드러운 그림자). 버튼은 검정 필, 상태는 색 필.
-     화면의 첫 문장은 노란 위젯 하나 — "앞으로 30일 안에 나갈 돈". */
+  /* ── Donna · 사이드패널. 값은 시안(donna-design/*.dc.html)에서 그대로 옮겼다.
+     바탕 #F2F2F4 · 카드 #fff 24px · 히어로 노랑 #FFD84D 28px · 검정 필 버튼 · 색 필 상태.
+     Manrope(영문·숫자) + 시스템 고딕(한글). */
   @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap");
-  @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
   :root { color-scheme: light;
     --bg: #F2F2F4; --card: #FFFFFF; --ink: #111114; --sub: #8A8A91; --faint: #C7C7CC; --line: #EDEDF0; --soft: #F5F5F7;
     --yellow: #FFD84D; --yellow-ink: #3A2E00; --green: #22C55E; --orange: #FF6B2C; --red: #FF4D3D; --blue: #2F6BFF;
-    --sans: Manrope, "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+    --sans: Manrope, -apple-system, "SF Pro Text", "Apple SD Gothic Neo", Pretendard, system-ui, sans-serif; }
   * { box-sizing: border-box; margin: 0; padding: 0; border: 0; outline: 0; background-image: none; }
   html, body { height: 100%; }
   html, body, #app { background: var(--bg); }
   body { width: 100%; min-width: 320px; overflow-y: auto; color: var(--ink); font-family: var(--sans);
     font-size: 14px; line-height: 1.45; letter-spacing: -.01em; word-break: keep-all; -webkit-font-smoothing: antialiased; }
-  body.wide #app { max-width: 480px; margin: 0 auto; padding-top: 12px; }
-  #app { min-height: 100%; padding: 18px 16px 96px; display: flex; flex-direction: column; gap: 14px; }
+  body.wide #app { max-width: 400px; margin: 0 auto; }
+  #app { min-height: 100%; padding: 20px 16px 96px; display: flex; flex-direction: column; gap: 14px; }
   button, input, select { font: inherit; color: inherit; background: transparent; }
   button { cursor: pointer; }
   b { font-weight: 800; }
 
   .card { background: var(--card); border-radius: 24px; box-shadow: 0 10px 30px rgba(20,20,30,.06), 0 1px 2px rgba(20,20,30,.04); }
-  .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 700; font-size: 14px; letter-spacing: -.01em; white-space: nowrap; }
   .pill.black { background: var(--ink); color: #fff; }
   .pill.gray { background: var(--soft); color: var(--ink); }
-  .tag { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: .01em; white-space: nowrap; }
+  .tag { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: .02em; white-space: nowrap; }
   .tag.green { background: var(--green); color: #fff; }
   .tag.orange { background: var(--orange); color: #fff; }
   .tag.yellow { background: var(--yellow); color: var(--yellow-ink); }
   .tag.soft { background: var(--soft); color: var(--sub); }
-  .avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: #fff; font-weight: 800; flex-shrink: 0; }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; color: #fff; flex-shrink: 0; }
   .avatar .logo { display: block; background: #fff; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain; }
   .avatar.ghost { background: var(--soft); color: var(--sub); }
 
-  /* 머리 */
-  header { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 0; }
+  /* 머리: 브랜드 + 톱니 (시안 Main) */
+  header { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 0; }
   header .brand { display: flex; align-items: center; gap: 8px; color: var(--ink); text-decoration: none; }
   header .brand img { width: 26px; height: 26px; border-radius: 8px; }
   header .brand b { font-size: 15px; font-weight: 800; letter-spacing: -.02em; }
-  header .brand small { display: none; }
-  header .saved { display: none; }
+  header .brand small, header .saved { display: none; }
   header .gear { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
-  header .gear.on { background: var(--ink); }
-  header .gear.on svg { stroke: #fff; }
-
-  /* 탭: 필 세그먼트 */
-  .top { display: flex; gap: 4px; padding: 4px; background: rgba(0,0,0,.05); border-radius: 999px; }
-  .top button { flex: 1; height: 34px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--sub); }
-  .top button.on { background: #fff; color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  /* 하위 화면 머리: 뒤로 + 제목 (시안 Detail) */
+  .subhead { display: flex; align-items: center; gap: 10px; padding: 4px 4px 0; }
+  .subhead .back { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+  .subhead span { font-size: 15px; font-weight: 800; letter-spacing: -.02em; }
   .view { display: none; flex-direction: column; gap: 14px; } .view.on { display: flex; }
 
-  /* 히어로 위젯 */
+  /* 히어로: 노란 위젯 */
   .hero { position: relative; background: var(--yellow); border-radius: 28px; padding: 22px 22px 20px; color: var(--yellow-ink); box-shadow: 0 14px 34px rgba(255,216,77,.35); }
   .hero .row { display: flex; align-items: center; justify-content: space-between; }
   .hero .k { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .7; }
-  .hero .cnt { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: rgba(58,46,0,.12); font-size: 12px; font-weight: 800; }
-  .hero .v { margin-top: 14px; font-size: 42px; font-weight: 800; letter-spacing: -.045em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .hero .cnt { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: rgba(58,46,0,.12); font-size: 12px; font-weight: 800; }
+  .hero .v { margin-top: 14px; font-size: 44px; font-weight: 800; letter-spacing: -.045em; line-height: 1; font-variant-numeric: tabular-nums; }
   .hero .v small { font-size: 13px; font-weight: 700; letter-spacing: 0; margin-left: 8px; opacity: .7; }
-  .hero .v.text { font-size: 24px; letter-spacing: -.03em; line-height: 1.2; }
-  .hero .sub { margin-top: 8px; font-size: 13.5px; font-weight: 600; opacity: .75; }
-  .hero .next { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(58,46,0,.14); display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
-  .hero .next .n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-  .hero .next .w { opacity: .7; white-space: nowrap; }
-  .hero .next .a { margin-left: auto; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .hero .next:empty { display: none; }
+  .hero .v.text { font-size: 26px; letter-spacing: -.035em; line-height: 1.15; }
+  .hero .sub { margin-top: 8px; font-size: 14px; font-weight: 600; opacity: .75; }
+  .hero .bar { margin-top: 18px; display: flex; align-items: center; gap: 10px; }
+  .hero .bar .track { flex: 1; height: 6px; border-radius: 999px; background: rgba(58,46,0,.14); overflow: hidden; }
+  .hero .bar .track i { display: block; height: 100%; background: var(--yellow-ink); border-radius: 999px; }
+  .hero .bar span { font-size: 12px; font-weight: 800; white-space: nowrap; }
+  .hero .bar:empty { display: none; }
 
-  .hd { display: flex; align-items: baseline; justify-content: space-between; padding: 4px 8px 0; }
+  .hd { display: flex; align-items: baseline; justify-content: space-between; padding: 6px 8px 0; }
   .hd h4 { font-size: 13px; font-weight: 800; color: var(--sub); }
-  .hd .hd-actions { display: flex; gap: 12px; }
-  .hd .add { font-size: 13px; font-weight: 800; color: var(--ink); }
-  .hd .add.alt { color: var(--sub); }
+  .hd span { font-size: 13px; font-weight: 700; color: var(--sub); }
   .wnote { font-size: 13px; font-weight: 600; color: var(--sub); padding: 0 8px; }
   .wnote:empty { display: none; }
   .wnote .lnk2 { display: block; margin-top: 6px; font-weight: 800; color: var(--ink); text-align: left; }
 
-  /* 구독 카드 */
+  /* 구독 카드 (시안 Main) */
   #w-list { display: flex; flex-direction: column; gap: 12px; }
-  .wc { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
-  .wc .t { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .wc { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; cursor: pointer; }
+  .wc .t { display: flex; align-items: center; gap: 12px; }
   .wc .t .m { flex: 1; min-width: 0; }
-  .wc .t .st { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--sub); }
-  .wc .t .nm { font-size: 18px; font-weight: 800; letter-spacing: -.03em; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wc .t .st { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--sub); white-space: nowrap; overflow: hidden; }
+  .wc .t .nm { font-size: 18px; font-weight: 800; letter-spacing: -.03em; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wc.hot .t .nm { font-size: 19px; margin-top: 1px; }
   .wc .t .amt { text-align: right; flex-shrink: 0; }
   .wc .t .amt .krw { font-size: 16px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-  .wc .t .amt .orig { font-size: 12px; font-weight: 600; color: var(--sub); margin-top: 1px; }
-  .wc.needs { background: #fff; border: 2px dashed #E0E0E5; box-shadow: none; }
-  .wc .line { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-  .wc .steps { display: flex; flex-direction: column; gap: 7px; }
-  .wc .steps .bars { display: flex; gap: 4px; }
-  .wc .steps .bars i { flex: 1; height: 5px; border-radius: 999px; background: var(--line); }
-  .wc .steps .bars i.on { background: var(--green); }
-  .wc .steps .bars i.on.hot { background: var(--orange); }
-  .wc .steps .lbl { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 700; color: var(--faint); }
-  .wc .steps .lbl span.on { color: var(--ink); }
-  .wc .meta { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: var(--soft); border-radius: 16px; font-size: 12.5px; font-weight: 600; color: var(--sub); line-height: 1.5; }
-  .wc .meta .lnk3 { color: var(--blue); font-weight: 800; cursor: pointer; }
-  .wc .btns { display: flex; gap: 8px; flex-wrap: wrap; }
-  .wc .btns button { flex: 1; min-width: 0; height: 42px; border-radius: 999px; background: var(--soft); color: var(--ink); font-weight: 700; font-size: 13.5px; }
-  .wc .btns button.p { background: var(--ink); color: #fff; }
-  .wc .btns button.sp { color: var(--red); flex: 0 0 auto; padding: 0 16px; }
-  .wc .detail[hidden] { display: none; }
-  .wc .detail { display: flex; flex-direction: column; gap: 12px; }
+  .wc.hot .t .amt .krw { font-size: 17px; }
+  .wc .t .amt .orig { font-size: 12px; font-weight: 600; color: var(--sub); }
+  .wc.needs { padding: 14px 18px; background: #fff; border: 2px dashed #E0E0E5; box-shadow: none; }
+  .wc.needs .t .nm { font-size: 16px; margin-top: 0; letter-spacing: -.02em; }
+  .wc.needs .t .st { font-size: 12.5px; margin-top: 2px; white-space: normal; }
+  .wc .line { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; }
+  .steps { display: flex; flex-direction: column; gap: 8px; }
+  .steps .bars { display: flex; gap: 4px; }
+  .steps .bars i { flex: 1; height: 5px; border-radius: 999px; background: var(--line); }
+  .steps .bars i.on { background: var(--green); }
+  .steps .bars i.on.hot { background: var(--orange); }
+  .steps .lbl { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 700; color: var(--sub); }
+  .steps .lbl span.on { color: var(--ink); }
+  .wc .btns { display: flex; gap: 8px; }
+  .wc .btns .pill { flex: 1; }
 
   /* 빈 상태 */
   .empty { padding: 8px 4px 0; display: flex; flex-direction: column; gap: 14px; }
   .empty b { font-size: 20px; font-weight: 800; letter-spacing: -.03em; }
   .empty .or { font-size: 13px; font-weight: 600; color: var(--sub); }
   .empty .or .lnk { color: var(--ink); font-weight: 800; cursor: pointer; }
-  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 6px; }
-  .tiles button { display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--ink); padding: 4px 0; border-radius: 16px; }
-  .tiles button:hover { background: rgba(0,0,0,.04); }
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .tiles button { display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--ink); }
+  .tiles button .avatar { width: 56px; height: 56px; font-size: 20px; }
   .tiles button.on .avatar { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--ink); }
-  .tiles button .avatar { width: 52px; height: 52px; }
+  .tiles button.on span { font-weight: 800; }
+  .tiles button.plus .avatar { background: var(--soft); color: var(--ink); font-size: 22px; }
+  .tiles button.plus span { color: var(--sub); }
 
   /* 플로팅 등록 버튼 */
   .fab { position: fixed; left: 0; right: 0; bottom: 20px; display: flex; justify-content: center; pointer-events: none; z-index: 5; }
-  .fab .pill { pointer-events: auto; height: 50px; padding: 0 24px; font-size: 15px; box-shadow: 0 10px 24px rgba(0,0,0,.18); }
+  .fab .pill { pointer-events: auto; height: 50px; padding: 0 26px; font-size: 15px; box-shadow: 0 10px 24px rgba(0,0,0,.18); }
   .fab[hidden] { display: none; }
+
+  /* 상세 화면 (시안 Detail) */
+  .dt-main { padding: 22px 22px 20px; display: flex; flex-direction: column; gap: 18px; }
+  .dt-main .head { display: flex; align-items: center; gap: 14px; }
+  .dt-main .head .avatar { width: 56px; height: 56px; font-size: 22px; }
+  .dt-main .head .s { font-size: 12.5px; font-weight: 700; color: var(--sub); }
+  .dt-main .head .nm { font-size: 24px; font-weight: 800; letter-spacing: -.035em; margin-top: 2px; }
+  .dt-main .big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .dt-main .big .krw { font-size: 40px; font-weight: 800; letter-spacing: -.045em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .dt-main .big .orig { font-size: 14px; font-weight: 700; color: var(--sub); }
+  .dt-main .when { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; }
+  .dt-main .steps .bars i { height: 6px; }
+  .dt-main .steps .lbl { color: var(--faint); }
+  .dt-main .btns { display: flex; gap: 8px; }
+  .dt-main .btns .pill { flex: 1; height: 46px; }
+  .dt-info { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .dt-info .r { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .dt-info .r span { font-size: 14px; font-weight: 800; }
+  .dt-info .r b { font-size: 13px; font-weight: 700; color: var(--sub); text-align: right; }
+  .dt-info .r b.lnk { color: var(--blue); cursor: pointer; }
+  .dt-info hr { height: 1px; background: var(--line); }
+  .dt-acts { display: flex; gap: 8px; justify-content: center; margin-top: auto; padding-top: 12px; }
+  .dt-acts .pill { background: #fff; }
+  .dt-acts .pill.danger { color: var(--red); }
+  .dt-acts .pill.p { background: var(--ink); color: #fff; }
 
   .fine { padding: 6px 12px 0; font-size: 12px; font-weight: 600; color: var(--faint); line-height: 1.7; text-align: center; }
   .fine .lnk { color: var(--sub); font-weight: 800; cursor: pointer; }
-  .fine b { font-weight: 700; color: var(--sub); }
 
-  /* 바텀시트: 등록·수정 */
+  /* 바텀시트: 등록·수정 (시안 Register) */
   .sheet-bg { position: fixed; inset: 0; background: rgba(17,17,20,.35); display: none; z-index: 10; }
   .sheet-bg.on { display: block; }
-  .form { position: fixed; left: 0; right: 0; bottom: 0; max-height: 92%; max-width: 480px; margin: 0 auto; background: #fff; border-radius: 30px 30px 0 0;
-    padding: 14px 20px 22px; display: none; flex-direction: column; gap: 16px; z-index: 11; overflow-y: auto; box-shadow: 0 -12px 40px rgba(0,0,0,.10); }
+  .form { position: fixed; left: 0; right: 0; bottom: 0; max-height: 94%; max-width: 400px; margin: 0 auto; background: #fff; border-radius: 30px 30px 0 0;
+    padding: 14px 20px 24px; display: none; flex-direction: column; gap: 18px; z-index: 11; overflow-y: auto; box-shadow: 0 -12px 40px rgba(0,0,0,.10); }
   .form.on { display: flex; }
   .form .grip { width: 40px; height: 5px; border-radius: 999px; background: #E0E0E5; margin: 0 auto; flex-shrink: 0; }
-  .form h3 { font-size: 22px; font-weight: 800; letter-spacing: -.035em; }
-  .form .lead { font-size: 13.5px; font-weight: 600; color: var(--sub); margin-top: 3px; }
-  .form label { display: block; font-size: 13px; font-weight: 800; color: var(--sub); margin: 0 0 8px 4px; }
-  .form input[type=text], .form input[type=date], .form select { width: 100%; height: 46px; padding: 0 14px; border-radius: 14px; background: var(--soft); font-weight: 700; font-size: 15px; }
+  .form h3 { font-size: 24px; font-weight: 800; letter-spacing: -.035em; }
+  .form .lead { font-size: 14px; font-weight: 600; color: var(--sub); margin-top: 4px; }
+  .form .sugg:empty { display: none; }
+  .form .name-wrap { display: none; }
+  .form .name-wrap.on { display: block; }
+  .form input[type=text], .form select { width: 100%; height: 46px; padding: 0 14px; border-radius: 14px; background: var(--soft); font-weight: 700; font-size: 15px; }
   .form input::placeholder { color: var(--faint); font-weight: 600; }
+  /* 고른 서비스 요약 + 상태·채널 필 (회색 상자) */
+  .picked-box { background: var(--soft); border-radius: 20px; padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+  .picked-box:empty { display: none; }
+  .picked-box .p { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .picked-box .p .m { flex: 1; min-width: 0; }
+  .picked-box .p .nm { font-size: 17px; font-weight: 800; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .picked-box .p .s { font-size: 12.5px; font-weight: 700; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .picked-box .p .krw { text-align: right; flex-shrink: 0; }
+  .picked-box .p .krw b { font-size: 16px; font-variant-numeric: tabular-nums; }
+  .picked-box .p .krw small { display: block; font-size: 11.5px; font-weight: 600; color: var(--sub); }
+  .seg { display: flex; gap: 8px; flex-wrap: wrap; }
+  .seg button { height: 36px; padding: 0 14px; border-radius: 999px; background: #fff; color: var(--sub); font-size: 13px; font-weight: 700; }
+  .seg button.on { background: var(--ink); color: #fff; }
+  .seg.outline button.on { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+  /* 세부 칸: 요약을 눌렀을 때만 */
+  .form .adv { display: none; flex-direction: column; gap: 12px; }
+  .form .adv.on { display: flex; }
+  .form label { display: block; font-size: 13px; font-weight: 800; color: var(--sub); margin-bottom: 8px; padding-left: 4px; }
   .form .row { display: flex; gap: 8px; }
   .form .row > * { flex: 1; min-width: 0; }
-  .form .sugg { margin: 0; }
-  .form .sugg:empty { display: none; }
-  .form .picked { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--soft); border-radius: 20px; }
-  .form .picked .m { flex: 1; min-width: 0; }
-  .form .picked .nm { font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
-  .form .picked .s { font-size: 12.5px; font-weight: 700; color: var(--sub); margin-top: 2px; }
-  .form .picked .krw { text-align: right; }
-  .form .picked .krw b { font-size: 15px; font-variant-numeric: tabular-nums; }
-  .form .picked .krw small { display: block; font-size: 11px; font-weight: 600; color: var(--sub); }
-  .form .picked:empty { display: none; }
-  .seg { display: flex; gap: 8px; flex-wrap: wrap; }
-  .seg button { height: 38px; padding: 0 14px; border-radius: 999px; background: var(--soft); color: var(--sub); font-size: 13.5px; font-weight: 700; }
-  .seg button.on { background: var(--ink); color: #fff; }
   .form .chk { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--sub); cursor: pointer; }
   .form .chk input { width: 18px; height: 18px; accent-color: var(--ink); }
-  .form .err { font-size: 13px; font-weight: 700; color: var(--red); min-height: 16px; }
+  .form .krw-line { font-size: 12.5px; font-weight: 600; color: var(--sub); }
+  .form .krw-line:empty { display: none; }
+  /* 날짜: 주 단위 띠 (가로로 넘긴다) */
+  .week { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 -4px; }
+  .week::-webkit-scrollbar { display: none; }
+  .week .w7 { flex: 0 0 100%; scroll-snap-align: start; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 0 4px; text-align: center; }
+  .week .dow { font-size: 12px; font-weight: 700; color: var(--sub); }
+  .week .dow.sun { color: var(--orange); }
+  .week .d { height: 44px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; border-radius: 14px; }
+  .week .d.past { color: var(--faint); }
+  .week .d.on { background: var(--ink); color: #fff; }
+  .week .d.today { box-shadow: inset 0 0 0 2px var(--line); }
+  .form .datenav { display: flex; align-items: center; justify-content: space-between; padding-left: 4px; }
+  .form .datenav label { margin: 0; padding: 0; }
+  .form .datenav span { font-size: 12.5px; font-weight: 700; color: var(--sub); }
+  .form .datenav input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .form .err { font-size: 13px; font-weight: 700; color: var(--red); }
   .form .err:empty { display: none; }
-  .form .acts { display: flex; gap: 8px; }
-  .form .acts .p { flex: 1; height: 54px; border-radius: 18px; background: var(--ink); color: #fff; font-weight: 800; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-  .form .acts .g { height: 54px; padding: 0 18px; border-radius: 18px; background: var(--soft); color: var(--ink); font-weight: 700; }
-  .form .fine2 { font-size: 12px; font-weight: 600; color: var(--faint); line-height: 1.6; }
-  .form .preset-note, .form .krw-line { font-size: 12.5px; font-weight: 600; color: var(--sub); }
-  .form .preset-note:empty, .form .krw-line:empty { display: none; }
-  .form .krw-line b { color: var(--ink); }
-  details.more { border-radius: 16px; }
-  details.more summary { list-style: none; cursor: pointer; font-size: 13px; font-weight: 800; color: var(--sub); padding: 4px; }
-  details.more summary::-webkit-details-marker { display: none; }
-  details.more[open] summary { color: var(--ink); }
-  details.more .body { display: flex; flex-direction: column; gap: 14px; padding-top: 12px; }
+  .form .submit { height: 54px; border-radius: 18px; background: var(--ink); color: #fff; font-weight: 800; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+  .form .close { align-self: center; font-size: 13px; font-weight: 700; color: var(--sub); }
 
-  /* 과세유형 게이트 */
-  .gate { position: fixed; inset: 0; max-width: 480px; margin: 0 auto; background: var(--bg); padding: 26px 20px; display: none; z-index: 12; overflow-y: auto; }
-  .gate.on { display: block; }
-  .gate .eyebrow { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; margin-bottom: 8px; }
-  .gate h3 { font-size: 22px; font-weight: 800; letter-spacing: -.035em; margin-bottom: 6px; }
-  .gate p { font-size: 13.5px; font-weight: 600; color: var(--sub); margin-bottom: 16px; }
-  .gate button { display: block; width: 100%; margin-top: 8px; padding: 16px 18px; border-radius: 20px; background: #fff; font-size: 15px; font-weight: 800; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,.05); }
-  .gate button .sub { display: block; font-size: 12.5px; font-weight: 600; color: var(--sub); margin-top: 2px; }
+  /* 설정·기록: 시안의 Detail 계열 (뒤로 머리 + 흰 카드) */
+  .me { padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .me h4 { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; }
+  .me label { display: block; font-size: 13px; font-weight: 800; color: var(--sub); margin: 4px 0 -4px 4px; }
+  .me input[type=text], .me select { width: 100%; height: 46px; padding: 0 14px; border-radius: 14px; background: var(--soft); font-weight: 700; font-size: 15px; }
+  .me .row { display: flex; gap: 8px; }
+  .me .row > * { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .me .chk { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .me .chk input { width: 18px; height: 18px; accent-color: var(--ink); }
+  .me .hint { font-size: 12.5px; font-weight: 600; color: var(--sub); line-height: 1.6; }
+  .me .err { font-size: 13px; font-weight: 700; color: var(--red); }
+  .me .err:empty { display: none; }
+  .me .acts { display: flex; gap: 8px; margin-top: 4px; }
+  .me .acts button { height: 44px; padding: 0 18px; border-radius: 999px; font-weight: 800; font-size: 14px; }
+  .me .acts .p { background: var(--ink); color: #fff; }
+  .me .acts .g { background: var(--soft); color: var(--ink); }
+  .me .r { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+  .me .r span { font-size: 14px; font-weight: 800; }
+  .me .r b { font-size: 13px; font-weight: 700; color: var(--sub); }
+  .me hr { height: 1px; background: var(--line); }
 
-  /* 결제 기록·세무 */
   .due { padding: 18px 20px; }
   .due:empty { display: none; }
   .due h4 { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; margin-bottom: 8px; }
@@ -224,97 +265,50 @@
   #export { background: var(--ink); color: #fff; }
   #copy { background: #fff; color: var(--ink); }
 
-  /* 설정 */
-  .me { display: flex; flex-direction: column; gap: 12px; padding: 18px 20px; }
-  .me label { display: block; font-size: 13px; font-weight: 800; color: var(--sub); margin: 4px 0 -4px 4px; }
-  .me input[type=text], .me select { width: 100%; height: 46px; padding: 0 14px; border-radius: 14px; background: var(--soft); font-weight: 700; font-size: 15px; }
-  .me .row { display: flex; gap: 8px; }
-  .me .row > * { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
-  .me .chk { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
-  .me .chk input { width: 18px; height: 18px; accent-color: var(--ink); }
-  .me .hint { font-size: 12.5px; font-weight: 600; color: var(--sub); line-height: 1.6; }
-  .me .err { font-size: 13px; font-weight: 700; color: var(--red); }
-  .me .err:empty { display: none; }
-  .me .acts { display: flex; gap: 8px; margin-top: 4px; }
-  .me .acts button { height: 44px; padding: 0 18px; border-radius: 999px; font-weight: 800; font-size: 14px; }
-  .me .acts .p { background: var(--ink); color: #fff; }
-  .me .acts .g { background: var(--soft); color: var(--ink); }
-  .me h4 { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; }
+  .gate { position: fixed; inset: 0; max-width: 400px; margin: 0 auto; background: var(--bg); padding: 26px 20px; display: none; z-index: 12; overflow-y: auto; }
+  .gate.on { display: block; }
+  .gate .eyebrow { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; margin-bottom: 8px; }
+  .gate h3 { font-size: 22px; font-weight: 800; letter-spacing: -.035em; margin-bottom: 6px; }
+  .gate p { font-size: 13.5px; font-weight: 600; color: var(--sub); margin-bottom: 16px; }
+  .gate button { display: block; width: 100%; margin-top: 8px; padding: 16px 18px; border-radius: 20px; background: #fff; font-size: 15px; font-weight: 800; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,.05); }
+  .gate button .sub { display: block; font-size: 12.5px; font-weight: 600; color: var(--sub); margin-top: 2px; }
 </style>
 </head>
 <body>
 <div id="app">
-  <header>
-    <a class="brand" href="https://donna.co.kr/" target="_blank" rel="noopener"><img src="icon48.png" alt=""><span><b>Donna</b><small>donna.co.kr</small></span></a>
-    <span class="saved" id="total-saved"></span>
-    <button class="gear" id="tab-me" aria-label="설정">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111114" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
-    </button>
-  </header>
-
-  <div class="top">
-    <button id="tab-watch" class="on">구독</button>
-    <button id="tab-book">기록 · 세무</button>
-  </div>
-
+  <!-- 홈 -->
   <div class="view on" id="view-watch">
+    <header>
+      <a class="brand" href="https://donna.co.kr/" target="_blank" rel="noopener"><img src="icon48.png" alt=""><span><b>Donna</b><small>donna.co.kr</small></span></a>
+      <span class="saved" id="total-saved"></span>
+      <button class="gear" id="tab-me" aria-label="설정">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111114" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
+      </button>
+    </header>
     <div class="hero" id="hero"></div>
-    <div class="hd"><h4>다음 결제</h4><div class="hd-actions"><button class="add alt" id="w-enable">이 결제창에서 켜기</button><button class="add" id="w-add">+ 등록</button></div></div>
+    <div class="hd"><h4>다음 결제</h4><span>가까운 순</span></div>
     <div class="wnote" id="w-note"></div>
     <div id="w-list"></div>
-    <div class="fine">
-      <span class="lnk" id="w-all">모든 결제창에서 자동으로 켜기</span><br>
-      이 브라우저에만 저장 · 서버 전송 없음
-    </div>
   </div>
 
-  <div class="view" id="view-book">
-    <div class="card due" id="due"></div>
-    <div class="card todo" id="todo"></div>
-    <div class="tabs">
-      <button class="tab on" data-q="this">이번 분기</button>
-      <button class="tab" data-q="last">지난 분기</button>
-      <button class="tab" data-q="all">전체</button>
-    </div>
-    <div class="summary" id="summary"></div>
-    <ul id="list"></ul>
-    <footer>
-      <button id="export">분기 자료 내보내기</button>
-      <button id="copy">전달 문구 복사</button>
-    </footer>
-    <div class="fine">
-      이 브라우저에만 저장 · 서버 전송 없음<br>
-      <span class="lnk" id="backup">기록 백업</span> ·
-      <span class="lnk" id="restore">불러오기</span>
-      <input type="file" id="restore-file" accept="application/json" hidden>
-    </div>
+  <!-- 구독 상세 -->
+  <div class="view" id="view-detail">
+    <div class="subhead"><button class="back" id="dt-back" aria-label="뒤로"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111114" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button><span id="dt-title"></span></div>
+    <div class="card dt-main" id="dt-main"></div>
+    <div class="card dt-info" id="dt-info"></div>
+    <div class="dt-acts" id="dt-acts"></div>
   </div>
 
+  <!-- 설정 -->
   <div class="view" id="view-me">
+    <div class="subhead"><button class="back" id="me-back" aria-label="뒤로"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111114" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button><span>설정</span></div>
     <div class="card me">
-      <h4>사업자 정보</h4>
-      <label>사업자등록번호</label>
-      <input type="text" id="me-brn" inputmode="numeric" placeholder="000-00-00000" autocomplete="off">
-      <div class="hint">해외 결제창에 세금 ID 칸이 보이면 이 번호를 버튼 한 번으로 넣어 부가세를 뺍니다.</div>
-      <div class="row">
-        <div><label>사업자 유형</label>
-          <select id="me-type">
-            <option value="solo">개인사업자</option>
-            <option value="corp">법인</option>
-            <option value="personal">사업자가 아닙니다</option>
-          </select></div>
-        <div><label>부가세 신고</label>
-          <select id="me-tax">
-            <option value="general">일반과세자</option>
-            <option value="simplified">간이과세자</option>
-            <option value="exempt">면세사업자</option>
-            <option value="unknown">잘 모르겠어요</option>
-          </select></div>
-      </div>
-      <div class="err" id="me-err"></div>
-      <div class="acts"><button class="p" id="me-save">저장</button></div>
+      <div class="r" id="go-book"><span>결제 기록 · 세무 자료</span><b>→</b></div>
+      <hr>
+      <div class="r" id="w-enable"><span>이 결제창에서 자동 감지 켜기</span><b>→</b></div>
+      <hr>
+      <div class="r" id="w-all"><span>모든 결제창에서 자동으로 켜기</span><b id="w-all-state">끔</b></div>
     </div>
-
     <div class="card me">
       <h4>알림</h4>
       <label class="chk"><input type="checkbox" id="me-noti" checked> 결제 전 알림 받기</label>
@@ -341,7 +335,54 @@
         <button class="g" id="me-ics">캘린더에 넣기</button>
       </div>
     </div>
+    <div class="card me">
+      <h4>사업자 정보</h4>
+      <label>사업자등록번호</label>
+      <input type="text" id="me-brn" inputmode="numeric" placeholder="000-00-00000" autocomplete="off">
+      <div class="hint">해외 결제창에 세금 ID 칸이 보이면 이 번호를 버튼 한 번으로 넣어 부가세를 뺍니다.</div>
+      <div class="row">
+        <div><label>사업자 유형</label>
+          <select id="me-type">
+            <option value="solo">개인사업자</option>
+            <option value="corp">법인</option>
+            <option value="personal">사업자가 아닙니다</option>
+          </select></div>
+        <div><label>부가세 신고</label>
+          <select id="me-tax">
+            <option value="general">일반과세자</option>
+            <option value="simplified">간이과세자</option>
+            <option value="exempt">면세사업자</option>
+            <option value="unknown">잘 모르겠어요</option>
+          </select></div>
+      </div>
+      <div class="err" id="me-err"></div>
+      <div class="acts"><button class="p" id="me-save">저장</button></div>
+    </div>
     <div class="fine">이 브라우저에만 저장 · 서버 전송 없음</div>
+  </div>
+
+  <!-- 결제 기록 · 세무 -->
+  <div class="view" id="view-book">
+    <div class="subhead"><button class="back" id="book-back" aria-label="뒤로"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111114" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button><span>결제 기록 · 세무</span></div>
+    <div class="card due" id="due"></div>
+    <div class="card todo" id="todo"></div>
+    <div class="tabs">
+      <button class="tab on" data-q="this">이번 분기</button>
+      <button class="tab" data-q="last">지난 분기</button>
+      <button class="tab" data-q="all">전체</button>
+    </div>
+    <div class="summary" id="summary"></div>
+    <ul id="list"></ul>
+    <footer>
+      <button id="export">분기 자료 내보내기</button>
+      <button id="copy">전달 문구 복사</button>
+    </footer>
+    <div class="fine">
+      이 브라우저에만 저장 · 서버 전송 없음<br>
+      <span class="lnk" id="backup">기록 백업</span> ·
+      <span class="lnk" id="restore">불러오기</span>
+      <input type="file" id="restore-file" accept="application/json" hidden>
+    </div>
   </div>
 
   <div class="fab" id="fab"><button class="pill black" id="w-fab">
@@ -357,66 +398,48 @@
     </div>
 
     <div class="tiles sugg" id="w-sugg"></div>
-    <div>
-      <label for="w-name">서비스 이름</label>
-      <input type="text" id="w-name" placeholder="목록에 없으면 직접 입력" autocomplete="off">
-    </div>
-    <div class="picked" id="w-picked"></div>
-    <div class="preset-note" id="w-preset-note"></div>
+    <div class="name-wrap" id="w-name-wrap"><input type="text" id="w-name" placeholder="서비스 이름" autocomplete="off"></div>
 
-    <div>
-      <label>지금 상태</label>
+    <div class="picked-box" id="w-picked">
+      <div class="p" id="w-picked-row"></div>
       <div class="seg" id="w-kind">
         <button type="button" data-v="sub">결제 중</button>
         <button type="button" data-v="trial">무료 체험 중</button>
       </div>
-    </div>
-
-    <div>
-      <label id="w-due-label" for="w-due">다음 결제일</label>
-      <input type="date" id="w-due">
-    </div>
-
-    <div>
-      <label>어디서 결제하나요</label>
-      <div class="seg" id="w-channel">
+      <div class="seg outline" id="w-channel">
         <button type="button" data-v="web">웹사이트</button>
         <button type="button" data-v="appstore">App Store</button>
         <button type="button" data-v="play">Google Play</button>
       </div>
-    </div>
-
-    <details class="more" id="w-more">
-      <summary>금액·주기 직접 고치기</summary>
-      <div class="body">
-        <div>
-          <label>결제 주기</label>
-          <div class="seg" id="w-int">
-            <button type="button" data-v="month">매달</button>
-            <button type="button" data-v="year">매년</button>
-            <button type="button" data-v="">모르겠어요</button>
-          </div>
-        </div>
+      <div class="adv" id="w-adv">
         <div class="row">
           <div><label for="w-amt">금액</label><input type="text" id="w-amt" inputmode="decimal" placeholder="20"></div>
           <div><label for="w-cur">통화</label>
             <select id="w-cur"><option>USD</option><option>KRW</option><option>EUR</option><option>GBP</option><option>JPY</option></select></div>
         </div>
+        <div><label>결제 주기</label>
+          <div class="seg" id="w-int">
+            <button type="button" data-v="month">매달</button>
+            <button type="button" data-v="year">매년</button>
+            <button type="button" data-v="">모르겠어요</button>
+          </div></div>
         <div class="krw-line" id="w-krw"></div>
         <label class="chk"><input type="checkbox" id="w-auto" checked> 자동으로 결제됩니다</label>
-        <div>
-          <label for="w-url">해지·관리 주소 (선택)</label>
-          <input type="text" id="w-url" placeholder="https://...">
-        </div>
+        <div><label for="w-url">해지·관리 주소 (선택)</label><input type="text" id="w-url" placeholder="https://..."></div>
       </div>
-    </details>
+    </div>
+
+    <div>
+      <div class="datenav"><label id="w-due-label">다음 결제일</label><span id="w-due-text"></span><input type="date" id="w-due" aria-label="날짜"></div>
+      <div class="week" id="w-week"></div>
+    </div>
 
     <div class="err" id="w-err"></div>
-    <div class="acts">
-      <button class="p" id="w-save">등록하기</button>
-      <button class="g" id="w-cancel">닫기</button>
-    </div>
-    <div class="fine2">주기와 날짜를 알면 알림을 예약합니다. 모르면 확인 필요로 저장해 두고 나중에 완성할 수 있습니다. 금액은 기본값이라 실제 청구액과 다를 수 있습니다.</div>
+    <button class="submit" id="w-save">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD84D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+      <span id="w-save-text">등록하기</span>
+    </button>
+    <button class="close" id="w-cancel">닫기</button>
   </div>
 
   <div class="gate" id="gate">
