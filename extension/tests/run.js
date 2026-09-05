@@ -14,7 +14,7 @@ assert.ok(manifest.permissions.includes("sidePanel"), "sidePanel 권한 누락")
 assert.equal(manifest.side_panel && manifest.side_panel.default_path, "popup.html");
 assert.ok(!manifest.action.default_popup, "default_popup이 남아 있으면 사이드패널 대신 팝업이 뜬다");
 const P = require(path.join(root, "presets.js"));
-assert.match(manifest.name, /돈나가요/);
+assert.match(manifest.name, /Donna/);
 for (const size of [16, 48, 128]) {
   assert.ok(fs.existsSync(path.join(root, `icon${size}.png`)), `icon${size}.png 누락`);
 }
@@ -120,6 +120,10 @@ assert.equal(P.find("없는서비스"), null);
 assert.ok(P.search("", 10).length === 10 && P.search("", 10)[0].id === "chatgpt");
 for (const p of P.LIST) {
   assert.ok(p.amount > 0 && ["month", "year"].includes(p.interval) && /^https:\/\//.test(p.manageUrl), p.id + " 프리셋 값 이상");
+  assert.match(p.color, /^#[0-9A-Fa-f]{6}$/, p.id + " 색 누락");
+  if (p.logo) assert.ok(fs.existsSync(path.join(root, "logos", p.logo)), p.id + " 로고 파일 없음: " + p.logo);
 }
+assert.match(P.avatarHtml(P.find("claude")), /mask-image:url\(logos\/anthropic\.svg\)/);
+assert.match(P.avatarHtml(P.find("cursor")), />C</);
 
-console.log("돈나가요 확장프로그램 핵심 테스트 통과");
+console.log("Donna 확장프로그램 핵심 테스트 통과");

@@ -4,374 +4,429 @@
 <meta charset="UTF-8">
 <meta name="color-scheme" content="light">
 <style>
-  /* ── 돈나가요 1.4 · 사이드패널
-     흰 종이 한 장. 상자·카드·채운 버튼을 쓰지 않는다. 구분은 헤어라인 하나, 강조는 글자 굵기와 색 두 개뿐.
-     액센트 #14532D(딥 그린: 주버튼·선택), 경고 #B45309(브릭: "곧 결제"·"체험 종료" 글자에만). */
-  @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&family=Geist+Mono:wght@400;500&display=swap");
+  /* ── Donna 1.4 · 사이드패널
+     연회색 바탕 위 흰 카드(24px 라운드, 부드러운 그림자). 버튼은 검정 필, 상태는 색 필.
+     화면의 첫 문장은 노란 위젯 하나 — "앞으로 30일 안에 나갈 돈". */
+  @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap");
   @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
-  /* someonehastosayyes.com의 'quiet product-document' 팔레트. 흰 종이, 차가운 중성색, 액센트 하나(스틸블루). */
   :root { color-scheme: light;
-    --ink: #172033; --ink2: #344054; --mute: #667085; --faint: #98A2B3; --line: #DFE5EC; --bg: #FFFFFF; --paper: #F7F9FC;
-    --accent: #315F8C; --accent-dark: #244A70; --soft: #EDF3F8; --warn: #99443D; --success: #2F7653;
-    --sans: "Bricolage Grotesque", "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-    --mono: "Geist Mono", "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", sans-serif; }  /* 한글은 모노 폰트가 없어 Pretendard로 */
-  html, body, #app { background: var(--bg); }
+    --bg: #F2F2F4; --card: #FFFFFF; --ink: #111114; --sub: #8A8A91; --faint: #C7C7CC; --line: #EDEDF0; --soft: #F5F5F7;
+    --yellow: #FFD84D; --yellow-ink: #3A2E00; --green: #22C55E; --orange: #FF6B2C; --red: #FF4D3D; --blue: #2F6BFF;
+    --sans: Manrope, "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
   * { box-sizing: border-box; margin: 0; padding: 0; border: 0; outline: 0; background-image: none; }
   html, body { height: 100%; }
-  body { width: 100%; min-width: 320px; overflow-y: auto; color: var(--ink);
-    font-family: var(--sans); font-size: 14px; line-height: 1.5; letter-spacing: -.01em; word-break: keep-all; -webkit-font-smoothing: antialiased; }
-  body.wide #app { max-width: 560px; margin: 0 auto; padding-top: 24px; }
+  html, body, #app { background: var(--bg); }
+  body { width: 100%; min-width: 320px; overflow-y: auto; color: var(--ink); font-family: var(--sans);
+    font-size: 14px; line-height: 1.45; letter-spacing: -.01em; word-break: keep-all; -webkit-font-smoothing: antialiased; }
+  body.wide #app { max-width: 480px; margin: 0 auto; padding-top: 12px; }
+  #app { min-height: 100%; padding: 18px 16px 96px; display: flex; flex-direction: column; gap: 14px; }
   button, input, select { font: inherit; color: inherit; background: transparent; }
   button { cursor: pointer; }
-  input, select { width: 100%; height: 42px; padding: 0 0 0 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
-  input:focus, select:focus { border-bottom-color: var(--ink); }
-  input::placeholder { color: var(--faint); }
-  select { appearance: none; -webkit-appearance: none; }
-  b { font-weight: 600; }
+  b { font-weight: 800; }
 
-  /* 머리: 이름표 한 줄. 눌러야 하는 것처럼 보이면 안 되니 면을 두르지 않는다. */
-  header { display: flex; align-items: center; justify-content: space-between; padding: 22px 20px 6px; }
+  .card { background: var(--card); border-radius: 24px; box-shadow: 0 10px 30px rgba(20,20,30,.06), 0 1px 2px rgba(20,20,30,.04); }
+  .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .pill.black { background: var(--ink); color: #fff; }
+  .pill.gray { background: var(--soft); color: var(--ink); }
+  .tag { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: .01em; white-space: nowrap; }
+  .tag.green { background: var(--green); color: #fff; }
+  .tag.orange { background: var(--orange); color: #fff; }
+  .tag.yellow { background: var(--yellow); color: var(--yellow-ink); }
+  .tag.soft { background: var(--soft); color: var(--sub); }
+  .avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: #fff; font-weight: 800; flex-shrink: 0; }
+  .avatar .logo { display: block; background: #fff; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain; }
+  .avatar.ghost { background: var(--soft); color: var(--sub); }
+
+  /* 머리 */
+  header { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 0; }
   header .brand { display: flex; align-items: center; gap: 8px; color: var(--ink); text-decoration: none; }
-  header .brand img { width: 18px; height: 18px; border-radius: 5px; }
-  header .brand b { font-size: 13.5px; font-weight: 600; letter-spacing: -.025em; }
-  header .brand b::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 3px; border-radius: 2px; background: var(--accent); vertical-align: 1px; }
+  header .brand img { width: 26px; height: 26px; border-radius: 8px; }
+  header .brand b { font-size: 15px; font-weight: 800; letter-spacing: -.02em; }
   header .brand small { display: none; }
-  header .saved { font-size: 11.5px; color: var(--mute); }
-  header .saved:empty { display: none; }
+  header .saved { display: none; }
+  header .gear { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+  header .gear.on { background: var(--ink); }
+  header .gear.on svg { stroke: #fff; }
 
-  /* 탭: 글자만. 고른 탭만 검정. */
-  .top { display: flex; gap: 4px; padding: 10px 14px 12px; border-bottom: 1px solid var(--line); }
-  .top button { padding: 6px 10px; border-radius: 4px; font-size: 13px; font-weight: 500; color: var(--mute); }
-  .top button:hover { color: var(--ink); background: var(--paper); }
-  .top button.on { color: var(--ink); background: var(--soft); }
-  .view { display: none; } .view.on { display: block; }
+  /* 탭: 필 세그먼트 */
+  .top { display: flex; gap: 4px; padding: 4px; background: rgba(0,0,0,.05); border-radius: 999px; }
+  .top button { flex: 1; height: 34px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--sub); }
+  .top button.on { background: #fff; color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .view { display: none; flex-direction: column; gap: 14px; } .view.on { display: flex; }
 
-  /* 첫 문장: 숫자 하나. */
-  .hero { padding: 26px 20px 8px; }
-  .hero .k { font: 500 11px/1 var(--mono); color: var(--accent); letter-spacing: .03em; }
-  .hero .v { margin-top: 10px; font-size: 36px; font-weight: 500; letter-spacing: -.05em; line-height: 1; font-variant-numeric: tabular-nums; }
-  .hero .v.text { font-size: 22px; letter-spacing: -.035em; line-height: 1.2; }
-  .hero .v small { font-size: 12px; font-weight: 500; color: var(--mute); margin-left: 6px; letter-spacing: 0; }
-  .hero .sub { margin-top: 8px; font-size: 13px; color: var(--mute); }
-  .hero .sub b { color: var(--ink2); font-weight: 500; }
-  .hero .next { display: none; }
+  /* 히어로 위젯 */
+  .hero { position: relative; background: var(--yellow); border-radius: 28px; padding: 22px 22px 20px; color: var(--yellow-ink); box-shadow: 0 14px 34px rgba(255,216,77,.35); }
+  .hero .row { display: flex; align-items: center; justify-content: space-between; }
+  .hero .k { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .7; }
+  .hero .cnt { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: rgba(58,46,0,.12); font-size: 12px; font-weight: 800; }
+  .hero .v { margin-top: 14px; font-size: 42px; font-weight: 800; letter-spacing: -.045em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .hero .v small { font-size: 13px; font-weight: 700; letter-spacing: 0; margin-left: 8px; opacity: .7; }
+  .hero .v.text { font-size: 24px; letter-spacing: -.03em; line-height: 1.2; }
+  .hero .sub { margin-top: 8px; font-size: 13.5px; font-weight: 600; opacity: .75; }
+  .hero .next { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(58,46,0,.14); display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+  .hero .next .n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .hero .next .w { opacity: .7; white-space: nowrap; }
+  .hero .next .a { margin-left: auto; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .hero .next:empty { display: none; }
 
-  .wrap { padding: 18px 20px 0; }
-  .wrap .hd { display: flex; align-items: baseline; margin-bottom: 4px; }
-  .wrap .hd h4 { font: 500 11px/1 var(--mono); color: var(--mute); letter-spacing: .03em; }
-  .wrap .hd .hd-actions { margin-left: auto; display: flex; gap: 14px; }
-  .wrap .hd .add { font-size: 13px; font-weight: 600; color: var(--accent); }
-  .wrap .hd .add.alt { color: var(--mute); font-weight: 500; }
-  .wrap .hd .add:hover { text-decoration: underline; }
-  .wnote { font-size: 12.5px; color: var(--ink2); padding: 10px 0; }
+  .hd { display: flex; align-items: baseline; justify-content: space-between; padding: 4px 8px 0; }
+  .hd h4 { font-size: 13px; font-weight: 800; color: var(--sub); }
+  .hd .hd-actions { display: flex; gap: 12px; }
+  .hd .add { font-size: 13px; font-weight: 800; color: var(--ink); }
+  .hd .add.alt { color: var(--sub); }
+  .wnote { font-size: 13px; font-weight: 600; color: var(--sub); padding: 0 8px; }
   .wnote:empty { display: none; }
-  .wnote .lnk2 { display: block; margin-top: 6px; font-weight: 600; color: var(--accent); text-align: left; }
+  .wnote .lnk2 { display: block; margin-top: 6px; font-weight: 800; color: var(--ink); text-align: left; }
 
-  /* 목록: 줄 하나에 이름·언제·얼마. 상자 없이 헤어라인으로만 나눈다. */
-  .wc { padding: 14px 0; border-bottom: 1px solid var(--line); }
-  .wc .t { display: flex; align-items: baseline; gap: 8px; cursor: pointer; }
-  .wc .t .nm { font-size: 15px; font-weight: 500; letter-spacing: -.02em; flex: 1; min-width: 0;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .wc .t .amt { font-size: 14px; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .wc .t .amt small { font-size: 12px; color: var(--mute); margin-left: 4px; font-weight: 400; }
-  .wc .b { margin-top: 3px; font-size: 13px; color: var(--mute); cursor: pointer; }
-  .wc .b b { color: var(--ink2); font-weight: 500; }
-  .wc .b .st { font-weight: 600; }
-  .wc .b .st.soon, .wc .b .st.trial { color: var(--warn); }
-  .wc .b .st.wait { color: var(--accent); }
-  .wc .b .st.off, .wc .b .st.ok { color: var(--mute); font-weight: 500; }
-  .wc .b .old { color: var(--faint); }
-  .wc .detail { margin-top: 10px; }
+  /* 구독 카드 */
+  #w-list { display: flex; flex-direction: column; gap: 12px; }
+  .wc { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+  .wc .t { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .wc .t .m { flex: 1; min-width: 0; }
+  .wc .t .st { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--sub); }
+  .wc .t .nm { font-size: 18px; font-weight: 800; letter-spacing: -.03em; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wc .t .amt { text-align: right; flex-shrink: 0; }
+  .wc .t .amt .krw { font-size: 16px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .wc .t .amt .orig { font-size: 12px; font-weight: 600; color: var(--sub); margin-top: 1px; }
+  .wc.needs { background: #fff; border: 2px dashed #E0E0E5; box-shadow: none; }
+  .wc .line { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .wc .steps { display: flex; flex-direction: column; gap: 7px; }
+  .wc .steps .bars { display: flex; gap: 4px; }
+  .wc .steps .bars i { flex: 1; height: 5px; border-radius: 999px; background: var(--line); }
+  .wc .steps .bars i.on { background: var(--green); }
+  .wc .steps .bars i.on.hot { background: var(--orange); }
+  .wc .steps .lbl { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 700; color: var(--faint); }
+  .wc .steps .lbl span.on { color: var(--ink); }
+  .wc .meta { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: var(--soft); border-radius: 16px; font-size: 12.5px; font-weight: 600; color: var(--sub); line-height: 1.5; }
+  .wc .meta .lnk3 { color: var(--blue); font-weight: 800; cursor: pointer; }
+  .wc .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .wc .btns button { flex: 1; min-width: 0; height: 42px; border-radius: 999px; background: var(--soft); color: var(--ink); font-weight: 700; font-size: 13.5px; }
+  .wc .btns button.p { background: var(--ink); color: #fff; }
+  .wc .btns button.sp { color: var(--red); flex: 0 0 auto; padding: 0 16px; }
   .wc .detail[hidden] { display: none; }
-  .wc .meta { font-size: 12.5px; color: var(--mute); line-height: 1.6; margin-bottom: 8px; }
-  .wc .meta .lnk3 { color: var(--ink2); font-weight: 500; cursor: pointer; }
-  .wc .meta .lnk3:hover { text-decoration: underline; }
-  .wc .site { display: none; }
-  .wc .btns { display: flex; flex-wrap: wrap; gap: 4px 16px; }
-  .wc .btns button { font-size: 13px; font-weight: 500; color: var(--ink2); padding: 4px 0; }
-  .wc .btns button:hover { color: var(--ink); text-decoration: underline; }
-  .wc .btns button.p { color: var(--accent); font-weight: 600; }
-  .wc .btns button.p::after { content: " →"; }
-  .wc .btns .sp { margin-left: auto; color: var(--mute); }
-  .wc .btns .more { display: none; }
-  .wc .btns.extra { margin-top: 2px; }
-  .wc .btns.extra[hidden] { display: flex; }   /* 상세 안에서는 늘 보인다 */
+  .wc .detail { display: flex; flex-direction: column; gap: 12px; }
 
-  /* 빈 상태: 이름을 누르면 끝. */
-  .empty { padding: 26px 0 8px; font-size: 13.5px; color: var(--mute); line-height: 1.7; }
-  .empty b { display: block; font-size: 18px; font-weight: 500; color: var(--ink); letter-spacing: -.03em; margin-bottom: 4px; }
-  .empty .then { display: block; margin-top: 14px; font-size: 12.5px; }
-  .empty .or { display: block; margin-top: 16px; font-size: 12.5px; }
-  .empty .lnk { color: var(--accent); font-weight: 600; cursor: pointer; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px 8px; }
-  .chips button { padding: 7px 11px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--ink2); background: var(--bg); }
-  .chips button:hover { border-color: var(--accent); color: var(--ink); background: var(--paper); }
-  .chips button.on { border-color: var(--accent); color: var(--ink); background: var(--soft); }
-  .empty .chips { margin-top: 16px; }
+  /* 빈 상태 */
+  .empty { padding: 8px 4px 0; display: flex; flex-direction: column; gap: 14px; }
+  .empty b { font-size: 20px; font-weight: 800; letter-spacing: -.03em; }
+  .empty .or { font-size: 13px; font-weight: 600; color: var(--sub); }
+  .empty .or .lnk { color: var(--ink); font-weight: 800; cursor: pointer; }
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 6px; }
+  .tiles button { display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--ink); padding: 4px 0; border-radius: 16px; }
+  .tiles button:hover { background: rgba(0,0,0,.04); }
+  .tiles button.on .avatar { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--ink); }
+  .tiles button .avatar { width: 52px; height: 52px; }
 
-  .fine { padding: 16px 20px 26px; font-size: 11.5px; color: var(--faint); line-height: 1.8; }
-  .fine b { font-weight: 500; color: var(--mute); }
-  .fine .lnk { color: var(--mute); font-weight: 500; cursor: pointer; }
-  .fine .lnk:hover { color: var(--ink); }
+  /* 플로팅 등록 버튼 */
+  .fab { position: fixed; left: 0; right: 0; bottom: 20px; display: flex; justify-content: center; pointer-events: none; z-index: 5; }
+  .fab .pill { pointer-events: auto; height: 50px; padding: 0 24px; font-size: 15px; box-shadow: 0 10px 24px rgba(0,0,0,.18); }
+  .fab[hidden] { display: none; }
 
-  /* 폼: 전면. 상자 대신 밑줄. */
-  .form, .gate { position: fixed; inset: 0; max-width: 560px; margin: 0 auto; background: var(--bg);
-    padding: 26px 20px 40px; display: none; z-index: 11; overflow-y: auto; }
-  .form.on, .gate.on { display: block; }
-  .form h3, .gate h3 { font-size: 22px; font-weight: 500; letter-spacing: -.04em; }
-  .form .lead, .gate p { margin-top: 4px; font-size: 13px; color: var(--mute); }
-  .form label, .me label { display: block; margin: 22px 0 2px; font: 500 11px/1.4 var(--mono); color: var(--mute); letter-spacing: .03em; }
-  .form .row, .me .row { display: flex; gap: 20px; }
-  .form .row > *, .me .row > * { flex: 1; }
-  .form .chk, .me .chk { display: flex; align-items: center; gap: 8px; margin-top: 22px; font-size: 13.5px; color: var(--ink2); cursor: pointer; }
-  .form .chk input, .me .chk input { width: auto; height: auto; accent-color: var(--accent); }
-  .form .err, .me .err { font-size: 12.5px; color: var(--warn); font-weight: 500; margin-top: 12px; min-height: 16px; }
-  .form .acts, .me .acts { display: flex; align-items: center; gap: 22px; margin-top: 24px; }
-  .form .acts button, .me .acts button { font-size: 14px; font-weight: 600; }
-  .form .acts .p, .me .acts .p { height: 42px; padding: 0 18px; border: 1px solid var(--ink); border-radius: 6px; background: var(--ink); color: #fff; }
-  .form .acts .p:hover, .me .acts .p:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
-  .form .acts .g, .me .acts .g { color: var(--mute); }
-  .form .fine2 { font-size: 12px; color: var(--faint); line-height: 1.7; margin-top: 18px; }
-  .form .sugg { margin-top: 10px; }
+  .fine { padding: 6px 12px 0; font-size: 12px; font-weight: 600; color: var(--faint); line-height: 1.7; text-align: center; }
+  .fine .lnk { color: var(--sub); font-weight: 800; cursor: pointer; }
+  .fine b { font-weight: 700; color: var(--sub); }
+
+  /* 바텀시트: 등록·수정 */
+  .sheet-bg { position: fixed; inset: 0; background: rgba(17,17,20,.35); display: none; z-index: 10; }
+  .sheet-bg.on { display: block; }
+  .form { position: fixed; left: 0; right: 0; bottom: 0; max-height: 92%; max-width: 480px; margin: 0 auto; background: #fff; border-radius: 30px 30px 0 0;
+    padding: 14px 20px 22px; display: none; flex-direction: column; gap: 16px; z-index: 11; overflow-y: auto; box-shadow: 0 -12px 40px rgba(0,0,0,.10); }
+  .form.on { display: flex; }
+  .form .grip { width: 40px; height: 5px; border-radius: 999px; background: #E0E0E5; margin: 0 auto; flex-shrink: 0; }
+  .form h3 { font-size: 22px; font-weight: 800; letter-spacing: -.035em; }
+  .form .lead { font-size: 13.5px; font-weight: 600; color: var(--sub); margin-top: 3px; }
+  .form label { display: block; font-size: 13px; font-weight: 800; color: var(--sub); margin: 0 0 8px 4px; }
+  .form input[type=text], .form input[type=date], .form select { width: 100%; height: 46px; padding: 0 14px; border-radius: 14px; background: var(--soft); font-weight: 700; font-size: 15px; }
+  .form input::placeholder { color: var(--faint); font-weight: 600; }
+  .form .row { display: flex; gap: 8px; }
+  .form .row > * { flex: 1; min-width: 0; }
+  .form .sugg { margin: 0; }
   .form .sugg:empty { display: none; }
-  .form .krw, .form .preset-note { margin-top: 8px; font-size: 12.5px; color: var(--mute); line-height: 1.6; }
-  .form .krw b { color: var(--ink); }
-  .form .krw:empty, .form .preset-note:empty { display: none; }
-  .seg { display: flex; gap: 18px; }
-  .seg { gap: 6px; flex-wrap: wrap; }
-  .seg button { padding: 7px 11px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--mute); }
-  .seg button:hover { color: var(--ink); background: var(--paper); }
-  .seg button.on { color: var(--ink); background: var(--soft); border-color: var(--accent); }
-  .gate button { display: block; width: 100%; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; font-weight: 600; text-align: left; }
-  .gate button .sub { display: block; font-size: 12.5px; font-weight: 400; color: var(--mute); margin-top: 2px; }
-  .gate .eyebrow { font: 500 11px/1 var(--mono); color: var(--accent); letter-spacing: .03em; margin-bottom: 10px; }
-  .gate p { margin-bottom: 8px; }
+  .form .picked { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--soft); border-radius: 20px; }
+  .form .picked .m { flex: 1; min-width: 0; }
+  .form .picked .nm { font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
+  .form .picked .s { font-size: 12.5px; font-weight: 700; color: var(--sub); margin-top: 2px; }
+  .form .picked .krw { text-align: right; }
+  .form .picked .krw b { font-size: 15px; font-variant-numeric: tabular-nums; }
+  .form .picked .krw small { display: block; font-size: 11px; font-weight: 600; color: var(--sub); }
+  .form .picked:empty { display: none; }
+  .seg { display: flex; gap: 8px; flex-wrap: wrap; }
+  .seg button { height: 38px; padding: 0 14px; border-radius: 999px; background: var(--soft); color: var(--sub); font-size: 13.5px; font-weight: 700; }
+  .seg button.on { background: var(--ink); color: #fff; }
+  .form .chk { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--sub); cursor: pointer; }
+  .form .chk input { width: 18px; height: 18px; accent-color: var(--ink); }
+  .form .err { font-size: 13px; font-weight: 700; color: var(--red); min-height: 16px; }
+  .form .err:empty { display: none; }
+  .form .acts { display: flex; gap: 8px; }
+  .form .acts .p { flex: 1; height: 54px; border-radius: 18px; background: var(--ink); color: #fff; font-weight: 800; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .form .acts .g { height: 54px; padding: 0 18px; border-radius: 18px; background: var(--soft); color: var(--ink); font-weight: 700; }
+  .form .fine2 { font-size: 12px; font-weight: 600; color: var(--faint); line-height: 1.6; }
+  .form .preset-note, .form .krw-line { font-size: 12.5px; font-weight: 600; color: var(--sub); }
+  .form .preset-note:empty, .form .krw-line:empty { display: none; }
+  .form .krw-line b { color: var(--ink); }
+  details.more { border-radius: 16px; }
+  details.more summary { list-style: none; cursor: pointer; font-size: 13px; font-weight: 800; color: var(--sub); padding: 4px; }
+  details.more summary::-webkit-details-marker { display: none; }
+  details.more[open] summary { color: var(--ink); }
+  details.more .body { display: flex; flex-direction: column; gap: 14px; padding-top: 12px; }
+
+  /* 과세유형 게이트 */
+  .gate { position: fixed; inset: 0; max-width: 480px; margin: 0 auto; background: var(--bg); padding: 26px 20px; display: none; z-index: 12; overflow-y: auto; }
+  .gate.on { display: block; }
+  .gate .eyebrow { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; margin-bottom: 8px; }
+  .gate h3 { font-size: 22px; font-weight: 800; letter-spacing: -.035em; margin-bottom: 6px; }
+  .gate p { font-size: 13.5px; font-weight: 600; color: var(--sub); margin-bottom: 16px; }
+  .gate button { display: block; width: 100%; margin-top: 8px; padding: 16px 18px; border-radius: 20px; background: #fff; font-size: 15px; font-weight: 800; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,.05); }
+  .gate button .sub { display: block; font-size: 12.5px; font-weight: 600; color: var(--sub); margin-top: 2px; }
 
   /* 결제 기록·세무 */
-  .due { margin: 18px 20px 0; padding: 0 0 14px; border-bottom: 1px solid var(--line); }
+  .due { padding: 18px 20px; }
   .due:empty { display: none; }
-  .due h4 { font: 500 11px/1 var(--mono); color: var(--accent); letter-spacing: .03em; margin-bottom: 8px; }
-  .due .r { display: flex; align-items: baseline; gap: 8px; padding: 4px 0; font-size: 14px; }
-  .due .r .n { font-weight: 600; }
-  .due .r .w { font-size: 12.5px; color: var(--mute); }
-  .due .r .a { margin-left: auto; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .due .note { margin-top: 8px; font-size: 12.5px; color: var(--mute); }
-  .due .note b { color: var(--ink2); font-weight: 500; }
-  .todo { margin: 14px 20px 0; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .due h4 { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; margin-bottom: 8px; }
+  .due .r { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; font-size: 14px; }
+  .due .r .n { font-weight: 800; }
+  .due .r .w { font-size: 12.5px; font-weight: 600; color: var(--sub); }
+  .due .r .a { margin-left: auto; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .due .note { margin-top: 10px; font-size: 12.5px; font-weight: 600; color: var(--sub); }
+  .due .note b { color: var(--ink); }
+  .todo { padding: 16px 20px; }
   .todo:empty { display: none; }
-  .todo h4 { font: 500 11px/1 var(--mono); color: var(--mute); letter-spacing: .03em; margin-bottom: 8px; }
-  .todo .t { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13.5px; }
-  .todo .t .a { margin-left: auto; display: flex; gap: 12px; flex-shrink: 0; }
-  .todo .t .x, .todo .t .go { font-size: 12.5px; font-weight: 600; color: var(--accent); cursor: pointer; }
-  .todo .t .go { color: var(--ink2); }
-  .todo .how { font-size: 12px; color: var(--mute); line-height: 1.65; margin-top: 8px; }
-  .tabs { display: flex; gap: 16px; padding: 16px 20px 0; }
-  .tabs { gap: 4px; }
-  .tabs .tab { font-size: 13px; font-weight: 500; color: var(--mute); padding: 5px 10px; border-radius: 4px; }
-  .tabs .tab.on { color: var(--ink); background: var(--soft); }
-  .summary { padding: 14px 20px 4px; font-size: 13px; color: var(--mute); }
-  .summary b { color: var(--ink); font-weight: 600; }
-  .summary .leak, .summary .warn { color: var(--ink2); font-weight: 500; }
-  ul { list-style: none; padding: 0 20px; }
-  li { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-  .d { width: 44px; font: 11px/1.3 var(--mono); color: var(--faint); flex-shrink: 0; }
+  .todo h4 { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; margin-bottom: 8px; }
+  .todo .t { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13.5px; font-weight: 600; }
+  .todo .t .a { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; }
+  .todo .t .x, .todo .t .go { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; cursor: pointer; }
+  .todo .t .go { background: var(--soft); color: var(--ink); }
+  .todo .how { font-size: 12.5px; font-weight: 600; color: var(--sub); line-height: 1.6; margin-top: 10px; }
+  .tabs { display: flex; gap: 4px; padding: 4px; background: rgba(0,0,0,.05); border-radius: 999px; }
+  .tabs .tab { flex: 1; height: 32px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: var(--sub); }
+  .tabs .tab.on { background: #fff; color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .summary { padding: 0 8px; font-size: 13px; font-weight: 600; color: var(--sub); }
+  .summary b { color: var(--ink); }
+  .summary:empty { display: none; }
+  ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  li { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: #fff; border-radius: 20px; box-shadow: 0 6px 20px rgba(20,20,30,.04); }
+  .d { width: 40px; font-size: 11.5px; font-weight: 700; color: var(--faint); flex-shrink: 0; line-height: 1.3; }
   .m { flex: 1; min-width: 0; }
-  .m .n { display: block; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .m .s { display: block; font-size: 12px; color: var(--mute); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m .n { display: block; font-weight: 800; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m .s { display: block; font-size: 12px; font-weight: 600; color: var(--sub); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .a { text-align: right; flex-shrink: 0; }
-  .a .w { font-weight: 500; font-size: 14px; font-variant-numeric: tabular-nums; }
-  .a .v { font-size: 11.5px; color: var(--mute); }
-  .a .fx { font-size: 11.5px; color: var(--accent); cursor: pointer; font-weight: 600; white-space: nowrap; margin-top: 2px; display: inline-block; }
-  .chip { font-size: 11.5px; font-weight: 500; flex-shrink: 0; color: var(--mute); }
-  .chip.ask { color: var(--accent); cursor: pointer; font-weight: 600; }
-  .confirm { font-size: 12.5px; font-weight: 600; color: var(--accent); flex-shrink: 0; }
-  footer { padding: 18px 20px 6px; display: flex; gap: 22px; align-items: center; }
-  footer button { font-size: 14px; font-weight: 600; }
-  #export { height: 42px; padding: 0 18px; border: 1px solid var(--ink); border-radius: 6px; background: var(--ink); color: #fff; }
-  #export:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
-  #copy { color: var(--mute); }
+  .a .w { font-weight: 800; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+  .a .v { font-size: 11.5px; font-weight: 600; color: var(--sub); }
+  .a .fx { font-size: 11.5px; color: var(--blue); cursor: pointer; font-weight: 800; white-space: nowrap; margin-top: 2px; display: inline-block; }
+  .chip { font-size: 11.5px; font-weight: 800; flex-shrink: 0; color: var(--sub); }
+  .chip.ask { height: 26px; padding: 0 10px; border-radius: 999px; background: var(--ink); color: #fff; display: inline-flex; align-items: center; cursor: pointer; }
+  .confirm { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--soft); font-size: 12.5px; font-weight: 800; flex-shrink: 0; }
+  .empty-book { padding: 26px 20px; text-align: center; font-size: 13.5px; font-weight: 600; color: var(--sub); line-height: 1.7; }
+  .empty-book b { display: block; font-size: 17px; color: var(--ink); margin-bottom: 4px; }
+  .empty-book .then { display: block; margin-top: 12px; font-size: 12.5px; color: var(--faint); }
+  footer { display: flex; gap: 8px; align-items: center; padding: 4px 0 0; }
+  footer button { flex: 1; height: 46px; border-radius: 999px; font-size: 14px; font-weight: 800; }
+  #export { background: var(--ink); color: #fff; }
+  #copy { background: #fff; color: var(--ink); }
 
-  /* 내 정보 */
-  .me .hint { font-size: 12.5px; color: var(--mute); line-height: 1.65; margin-top: 8px; }
-  .me .acts { margin-top: 18px; }
-  .view#view-me .hd { margin-top: 8px; }
-
-  @media (prefers-color-scheme: dark) { html, body, #app, .form, .gate { background: var(--bg); color: var(--ink); } }
+  /* 설정 */
+  .me { display: flex; flex-direction: column; gap: 12px; padding: 18px 20px; }
+  .me label { display: block; font-size: 13px; font-weight: 800; color: var(--sub); margin: 4px 0 -4px 4px; }
+  .me input[type=text], .me select { width: 100%; height: 46px; padding: 0 14px; border-radius: 14px; background: var(--soft); font-weight: 700; font-size: 15px; }
+  .me .row { display: flex; gap: 8px; }
+  .me .row > * { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .me .chk { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .me .chk input { width: 18px; height: 18px; accent-color: var(--ink); }
+  .me .hint { font-size: 12.5px; font-weight: 600; color: var(--sub); line-height: 1.6; }
+  .me .err { font-size: 13px; font-weight: 700; color: var(--red); }
+  .me .err:empty { display: none; }
+  .me .acts { display: flex; gap: 8px; margin-top: 4px; }
+  .me .acts button { height: 44px; padding: 0 18px; border-radius: 999px; font-weight: 800; font-size: 14px; }
+  .me .acts .p { background: var(--ink); color: #fff; }
+  .me .acts .g { background: var(--soft); color: var(--ink); }
+  .me h4 { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; }
 </style>
 </head>
 <body>
 <div id="app">
   <header>
-    <a class="brand" href="https://donna.co.kr/" target="_blank" rel="noopener"><img src="icon48.png" alt=""><span><b>돈나가요</b><small>donna.co.kr</small></span></a>
+    <a class="brand" href="https://donna.co.kr/" target="_blank" rel="noopener"><img src="icon48.png" alt=""><span><b>Donna</b><small>donna.co.kr</small></span></a>
     <span class="saved" id="total-saved"></span>
+    <button class="gear" id="tab-me" aria-label="설정">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111114" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
+    </button>
   </header>
 
   <div class="top">
-    <button id="tab-watch" class="on">구독 알림</button>
-    <button id="tab-book">결제 기록 · 세무</button>
-    <button id="tab-me">내 정보</button>
+    <button id="tab-watch" class="on">구독</button>
+    <button id="tab-book">기록 · 세무</button>
   </div>
-
-  <div class="view" id="view-book">
-  <div class="due" id="due"></div>
-  <div class="todo" id="todo"></div>
-
-  <div class="tabs">
-    <button class="tab on" data-q="this">이번 분기</button>
-    <button class="tab" data-q="last">지난 분기</button>
-    <button class="tab" data-q="all">전체</button>
-  </div>
-  <div class="summary" id="summary"></div>
-  <ul id="list"></ul>
-  <footer>
-    <button id="export">분기 자료 내보내기</button>
-    <button id="copy">전달 문구 복사</button>
-  </footer>
-  <div class="fine">
-    이 브라우저에만 저장 · 서버 전송 없음<br>
-    <span class="lnk" id="backup">기록 백업</span> ·
-    <span class="lnk" id="restore">불러오기</span>
-    <input type="file" id="restore-file" accept="application/json" hidden>
-  </div>
-  </div><!-- /view-book -->
 
   <div class="view on" id="view-watch">
     <div class="hero" id="hero"></div>
-    <div class="wrap">
-      <div class="hd"><h4>내 구독</h4><div class="hd-actions"><button class="add alt" id="w-enable">이 결제창에서 켜기</button><button class="add" id="w-add">+ 등록</button></div></div>
-      <div class="wnote" id="w-note"></div>
-      <div id="w-list"></div>
-    </div>
+    <div class="hd"><h4>다음 결제</h4><div class="hd-actions"><button class="add alt" id="w-enable">이 결제창에서 켜기</button><button class="add" id="w-add">+ 등록</button></div></div>
+    <div class="wnote" id="w-note"></div>
+    <div id="w-list"></div>
     <div class="fine">
       <span class="lnk" id="w-all">모든 결제창에서 자동으로 켜기</span><br>
       이 브라우저에만 저장 · 서버 전송 없음
     </div>
   </div>
 
+  <div class="view" id="view-book">
+    <div class="card due" id="due"></div>
+    <div class="card todo" id="todo"></div>
+    <div class="tabs">
+      <button class="tab on" data-q="this">이번 분기</button>
+      <button class="tab" data-q="last">지난 분기</button>
+      <button class="tab" data-q="all">전체</button>
+    </div>
+    <div class="summary" id="summary"></div>
+    <ul id="list"></ul>
+    <footer>
+      <button id="export">분기 자료 내보내기</button>
+      <button id="copy">전달 문구 복사</button>
+    </footer>
+    <div class="fine">
+      이 브라우저에만 저장 · 서버 전송 없음<br>
+      <span class="lnk" id="backup">기록 백업</span> ·
+      <span class="lnk" id="restore">불러오기</span>
+      <input type="file" id="restore-file" accept="application/json" hidden>
+    </div>
+  </div>
+
   <div class="view" id="view-me">
-    <div class="wrap">
-      <div class="hd"><h4>사업자 정보</h4></div>
-      <div class="me">
-        <label>사업자등록번호</label>
-        <input type="text" id="me-brn" inputmode="numeric" placeholder="000-00-00000" autocomplete="off">
-        <div class="hint">해외 결제창에 세금 ID 칸이 보이면 이 번호를 버튼 한 번으로 넣어 부가세를 뺍니다.
-          이미 결제 중인 구독은 그 서비스 사이트에서 직접 넣으셔야 합니다.</div>
-
-        <div class="row">
-          <div><label>사업자 유형</label>
-            <select id="me-type">
-              <option value="solo">개인사업자</option>
-              <option value="corp">법인</option>
-              <option value="personal">사업자가 아닙니다</option>
-            </select></div>
-          <div><label>부가세 신고</label>
-            <select id="me-tax">
-              <option value="general">일반과세자</option>
-              <option value="simplified">간이과세자</option>
-              <option value="exempt">면세사업자</option>
-              <option value="unknown">잘 모르겠어요</option>
-            </select></div>
-        </div>
-        <div class="err" id="me-err"></div>
-        <div class="acts"><button class="p" id="me-save">저장</button></div>
+    <div class="card me">
+      <h4>사업자 정보</h4>
+      <label>사업자등록번호</label>
+      <input type="text" id="me-brn" inputmode="numeric" placeholder="000-00-00000" autocomplete="off">
+      <div class="hint">해외 결제창에 세금 ID 칸이 보이면 이 번호를 버튼 한 번으로 넣어 부가세를 뺍니다.</div>
+      <div class="row">
+        <div><label>사업자 유형</label>
+          <select id="me-type">
+            <option value="solo">개인사업자</option>
+            <option value="corp">법인</option>
+            <option value="personal">사업자가 아닙니다</option>
+          </select></div>
+        <div><label>부가세 신고</label>
+          <select id="me-tax">
+            <option value="general">일반과세자</option>
+            <option value="simplified">간이과세자</option>
+            <option value="exempt">면세사업자</option>
+            <option value="unknown">잘 모르겠어요</option>
+          </select></div>
       </div>
+      <div class="err" id="me-err"></div>
+      <div class="acts"><button class="p" id="me-save">저장</button></div>
+    </div>
 
-      <div class="hd" style="margin-top:22px"><h4>알림</h4></div>
-      <div class="me">
-        <label class="chk"><input type="checkbox" id="me-noti" checked> 결제 전 알림 받기</label>
-        <div class="row">
-          <div><label>연 구독</label>
-            <select id="me-lead-y">
-              <option value="30,7,1">30일 · 7일 · 1일 전</option>
-              <option value="30,7">30일 · 7일 전</option>
-              <option value="14,3">14일 · 3일 전</option>
-              <option value="7">7일 전 한 번</option>
-              <option value="3">3일 전 한 번</option>
-            </select></div>
-          <div><label>월 구독</label>
-            <select id="me-lead-m">
-              <option value="7,3">7일 · 3일 전</option>
-              <option value="5,1">5일 · 1일 전</option>
-              <option value="3">3일 전 한 번</option>
-              <option value="1">1일 전 한 번</option>
-            </select></div>
-        </div>
-        <div class="hint">알림은 크롬이 켜져 있을 때만 옵니다.
-          캘린더에 넣어 두면 컴퓨터가 꺼져 있어도 휴대폰에서 받습니다.</div>
-        <div class="acts">
-          <button class="p" id="me-noti-save">저장</button>
-          <button class="g" id="me-ics">캘린더에 넣기</button>
-        </div>
+    <div class="card me">
+      <h4>알림</h4>
+      <label class="chk"><input type="checkbox" id="me-noti" checked> 결제 전 알림 받기</label>
+      <div class="row">
+        <div><label>연 구독</label>
+          <select id="me-lead-y">
+            <option value="30,7,1">30일 · 7일 · 1일 전</option>
+            <option value="30,7">30일 · 7일 전</option>
+            <option value="14,3">14일 · 3일 전</option>
+            <option value="7">7일 전 한 번</option>
+            <option value="3">3일 전 한 번</option>
+          </select></div>
+        <div><label>월 구독</label>
+          <select id="me-lead-m">
+            <option value="7,3">7일 · 3일 전</option>
+            <option value="5,1">5일 · 1일 전</option>
+            <option value="3">3일 전 한 번</option>
+            <option value="1">1일 전 한 번</option>
+          </select></div>
+      </div>
+      <div class="hint">알림은 Chrome이 켜져 있을 때 옵니다. 캘린더에 넣어 두면 휴대폰에서도 받습니다.</div>
+      <div class="acts">
+        <button class="p" id="me-noti-save">저장</button>
+        <button class="g" id="me-ics">캘린더에 넣기</button>
       </div>
     </div>
     <div class="fine">이 브라우저에만 저장 · 서버 전송 없음</div>
   </div>
 
-  <div class="form" id="w-form">
-    <h3 id="w-form-title">구독 수정</h3>
-    <div class="lead" id="w-form-lead">읽어 온 값이 실제와 다르면 여기서 고칠 수 있습니다.
-      모르는 내용은 비워도 되고, 이 목록은 세무 자료에 들어가지 않습니다.</div>
+  <div class="fab" id="fab"><button class="pill black" id="w-fab">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+    구독 등록</button></div>
 
-    <label>서비스 이름</label>
-    <input type="text" id="w-name" placeholder="이름을 누르거나 직접 입력" autocomplete="off">
-    <div class="chips sugg" id="w-sugg"></div>
+  <div class="sheet-bg" id="sheet-bg"></div>
+  <div class="form" id="w-form">
+    <div class="grip"></div>
+    <div>
+      <h3 id="w-form-title">무엇을 쓰고 있나요?</h3>
+      <div class="lead" id="w-form-lead">이름을 누르면 금액과 주기는 채워 드려요.</div>
+    </div>
+
+    <div class="tiles sugg" id="w-sugg"></div>
+    <div>
+      <label for="w-name">서비스 이름</label>
+      <input type="text" id="w-name" placeholder="목록에 없으면 직접 입력" autocomplete="off">
+    </div>
+    <div class="picked" id="w-picked"></div>
     <div class="preset-note" id="w-preset-note"></div>
 
-    <label>지금 상태</label>
-    <div class="seg" id="w-kind">
-      <button type="button" data-v="sub">결제 중</button>
-      <button type="button" data-v="trial">무료 체험 중</button>
+    <div>
+      <label>지금 상태</label>
+      <div class="seg" id="w-kind">
+        <button type="button" data-v="sub">결제 중</button>
+        <button type="button" data-v="trial">무료 체험 중</button>
+      </div>
     </div>
 
-    <label>결제 주기</label>
-    <div class="seg" id="w-int">
-      <button type="button" data-v="month">매달</button>
-      <button type="button" data-v="year">매년</button>
-      <button type="button" data-v="">모르겠어요</button>
+    <div>
+      <label id="w-due-label" for="w-due">다음 결제일</label>
+      <input type="date" id="w-due">
     </div>
 
-    <label id="w-due-label">다음 결제일</label>
-    <input type="date" id="w-due">
-
-    <div class="row">
-      <div><label>금액</label><input type="text" id="w-amt" inputmode="decimal" placeholder="20"></div>
-      <div><label>통화</label>
-        <select id="w-cur"><option>USD</option><option>KRW</option><option>EUR</option>
-          <option>GBP</option><option>JPY</option></select></div>
-    </div>
-    <div class="krw" id="w-krw"></div>
-
-    <label>어디서 결제하나요</label>
-    <div class="seg" id="w-channel">
-      <button type="button" data-v="web">웹사이트</button>
-      <button type="button" data-v="appstore">App Store</button>
-      <button type="button" data-v="play">Google Play</button>
+    <div>
+      <label>어디서 결제하나요</label>
+      <div class="seg" id="w-channel">
+        <button type="button" data-v="web">웹사이트</button>
+        <button type="button" data-v="appstore">App Store</button>
+        <button type="button" data-v="play">Google Play</button>
+      </div>
     </div>
 
-    <label class="chk"><input type="checkbox" id="w-auto" checked> 자동으로 결제됩니다</label>
-    <label>해지·관리 주소 <span style="font-weight:500;letter-spacing:0">(선택)</span></label>
-    <input type="text" id="w-url" placeholder="https://...">
+    <details class="more" id="w-more">
+      <summary>금액·주기 직접 고치기</summary>
+      <div class="body">
+        <div>
+          <label>결제 주기</label>
+          <div class="seg" id="w-int">
+            <button type="button" data-v="month">매달</button>
+            <button type="button" data-v="year">매년</button>
+            <button type="button" data-v="">모르겠어요</button>
+          </div>
+        </div>
+        <div class="row">
+          <div><label for="w-amt">금액</label><input type="text" id="w-amt" inputmode="decimal" placeholder="20"></div>
+          <div><label for="w-cur">통화</label>
+            <select id="w-cur"><option>USD</option><option>KRW</option><option>EUR</option><option>GBP</option><option>JPY</option></select></div>
+        </div>
+        <div class="krw-line" id="w-krw"></div>
+        <label class="chk"><input type="checkbox" id="w-auto" checked> 자동으로 결제됩니다</label>
+        <div>
+          <label for="w-url">해지·관리 주소 (선택)</label>
+          <input type="text" id="w-url" placeholder="https://...">
+        </div>
+      </div>
+    </details>
+
     <div class="err" id="w-err"></div>
     <div class="acts">
-      <button class="p" id="w-save">저장</button>
-      <button class="g" id="w-cancel">취소</button>
+      <button class="p" id="w-save">등록하기</button>
+      <button class="g" id="w-cancel">닫기</button>
     </div>
-    <div class="fine2">주기와 날짜를 알면 알림을 예약합니다. 아직 모르면 확인 필요로 저장해 두고 나중에 완성할 수 있습니다.
-      금액은 기본값이라 실제 청구액과 다를 수 있습니다.</div>
+    <div class="fine2">주기와 날짜를 알면 알림을 예약합니다. 모르면 확인 필요로 저장해 두고 나중에 완성할 수 있습니다. 금액은 기본값이라 실제 청구액과 다를 수 있습니다.</div>
   </div>
 
   <div class="gate" id="gate">
     <div class="eyebrow">한 번만 여쭐게요</div>
     <h3>부가가치세 신고를 어떻게 하시나요?</h3>
     <p>답에 따라 자료의 부가세 처리 표기가 달라집니다. 모르시면 비워 두고 세무대리인께 넘기는 편이 안전합니다.</p>
-    <button data-tax="general">일반과세자
-      <span class="sub">1월과 7월에 부가세 신고를 합니다</span></button>
-    <button data-tax="simplified">간이과세자
-      <span class="sub">1월에 한 번만 신고합니다</span></button>
-    <button data-tax="exempt">면세사업자
-      <span class="sub">부가세 신고를 하지 않습니다 (병원·학원·금융 등)</span></button>
-    <button data-tax="unknown">잘 모르겠어요
-      <span class="sub">판단 칸을 비우고 '확인 필요'로 표시해 보냅니다</span></button>
+    <button data-tax="general">일반과세자<span class="sub">1월과 7월에 부가세 신고를 합니다</span></button>
+    <button data-tax="simplified">간이과세자<span class="sub">1월에 한 번만 신고합니다</span></button>
+    <button data-tax="exempt">면세사업자<span class="sub">부가세 신고를 하지 않습니다 (병원·학원·금융 등)</span></button>
+    <button data-tax="unknown">잘 모르겠어요<span class="sub">판단 칸을 비우고 '확인 필요'로 표시해 보냅니다</span></button>
   </div>
 
   <script src="rules.js"></script>

@@ -452,7 +452,7 @@
     /* 배지는 두 장이 겹쳐 있다. 앞장은 "이번에 아낄 돈", 뒷장은 "부가세로 아낀 돈".
        한 번에 하나만 보이고 서서히 바뀐다 — 둘을 나란히 쓰면 어느 쪽이 이번 건인지 헷갈린다. */
     badge.innerHTML =
-      `<span class="svst-face svst-on"><span class="svst-plate-label"><img class="svst-bell" src="${brandIcon}" alt="">돈나가요</span>` +
+      `<span class="svst-face svst-on"><span class="svst-plate-label"><img class="svst-bell" src="${brandIcon}" alt="">Donna</span>` +
       `<span class="svst-plate-val"></span></span>` +
       `<span class="svst-face svst-alt"><span class="svst-plate-label"></span>` +
       `<span class="svst-plate-val"></span></span>`;
@@ -533,7 +533,7 @@
     b.classList.toggle("svst-dot", mode === "setup" || mode === "ask");
 
     const face = b.querySelector(".svst-face");
-    face.querySelector(".svst-plate-label").textContent = on ? label : "돈나가요";
+    face.querySelector(".svst-plate-label").textContent = on ? label : "Donna";
     face.querySelector(".svst-plate-val").textContent = value || "";
 
     /* 누적 절감액은 "이 도구를 계속 켜 둘 이유"다. 하지만 이번 결제 금액과 같은 자리에
@@ -687,7 +687,7 @@
     return `<div class="svst-head">
         ${o.back
           ? `<span class="svst-back" data-svst="back-${o.back}">← 뒤로</span>`
-          : `<span class="svst-title svst-brand"><img src="${chrome.runtime.getURL("icon48.png")}" alt="돈나가요"></span>`}
+          : `<span class="svst-title svst-brand"><img src="${chrome.runtime.getURL("icon48.png")}" alt="Donna"></span>`}
         <span class="svst-close" id="svst-x">✕</span>
       </div>
       <div class="svst-top">
