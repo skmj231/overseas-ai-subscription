@@ -8,12 +8,17 @@ const R = require(path.join(root, "rules.js"));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, "1.3.3");
+assert.equal(manifest.version, "1.4.0");
+/* 사이드패널: 아이콘을 누르면 팝업이 아니라 패널이 열려야 한다. 팝업이 남아 있으면 그쪽이 먼저 잡힌다. */
+assert.ok(manifest.permissions.includes("sidePanel"), "sidePanel 권한 누락");
+assert.equal(manifest.side_panel && manifest.side_panel.default_path, "popup.html");
+assert.ok(!manifest.action.default_popup, "default_popup이 남아 있으면 사이드패널 대신 팝업이 뜬다");
+const P = require(path.join(root, "presets.js"));
 assert.match(manifest.name, /돈나가요/);
 for (const size of [16, 48, 128]) {
   assert.ok(fs.existsSync(path.join(root, `icon${size}.png`)), `icon${size}.png 누락`);
 }
-for (const file of ["onboarding.html", "onboarding.css", "onboarding.js"]) {
+for (const file of ["onboarding.html", "onboarding.css", "onboarding.js", "presets.js"]) {
   assert.ok(fs.existsSync(path.join(root, file)), `${file} 누락`);
 }
 
@@ -70,5 +75,51 @@ const page = W.parsePage(
 assert.equal(page.nextDue, "2026-09-21");
 assert.equal(page.interval, "month");
 assert.equal(page.auto, true);
+
+// ---------- 1.4: 원화 예상 · 무료 체험 · 채널 · 프리셋 ----------
+const rates = { KRW: 1400, EUR: 0.9 };
+assert.equal(W.estimateKrw(20, "USD", rates, { vat: true }), Math.round(20 * 1400 * 1.013 * 1.1));
+assert.equal(W.estimateKrw(20, "USD", rates, { vat: false }), Math.round(20 * 1400 * 1.013));
+assert.equal(W.estimateKrw(10, "EUR", rates, {}), Math.round(10 * (1400 / 0.9) * 1.013));
+assert.equal(W.estimateKrw(5000, "KRW", null, { vat: true }), 5000, "원화는 그대로");
+assert.equal(W.estimateKrw(20, "USD", null, {}), null, "환율을 모르면 지어내지 않는다");
+
+const trial = W.makeWatch({ name: "Perplexity", kind: "trial", interval: "year", nextDue: "2026-09-10",
+  amountOrig: 200, currency: "USD", channel: "appstore" }, "2026-09-01");
+assert.equal(trial.kind, "trial");
+assert.equal(trial.due, "2026-09-10", "체험 종료일은 그대로 첫 결제일");
+assert.deepEqual(W.alertDaysBefore(trial, W.LEAD_DEFAULT), [2, 0]);
+let tp = W.planTick({ t: trial }, "2026-09-08", {}, W.LEAD_DEFAULT);
+assert.equal(tp.notifications.length, 1);
+const tm = W.messageFor("pre", trial, 2, {});
+assert.match(tm.title, /무료 체험이 끝나요/);
+assert.match(tm.message, /매년 USD 200/);
+assert.equal(W.cancelUrl(trial), W.CHANNEL_URL.appstore, "앱스토어 결제는 스토어 구독 화면으로");
+const paidTrial = W.applyAction(trial, "paid", "2026-09-11");
+assert.equal(paidTrial.kind, "sub", "체험이 끝나고 결제되면 보통 구독");
+assert.equal(paidTrial.due, "2027-09-10");
+
+assert.deepEqual(W.alertDaysBefore({ interval: "year", auto: true }, W.LEAD_DEFAULT), [30, 7, 1]);
+assert.deepEqual(W.alertDaysBefore({ interval: "month", auto: true }, { year: [14, 3], month: [5, 1] }), [5, 1],
+  "예전 설정(trial 없음)도 그대로 읽힌다");
+
+const tot = W.monthlyTotal({
+  a: W.makeWatch({ name: "A", interval: "month", nextDue: "2026-10-01", amountKrw: 30000 }, "2026-09-01"),
+  b: W.makeWatch({ name: "B", interval: "year", nextDue: "2026-10-01", amountKrw: 120000 }, "2026-09-01"),
+  c: W.makeWatch({ name: "C", interval: "month", nextDue: "2026-10-01" }, "2026-09-01"),
+  d: W.applyAction(W.makeWatch({ name: "D", interval: "month", nextDue: "2026-10-01", amountKrw: 99999 }, "2026-09-01"), "canceled", "2026-09-01")
+});
+assert.deepEqual(tot, { monthly: 40000, count: 3, unknown: 1 });
+const up = W.upcoming({ a: W.makeWatch({ name: "A", interval: "month", nextDue: "2026-09-05", amountKrw: 1 }, "2026-09-01") }, "2026-09-01", 30);
+assert.equal(up.length, 1); assert.equal(up[0].left, 4);
+
+assert.equal(P.find("chatgpt").name, "ChatGPT Plus");
+assert.equal(P.find("클로드").id, "claude");
+assert.equal(P.find("Cursor Pro").id, "cursor");
+assert.equal(P.find("없는서비스"), null);
+assert.ok(P.search("", 10).length === 10 && P.search("", 10)[0].id === "chatgpt");
+for (const p of P.LIST) {
+  assert.ok(p.amount > 0 && ["month", "year"].includes(p.interval) && /^https:\/\//.test(p.manageUrl), p.id + " 프리셋 값 이상");
+}
 
 console.log("돈나가요 확장프로그램 핵심 테스트 통과");

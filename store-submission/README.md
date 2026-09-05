@@ -1,8 +1,8 @@
-# 돈나가요 Donna 1.3.2 재심사 제출 순서
+# 돈나가요 Donna 1.4.0 제출 순서
 
 ## 올릴 파일
 
-- 확장프로그램: `releases/donna-extension-v1.3.2.zip`
+- 확장프로그램: `releases/donna-extension-v1.4.0.zip`
 - 작은 홍보 이미지: `assets/generated-brand/promo-small-440x280.png`
 - 큰 홍보 이미지: `assets/generated-brand/promo-marquee-1400x560.png`
 - 스크린샷 1~3: `assets/generated-brand/store-screenshot-01-1280x800.png`부터 `03`까지

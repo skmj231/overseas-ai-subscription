@@ -52,14 +52,81 @@
   /* 며칠 전에 알릴지. 기본값은 연 14·3일, 월 5·1일이지만
      '내 정보'에서 사용자가 바꿀 수 있다. 알림은 사람마다 적당한 간격이 다르고,
      너무 잦으면 꺼 버리기 때문에 고정해 두면 안 되는 값이다. */
-  const LEAD_DEFAULT = { year: [14, 3], month: [5, 1] };
+  /* 연 구독은 금액이 크고 "잊고 있다가 1년치가 나갔다"가 가장 아픈 사고라 30·7·1일 세 번.
+     무료 체험은 종료일이 곧 첫 결제일이라 2일 전과 당일에 묻는다. */
+  const LEAD_DEFAULT = { year: [30, 7, 1], month: [5, 1], trial: [2, 0] };
 
   function alertDaysBefore(w, lead) {
     if (!w || !w.interval) return [];
+    if (w.kind === "trial") {
+      const t = lead && Array.isArray(lead.trial) && lead.trial.length ? lead.trial : LEAD_DEFAULT.trial;
+      return t.slice().sort((a, b) => b - a);
+    }
     if (w.auto === false) return [0];
     const key = w.interval === "year" ? "year" : "month";
     const picked = lead && Array.isArray(lead[key]) && lead[key].length ? lead[key] : LEAD_DEFAULT[key];
     return picked.slice().sort((a, b) => b - a);
+  }
+
+  // ---------- 원화로 얼마 나가나 ----------
+  /* 카드 문자에 찍히는 금액은 화면의 달러와 다르다. 환율에 해외 이용 수수료가 붙고,
+     사업자번호를 넣지 않은 개인에게는 부가세 10%가 더 붙는다. 이 셋을 다 곱해야
+     "이번 달 실제로 빠져나갈 돈"이 된다. 환율을 모르면 모른다고 돌려준다. */
+  const CARD_FEE = 0.013;
+  const VAT = 0.10;
+
+  function estimateKrw(amountOrig, currency, rates, opts) {
+    if (amountOrig == null || isNaN(amountOrig)) return null;
+    const o = opts || {};
+    const cur = currency || "KRW";
+    if (cur === "KRW") return Math.round(Number(amountOrig));
+    if (!rates || !rates.KRW || (cur !== "USD" && !rates[cur])) return null;
+    const per = cur === "USD" ? 1 : rates[cur];
+    let krw = Number(amountOrig) * (rates.KRW / per) * (1 + (o.fee != null ? o.fee : CARD_FEE));
+    if (o.vat) krw *= 1 + VAT;
+    return Math.round(krw);
+  }
+
+  /* 살아 있는 구독의 월 환산 합계. 연 구독은 12로 나눈다.
+     금액을 모르는 건은 더하지 않고 몇 건인지만 센다 — 모르는 것을 0으로 더하면 합계가 거짓말이 된다. */
+  const isLive = (w) => !!w && (w.status === STATUS.ACTIVE || w.status === STATUS.PENDING);
+
+  function monthlyTotal(watch) {
+    let monthly = 0, count = 0, unknown = 0;
+    for (const k of Object.keys(watch || {})) {
+      const w = watch[k];
+      if (!isLive(w)) continue;
+      count++;
+      if (w.amountKrw == null) { unknown++; continue; }
+      monthly += w.interval === "year" ? w.amountKrw / 12 : w.amountKrw;
+    }
+    return { monthly: Math.round(monthly), count, unknown };
+  }
+
+  /* 앞으로 n일 안에 빠져나갈 것들. 화면 맨 위 "이번 달 나갈 돈"이 이걸 쓴다. */
+  function upcoming(watch, today, days) {
+    const out = [];
+    for (const k of Object.keys(watch || {})) {
+      const w = watch[k];
+      if (!isLive(w) || !w.due) continue;
+      const left = daysBetween(today, w.due);
+      if (left < 0 || left > (days == null ? 30 : days)) continue;
+      out.push({ key: k, w, left });
+    }
+    out.sort((a, b) => a.left - b.left);
+    return out;
+  }
+
+  /* 해지하러 갈 곳. 앱스토어·플레이로 결제한 구독은 사이트에서 해지해도 결제가 계속된다.
+     그래서 채널이 그쪽이면 사이트 주소가 있어도 스토어 구독 화면을 먼저 연다. */
+  const CHANNEL_URL = {
+    appstore: "https://apps.apple.com/account/subscriptions",
+    play: "https://play.google.com/store/account/subscriptions"
+  };
+  function cancelUrl(w) {
+    if (!w) return null;
+    if (w.channel && CHANNEL_URL[w.channel]) return CHANNEL_URL[w.channel];
+    return w.manageUrl || null;
   }
 
   // ---------- 금액의 신선도 ----------
@@ -184,14 +251,23 @@
   function makeWatch(input, today) {
     const interval = input.interval === "year" ? "year"
       : input.interval === "month" ? "month" : null;
-    const anchor = input.nextDue || (input.lastPaid ? addInterval(input.lastPaid, interval) : null);
-    const due = dueFrom(anchor, interval, today);
+    const kind = input.kind === "trial" ? "trial" : "sub";
+    /* 무료 체험은 '다음 결제일'이 곧 체험 종료일이다. 종료일이 지나면 유료 구독으로 바뀌므로
+       그 뒤로는 보통 구독과 같은 주기로 돈다. 그래서 due에 종료일을 그대로 넣는다. */
+    const anchor = input.nextDue || input.trialEnd
+      || (input.lastPaid ? addInterval(input.lastPaid, interval) : null);
+    const due = kind === "trial" && anchor && anchor >= today ? anchor : dueFrom(anchor, interval, today);
     return {
       name: (input.name || "").trim() || "이름 없는 구독",
       amountOrig: input.amountOrig != null ? Number(input.amountOrig) : null,
       currency: input.currency || "KRW",
       amountKrw: input.amountKrw != null ? Number(input.amountKrw) : null,
       interval,
+      kind,                                  // 'sub' | 'trial'
+      channel: input.channel || "web",       // 'web' | 'appstore' | 'play' — 해지 경로가 다르다
+      presetId: input.presetId || null,
+      refundUrl: input.refundUrl || null,
+      refundNote: input.refundNote || null,
       auto: input.auto !== false,
       lastPaid: input.lastPaid || null,
       due,
@@ -226,6 +302,18 @@
        그때 금액 자리를 비워 두면 "이 자동으로 빠져나갑니다" 같은 문장이 된다.
        빈칸을 남기지 말고 문장 자체를 바꾼다. */
     const amt = amountText(w);
+    /* 무료 체험: 종료일이 곧 첫 결제일이다. "체험이 끝난다"가 아니라 "돈이 나가기 시작한다"로 말한다.
+       한 번 유료로 넘어가면 대부분 환불이 안 되니, 끊을 곳을 바로 열어 준다. */
+    if (kind === "pre" && w.kind === "trial") {
+      const cyc = w.interval === "year" ? "매년" : "매달";
+      return {
+        title: left === 0 ? `${w.name} · 오늘 무료 체험이 끝나요` : `${w.name} · ${left}일 뒤 무료 체험이 끝나요`,
+        message: (amt ? `그 뒤로 ${cyc} ${amt}이 자동으로 빠져나갑니다.` : `그 뒤로 ${cyc} 자동으로 결제됩니다.`)
+          + " 계속 쓰지 않을 거면 지금 끊는 게 안전합니다.",
+        buttons: ["해지하러 가기", "계속 씁니다"],
+        actions: ["cancel-go", "keep"]
+      };
+    }
     if (kind === "pre" && w.auto !== false) {
       /* 제목은 날짜를 말하고 본문은 금액을 말한다. 날짜는 확실하지만 금액은 아닐 수 있다.
          그 차이를 금액 표현 자체에 담는다. meta가 없으면 예전처럼 확실하게 말한다. */
@@ -292,12 +380,16 @@
         // ── 결제 전
         if (w.status === STATUS.PENDING) continue;   // 해지하러 간 사람을 재촉하지 않는다
         if (w.ackedFor === w.due) continue;          // 이번 주기는 이미 "계속 쓴다"고 답했다
-        for (const d of alertDaysBefore(w, lead)) {
-          const nkey = `w-pre-${key}-${w.due}-${d}`;
-          if (left <= d && !notified[nkey]) {
+        /* 30·7·1일처럼 단계가 여럿이면 '남은 날이 속한 가장 가까운 단계' 하나만 쏜다.
+           'left <= d'인 첫 단계를 잡으면 30일 단계를 보낸 뒤 같은 날 7일 단계가 또 나간다.
+           단계를 놓친 사람(그날 브라우저를 안 켠 사람)에게는 다음 단계에서 늦게라도 한 번 간다. */
+        const days = alertDaysBefore(w, lead);
+        const slot = days.filter(d => left <= d).sort((a, b) => a - b)[0];
+        if (slot != null) {
+          const nkey = `w-pre-${key}-${w.due}-${slot}`;
+          if (!notified[nkey]) {
             notifications.push({ kind: "pre", nkey, key, w, left,
                                  fresh: freshness(w, today), ago: seenAgo(w, today) });
-            break;
           }
         }
         continue;
@@ -309,7 +401,7 @@
            그 결제는 브라우저에 화면을 남기지 않았으므로 기록함에도 안 들어간다.
            분기 자료가 비는 걸 막기 위해 마지막으로 본 금액으로 한 줄 남긴다. 추정이다. */
         updates[key] = { due: addInterval(w.due, w.interval), ackedFor: null, misses: 0,
-                         lastPaid: w.due };
+                         lastPaid: w.due, kind: "sub" };   // 체험이었다면 이제 유료 구독이다
         const row = estimatedRow(w, key, w.due);
         if (row) records.push(row);
         continue;
@@ -345,8 +437,8 @@
         return { ...w, status: STATUS.PENDING, pendingSince: today };
       case "keep":                            // 이번 주기는 계속 쓴다
         return { ...w, status: STATUS.ACTIVE, ackedFor: w.due, misses: 0 };
-      case "paid":                            // 결제됐다 → 다음 주기로
-        return { ...w, status: STATUS.ACTIVE, lastPaid: w.due,
+      case "paid":                            // 결제됐다 → 다음 주기로 (체험이었다면 이제 유료 구독)
+        return { ...w, status: STATUS.ACTIVE, lastPaid: w.due, kind: "sub",
                  due: addInterval(w.due, w.interval), ackedFor: null, misses: 0 };
       case "canceled":
         return { ...w, status: STATUS.CANCELED, canceledAt: today };
@@ -439,6 +531,7 @@
   root.SVSTWatch = {
     STATUS, GRACE_DAYS, MAX_MISSES,
     addInterval, daysBetween, dueFrom, alertDaysBefore, LEAD_DEFAULT,
+    CARD_FEE, VAT, estimateKrw, monthlyTotal, upcoming, isLive, cancelUrl, CHANNEL_URL,
     makeWatch, messageFor, amountText,
     FRESH, CYCLE_DAYS, cyclesSince, freshness, seenAgo,
     recordPrice, savedByCancel, estimatedRow, vatFreeYear, vatFreeCount,

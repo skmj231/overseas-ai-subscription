@@ -12,6 +12,15 @@
 importScripts("watch.js");
 const WATCH = self.SVSTWatch;
 
+/* ── 사이드패널 ──
+   툴바 아이콘을 누르면 팝업 대신 오른쪽 사이드패널이 열린다(ChatGPT·Claude 확장과 같은 자리).
+   팝업은 다른 곳을 클릭하면 사라져서, 결제창을 보면서 등록하거나 해지 화면으로 건너갔다 돌아오는
+   흐름이 매번 끊겼다. 패널은 탭을 바꿔도 열려 있고, 저장소가 바뀌면 그 자리에서 다시 그린다.
+   이 호출은 설정값을 덮어쓰는 것이라 서비스 워커가 깰 때마다 불러도 된다. */
+if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+}
+
 // ---------- 환율 ----------
 /* USD 기준 전체 rates를 통째로 캐시한다. EUR·GBP·JPY 결제도 환산해야 하기 때문. */
 async function getRates() {
@@ -42,6 +51,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg && msg.type === "openBook") {
     chrome.tabs.create({ url: chrome.runtime.getURL("popup.html") });
+  }
+  /* 결제창 패널이나 온보딩 화면의 버튼에서 온다. 클릭 직후에만 열 수 있고(브라우저 규칙),
+     await를 한 번이라도 거치면 그 권한이 사라지므로 여기서 바로 연다. */
+  if (msg && msg.type === "openPanel") {
+    const windowId = sender && sender.tab ? sender.tab.windowId : chrome.windows.WINDOW_ID_CURRENT;
+    if (chrome.sidePanel && chrome.sidePanel.open) {
+      chrome.sidePanel.open({ windowId }).catch(() => {});
+    }
   }
   /* 화면에서 실제로 읽은 금액이 들어온다. 알림 목록의 금액을 최신으로 맞추고,
      달라졌으면 그 사실만 한 번 알린다. 같으면 조용히 관측 시각만 갱신한다. */
@@ -118,7 +135,7 @@ const daysBetween = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400e3);
 /* ── 알림 설정 ──
    전체를 끌 수 있어야 하고, 며칠 전에 받을지도 고를 수 있어야 한다.
    고정해 두면 성가신 사람은 확장을 지우지 알림만 끄지 않는다. */
-const SET_DEFAULT = { notify: true, lead: { year: [14, 3], month: [5, 1] } };
+const SET_DEFAULT = { notify: true, lead: WATCH.LEAD_DEFAULT };
 let SET = SET_DEFAULT;
 
 async function loadSettings() {
@@ -148,8 +165,8 @@ function notify(id, title, message, buttons) {
  * 그래서 "결제됐습니다"는 늦은 소식이고, "곧 결제됩니다"가 진짜 도움이다.
  * 안 쓸 구독이면 그 며칠 사이에 해지하면 되고, 그건 부가세 절감보다 큰 돈이다.
  *
- * 언제 알릴지는 rules.js의 alertDaysBefore가 정한다.
- *   연 자동결제 → 14일 전, 3일 전   (금액이 크니 판단할 시간을 넉넉히)
+ * 언제 알릴지는 watch.js의 LEAD_DEFAULT와 사용자 설정이 정한다.
+ *   연 자동결제 → 30일 전, 7일 전, 1일 전   (금액이 크니 판단할 시간을 넉넉히)
  *   월 자동결제 → 5일 전, 1일 전
  *   수동 반복   → 결제하던 날 당일 ("이번 달도 필요하신가요")
  */
@@ -197,12 +214,14 @@ async function checkRenewals() {
     /* 결제 전 — 판단할 시간을 준다.
        'left === d' 로 정확히 맞추면 그날 브라우저를 안 켠 사람은 영영 못 받는다.
        'left <= d' 로 두고 키로 중복만 막으면, 늦게라도 반드시 한 번은 간다. */
-    for (const d of watchedHere(mkey) ? [] : alertDaysBefore({ interval: s.interval, auto })) {
-      const key = `pre-${mkey}-${next}-${d}`;
-      if (left >= 0 && left <= d && !notified[key]) {
+    /* 남은 날이 속한 가장 가까운 단계 하나만. (watch.js planTick과 같은 규칙) */
+    const slot = watchedHere(mkey) ? null
+      : alertDaysBefore({ interval: s.interval, auto }).filter(d => left >= 0 && left <= d).sort((a, b) => a - b)[0];
+    if (slot != null) {
+      const key = `pre-${mkey}-${next}-${slot}`;
+      if (!notified[key]) {
         upcoming.push({ mkey, merchant: s.merchant || "구독", date: next, left, auto,
           amountKrw: s.amountKrw, currency: s.currency, amountOrig: s.amountOrig, key });
-        break;
       }
     }
 
@@ -260,7 +279,8 @@ async function checkWatch() {
     const m = WATCH.messageFor(n.kind, n.w, n.left, { fresh: n.fresh, ago: n.ago });
     const id = `svstw-${n.key}-${Date.now()}`;
     if (!notify(id, m.title, m.message, m.buttons)) continue;
-    notiMap[id] = { key: n.key, actions: m.actions, url: n.w.manageUrl || null };
+    /* 해지하러 갈 주소는 채널을 본다. 앱스토어 결제를 사이트에서 해지하면 돈이 계속 나간다. */
+    notiMap[id] = { key: n.key, actions: m.actions, url: WATCH.cancelUrl(n.w) };
     notified[n.nkey] = true;
   }
   for (const k of Object.keys(updates)) {

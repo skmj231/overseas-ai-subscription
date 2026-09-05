@@ -13,7 +13,7 @@ node extension/tests/run.js
 저장소 루트에서 다음 파일만 ZIP에 포함합니다.
 
 - `manifest.json`
-- `background.js`, `content.js`, `popup.js`, `onboarding.js`, `rules.js`, `watch.js`
+- `background.js`, `content.js`, `popup.js`, `onboarding.js`, `rules.js`, `watch.js`, `presets.js`
 - `popup.html`, `onboarding.html`, `onboarding.css`, `panel.css`
 - `icon16.png`, `icon48.png`, `icon128.png`
 - `test.html`, `test.js`

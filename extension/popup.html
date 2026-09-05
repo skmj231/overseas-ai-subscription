@@ -17,16 +17,16 @@
   * { box-sizing: border-box; margin: 0; padding: 0; border: 0; outline: 0; background-image: none; }
   /* 툴바에서 열면 440px, 새 탭으로 열면 조금 넓게(.tab). 어느 쪽이든 가운데 한 칼럼이다 —
      넓은 화면에서 좌우로 퍼지면 눈이 갈 곳을 잃는다. */
+  /* 사이드패널은 너비를 사용자가 끌어서 정한다(360px~창의 절반). 고정 px를 두면
+     좁을 때 잘리고 넓을 때 한쪽에 몰린다. 100%로 두고 새 탭에서만 가운데 한 칼럼으로 묶는다. */
+  html, body { height: 100%; }
   body {
-    width: 440px; max-height: 600px; overflow-y: auto; margin: 0 auto;
+    width: 100%; min-width: 320px; margin: 0; overflow-y: auto;
     font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', sans-serif;
     color: #111315; font-size: 13px; word-break: keep-all; background: #fff;
     -webkit-font-smoothing: antialiased;
   }
-  /* 새 탭으로 열 때 넓힌다. 예전에는 이 클래스 이름이 'tab'이라 아래 분기 선택 칩(.tab)의
-     배경·모서리·글자 크기까지 <body>가 통째로 물려받았다. 화면 둘레에 회색 테가 생기고
-     본문 글자가 11.5px로 줄어들던 원인이다. 이름을 갈라 둔다. */
-  body.wide { width: 560px; max-height: none; padding-top: 18px; }
+  body.wide #app { max-width: 600px; margin: 0 auto; padding-top: 18px; }
   header { padding: 16px 18px 12px; display: flex; align-items: center; justify-content: space-between; }
   header .brand { display:flex; align-items:center; gap:7px; color:#111315; text-decoration:none; }
   header .brand img { width:24px; height:24px; border-radius:7px; }
@@ -124,7 +124,7 @@
     cursor: pointer; color: #fff; font-weight: 700; font-family: inherit; flex-shrink: 0; }
   .confirm:hover { background: #185A30; }
 
-  .empty { padding: 52px 24px; text-align: center; color: rgba(0,0,0,.42); font-size: 12.5px; line-height: 1.75; }
+  .empty { padding: 28px 20px; text-align: center; color: rgba(0,0,0,.42); font-size: 12.5px; line-height: 1.75; }
   .empty .then { display: block; margin-top: 20px; padding-top: 16px; font-size: 11.5px;
     color: rgba(0,0,0,.36); box-shadow: inset 0 1px 0 rgba(17,19,21,.07); }
   .empty b { display: block; font-size: 15px; font-weight: 600; color: #111315;
@@ -197,12 +197,13 @@
   .wc .btns button.p { background: #1E6B3A; color: #fff; }
   .wc .btns button:hover { opacity: .86; }
   .wc .btns .sp { margin-left: auto; }
+  .wc .btns .more { padding: 8px 10px; letter-spacing: .1em; color: rgba(0,0,0,.5); }
+  .wc .btns.extra { margin-top: 6px; }
+  .wc .btns.extra[hidden] { display: none; }
 
   /* 구독 추가 — .gate와 같은 전면 패널 */
-  .form { position: fixed; top: 0; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 440px; background: #fff; padding: 20px 18px; display: none; z-index: 11;
-    overflow-y: auto; }
-  body.wide .form { width: 560px; }
+  .form { position: fixed; inset: 0; width: auto; max-width: 600px; margin: 0 auto;
+    background: #fff; padding: 20px 18px; display: none; z-index: 11; overflow-y: auto; }
   .form.on { display: block; }
   .form h3 { font-size: 18px; font-weight: 600; letter-spacing: -.018em; margin-bottom: 4px; }
   .form .lead { font-size: 12px; color: rgba(0,0,0,.5); line-height: 1.55; margin-bottom: 14px; }
@@ -227,7 +228,7 @@
   .form .fine2 { font-size: 10px; color: rgba(0,0,0,.34); line-height: 1.7; margin-top: 12px; }
 
   /* 과세유형 질문 — CSV를 만들 때 딱 한 번 */
-  .gate { position: fixed; inset: 0; background: #fff; padding: 26px 22px; display: none; z-index: 10; }
+  .gate { position: fixed; inset: 0; max-width: 600px; margin: 0 auto; background: #fff; padding: 26px 22px; display: none; z-index: 10; overflow-y: auto; }
   .gate.on { display: block; }
   .gate .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 2px; color: rgba(0,0,0,.35); }
   .gate h3 { font-size: 19px; font-weight: 600; letter-spacing: -.018em; margin: 10px 0 6px; }
@@ -258,6 +259,49 @@
     .me .acts .p { background: #1E6B3A; color: #fff; }
     .me .acts .g { background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.09); color: #111315; }
   }
+  /* ── 1.4 사이드패널: 맨 위 한 줄 요약.
+     "이번 달 나갈 돈"이 이 화면의 첫 문장이다. 카드 문자는 결제 뒤에 오지만 이 숫자는 결제 전에 있다. */
+  .hero { margin: 4px 16px 12px; padding: 16px 18px; border-radius: 14px; background: var(--donna-forest); color: #F9F4E9;
+    box-shadow: 0 14px 28px -20px rgba(5,43,33,.72); }
+  .hero .k { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,.62); letter-spacing: .01em; }
+  .hero .v { margin-top: 4px; font-size: 26px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .hero .v small { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.6); margin-left: 6px; letter-spacing: 0; }
+  .hero .sub { margin-top: 8px; font-size: 11.5px; color: rgba(255,255,255,.62); line-height: 1.55; }
+  .hero .sub b { color: #fff; font-weight: 600; }
+  .hero .next { margin-top: 11px; padding-top: 10px; box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
+    display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; }
+  .hero .next .n { font-weight: 600; color: #fff; }
+  .hero .next .w { color: rgba(255,255,255,.62); font-size: 11.5px; }
+  .hero .next .a { margin-left: auto; font-weight: 600; color: var(--donna-gold); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  /* 자주 쓰는 서비스 칩. 이름을 누르면 금액·주기·해지 화면이 채워진다 — 입력은 날짜 하나만 남는다. */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { padding: 7px 11px; border-radius: 999px; background: #FFFCF5; box-shadow: inset 0 0 0 1px rgba(0,0,0,.1);
+    color: #2a2c28; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .chips button:hover { box-shadow: inset 0 0 0 1px var(--donna-forest); color: var(--donna-forest); }
+  .chips button.on { background: var(--donna-forest); color: #F9F4E9; box-shadow: none; }
+  .empty .chips { justify-content: center; margin-top: 18px; }
+  .empty .or { display: block; margin-top: 14px; font-size: 11.5px; color: rgba(0,0,0,.4); }
+
+  /* 폼 안 선택 칸: 구독 중/무료 체험, 월/연, 결제 채널. 셀렉트보다 한 눈에 보인다. */
+  .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+  .seg button { min-height: 40px; border-radius: 8px; background: #FFFCF5; box-shadow: inset 0 0 0 1px rgba(0,0,0,.1);
+    color: #4d4f4a; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 0 6px; }
+  .seg button.on { background: var(--donna-forest); color: #F9F4E9; box-shadow: none; }
+  .form .sugg { margin-top: 6px; }
+  .form .sugg:empty { display: none; }
+  .form .krw { margin-top: 7px; font-size: 11.5px; color: rgba(0,0,0,.5); line-height: 1.55; }
+  .form .krw b { color: #111315; font-weight: 700; }
+  .form .krw:empty { display: none; }
+  .form .preset-note { margin-top: 6px; font-size: 11px; color: rgba(0,0,0,.42); line-height: 1.55; }
+  .form .preset-note:empty { display: none; }
+
+  /* 카드 안 보조 정보: 채널·환불 규정. 경고가 아니라 단서라 흐리게. */
+  .wc .meta { margin-top: 6px; font-size: 11px; color: rgba(0,0,0,.42); line-height: 1.6; }
+  .wc .meta .lnk3 { font-weight: 600; color: #111315; cursor: pointer; }
+  .wc .meta .lnk3:hover { text-decoration: underline; }
+  .wc .t .st.trial { color: #8a5a00; }
+
   /* Donna 1.3.2 visual identity */
   :root { --donna-forest:#0C3F2E; --donna-forest-2:#0C3F2E; --donna-cream:#FBF8F0; --donna-gold:#D6AC49; }
   html, body, #app { background:var(--donna-cream); }
@@ -313,8 +357,9 @@
   </div><!-- /view-book -->
 
   <div class="view on" id="view-watch">
+    <div class="hero" id="hero"></div>
     <div class="wrap">
-      <div class="hd"><h4>결제 전 알림</h4><div class="hd-actions"><button class="add alt" id="w-add">직접 등록</button><button class="add" id="w-enable">이 결제창에서 켜기</button></div></div>
+      <div class="hd"><h4>내 구독</h4><div class="hd-actions"><button class="add alt" id="w-enable">이 결제창에서 켜기</button><button class="add" id="w-add">+ 구독 등록</button></div></div>
       <div class="wnote" id="w-note"></div>
       <div id="w-list"></div>
     </div>
@@ -358,6 +403,7 @@
         <div class="row">
           <div><label>연 구독</label>
             <select id="me-lead-y">
+              <option value="30,7,1">30일 · 7일 · 1일 전</option>
               <option value="30,7">30일 · 7일 전</option>
               <option value="14,3">14일 · 3일 전</option>
               <option value="7">7일 전 한 번</option>
@@ -388,18 +434,41 @@
       모르는 내용은 비워도 되고, 이 목록은 세무 자료에 들어가지 않습니다.</div>
 
     <label>서비스 이름</label>
-    <input type="text" id="w-name" placeholder="예: Midjourney">
+    <input type="text" id="w-name" placeholder="이름을 누르거나 직접 입력" autocomplete="off">
+    <div class="chips sugg" id="w-sugg"></div>
+    <div class="preset-note" id="w-preset-note"></div>
+
+    <label>지금 상태</label>
+    <div class="seg" id="w-kind">
+      <button type="button" data-v="sub">결제 중</button>
+      <button type="button" data-v="trial">무료 체험 중</button>
+    </div>
+
+    <label>결제 주기</label>
+    <div class="seg" id="w-int">
+      <button type="button" data-v="month">매달</button>
+      <button type="button" data-v="year">매년</button>
+      <button type="button" data-v="">모르겠어요</button>
+    </div>
+
+    <label id="w-due-label">다음 결제일</label>
+    <input type="date" id="w-due">
+
     <div class="row">
       <div><label>금액</label><input type="text" id="w-amt" inputmode="decimal" placeholder="20"></div>
       <div><label>통화</label>
-        <select id="w-cur"><option>KRW</option><option>USD</option><option>EUR</option>
+        <select id="w-cur"><option>USD</option><option>KRW</option><option>EUR</option>
           <option>GBP</option><option>JPY</option></select></div>
     </div>
-    <div class="row">
-      <div><label>주기</label>
-        <select id="w-int"><option value="">잘 모르겠어요</option><option value="month">월 구독</option><option value="year">연 구독</option></select></div>
-      <div><label>다음 결제일</label><input type="date" id="w-due"></div>
+    <div class="krw" id="w-krw"></div>
+
+    <label>어디서 결제하나요</label>
+    <div class="seg" id="w-channel">
+      <button type="button" data-v="web">웹사이트</button>
+      <button type="button" data-v="appstore">App Store</button>
+      <button type="button" data-v="play">Google Play</button>
     </div>
+
     <label class="chk"><input type="checkbox" id="w-auto" checked> 자동으로 결제됩니다</label>
     <label>해지·관리 주소 <span style="font-weight:500;letter-spacing:0">(선택)</span></label>
     <input type="text" id="w-url" placeholder="https://...">
@@ -408,8 +477,8 @@
       <button class="p" id="w-save">저장</button>
       <button class="g" id="w-cancel">취소</button>
     </div>
-    <div class="fine2">주기와 다음 결제일을 모두 알면 알림을 예약합니다.
-      아직 모르면 확인 필요로 저장해 두고 나중에 완성할 수 있습니다.</div>
+    <div class="fine2">주기와 날짜를 알면 알림을 예약합니다. 아직 모르면 확인 필요로 저장해 두고 나중에 완성할 수 있습니다.
+      금액은 기본값이라 실제 청구액과 다를 수 있습니다.</div>
   </div>
 
   <div class="gate" id="gate">
@@ -428,6 +497,7 @@
 
   <script src="rules.js"></script>
   <script src="watch.js"></script>
+  <script src="presets.js"></script>
   <script src="popup.js"></script>
 </div>
 </body>

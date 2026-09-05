@@ -422,7 +422,7 @@
   function alertDaysBefore(billing) {
     if (!billing || !billing.interval) return [];
     if (!billing.auto) return [0];                 // 수동은 그날 "또 하실 건가요"
-    return billing.interval === "year" ? [14, 3] : [5, 1];
+    return billing.interval === "year" ? [30, 7, 1] : [5, 1];   // watch.js LEAD_DEFAULT와 같은 값
   }
 
   // ============================================================

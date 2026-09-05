@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
   "name": "돈나가요 Donna: 해외 AI·SaaS 구독 결제 전 알림",
-  "version": "1.3.3",
-  "description": "해외 AI·SaaS 구독이 자동 결제되기 전에 미리 알려드립니다. 사업자는 결제창의 Tax ID 입력과 분기별 세무 자료 정리도 도움받을 수 있습니다.",
+  "version": "1.4.0",
+  "description": "해외 AI·SaaS 구독이 자동 결제되기 전에 원화 예상액과 함께 미리 알려드립니다. 무료 체험 종료, 해지 경로, 사업자 세무 자료 정리까지 한 패널에서.",
   "homepage_url": "https://donna.co.kr/",
   "permissions": [
+    "sidePanel",
     "storage",
     "alarms",
     "notifications",
@@ -23,13 +24,15 @@
     "128": "icon128.png"
   },
   "action": {
-    "default_popup": "popup.html",
     "default_title": "돈나가요 Donna · 구독 알림",
     "default_icon": {
       "16": "icon16.png",
       "48": "icon48.png",
       "128": "icon128.png"
     }
+  },
+  "side_panel": {
+    "default_path": "popup.html"
   },
   "content_scripts": [
     {
@@ -92,8 +95,14 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icon48.png", "icon128.png"],
-      "matches": ["https://*/*"]
+      "resources": [
+        "icon48.png",
+        "icon128.png"
+      ],
+      "matches": [
+        "https://*/*"
+      ]
     }
-  ]
+  ],
+  "minimum_chrome_version": "116"
 }

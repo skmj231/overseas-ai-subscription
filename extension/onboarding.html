@@ -11,40 +11,61 @@
     <header class="brand">
       <img src="icon48.png" alt="돈나가요 Donna">
       <span>돈나가요</span>
+      <ol class="steps" aria-label="진행 단계"><li class="on">알림 예시</li><li>구독 등록</li><li>완료</li></ol>
     </header>
 
+    <!-- 1. 무엇을 해 주는지 한 화면. 예시는 실제 구독으로 저장되지 않는다. -->
     <section class="step on" id="demo" aria-labelledby="demo-title">
       <p class="kicker">설치 완료</p>
-      <h1 id="demo-title">결제 전에<br>이렇게 알려드려요.</h1>
-      <p class="lead">먼저 예시를 확인하세요. 아래 내용은 실제 구독으로 저장되지 않습니다.</p>
+      <h1 id="demo-title">카드 문자보다<br>먼저 알려드려요.</h1>
+      <p class="lead">해외 AI·SaaS 구독은 결제되고 나면 환불이 거의 안 됩니다.
+        그래서 빠져나가기 <b>며칠 전에</b> 원화 예상액과 함께 알려드립니다.</p>
 
       <article class="demo-card" aria-label="결제 전 알림 예시">
         <div class="demo-label">예시 화면</div>
-        <div class="demo-head"><strong>ChatGPT Plus</strong><span>예정</span></div>
-        <p>USD 20 · 매달 자동결제</p>
+        <div class="demo-head"><strong>Claude Pro</strong><span>5일 뒤 자동결제</span></div>
+        <p>USD 20 · 매달 · 카드에는 약 <b id="demo-krw">₩30,800</b></p>
         <div class="demo-date"><span>다음 결제</span><b id="demo-due"></b></div>
         <div class="notice"><i></i><span id="demo-notice"></span></div>
+        <div class="demo-btns"><span>해지하러 가기</span><span>계속 씁니다</span></div>
       </article>
+
+      <ul class="promise">
+        <li><b>연 구독</b>은 30·7·1일 전, <b>월 구독</b>은 5·1일 전, <b>무료 체험</b>은 끝나기 2일 전에 알려드려요.</li>
+        <li>알림에서 바로 <b>해지 화면</b>으로 갑니다. App Store·Google Play 결제는 그쪽 해지 화면으로요.</li>
+        <li>은행 연동도 회원가입도 없습니다. 모든 내용은 <b>이 브라우저 안에만</b> 저장됩니다.</li>
+      </ul>
 
       <div class="actions">
         <button class="primary" id="start">내 구독 등록하기</button>
-        <button class="text" id="skip">예시만 보고 닫기</button>
+        <button class="text" id="skip">나중에 할게요</button>
       </div>
+      <p class="hint">언제든 브라우저 오른쪽 위 <img src="icon16.png" alt="" class="inline-icon"> 아이콘을 누르면 오른쪽에 패널이 열립니다.</p>
     </section>
 
+    <!-- 2. 첫 구독. 이름을 누르면 금액·주기·해지 화면이 채워지고, 사용자는 날짜 하나만 적는다. -->
     <section class="step" id="register" aria-labelledby="register-title">
       <button class="back" id="back" aria-label="예시 화면으로 돌아가기">← 예시로 돌아가기</button>
       <p class="kicker">첫 구독 등록</p>
-      <h1 id="register-title">기억나는 것만<br>알려주세요.</h1>
-      <p class="lead">모르는 내용은 비워도 됩니다. 나중에 결제 관리 화면에서 확인할 수 있어요.</p>
+      <h1 id="register-title">쓰고 있는 서비스를<br>눌러 주세요.</h1>
+      <p class="lead">금액과 주기는 채워 드립니다. 모르는 내용은 비워도 됩니다.</p>
 
       <form id="form" novalidate>
-        <label for="service">어떤 서비스를 쓰고 있나요?</label>
-        <input id="service" name="service" type="text" maxlength="60" autocomplete="off" placeholder="서비스 이름 검색 또는 직접 입력" required>
         <div class="services" id="services" aria-label="자주 쓰는 서비스"></div>
+        <label for="service">목록에 없으면 직접 입력</label>
+        <input id="service" name="service" type="text" maxlength="60" autocomplete="off" placeholder="서비스 이름" required>
+        <p class="preset-note" id="preset-note"></p>
 
         <fieldset>
-          <legend>매달 결제인가요, 매년 결제인가요?</legend>
+          <legend>지금 상태</legend>
+          <div class="segments" id="kinds">
+            <button type="button" data-kind="sub" class="on">결제 중</button>
+            <button type="button" data-kind="trial">무료 체험 중</button>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>결제 주기</legend>
           <div class="segments" id="intervals">
             <button type="button" data-interval="month">매달</button>
             <button type="button" data-interval="year">매년</button>
@@ -52,37 +73,51 @@
           </div>
         </fieldset>
 
-        <label for="due">다음 결제일 <small>선택</small></label>
+        <label for="due" id="due-label">다음 결제일 <small>선택</small></label>
         <input id="due" name="due" type="date">
 
-        <details>
-          <summary>금액도 알고 있어요 <span>선택</span></summary>
+        <div class="money-wrap">
+          <label for="amount">금액 <small>기본값, 고칠 수 있어요</small></label>
           <div class="money">
             <select id="currency" aria-label="통화">
-              <option value="KRW">KRW</option><option value="USD">USD</option>
+              <option value="USD">USD</option><option value="KRW">KRW</option>
               <option value="EUR">EUR</option><option value="GBP">GBP</option><option value="JPY">JPY</option>
             </select>
             <input id="amount" inputmode="decimal" placeholder="금액">
           </div>
-        </details>
+          <p class="krw" id="krw"></p>
+        </div>
+
+        <fieldset>
+          <legend>어디서 결제하나요</legend>
+          <div class="segments" id="channels">
+            <button type="button" data-channel="web" class="on">웹사이트</button>
+            <button type="button" data-channel="appstore">App Store</button>
+            <button type="button" data-channel="play">Google Play</button>
+          </div>
+        </fieldset>
 
         <p class="error" id="error" role="alert"></p>
         <button class="primary" type="submit">이 내용으로 등록하기</button>
       </form>
     </section>
 
+    <!-- 3. 끝. 언제 알림이 오는지 한 줄, 그리고 패널을 연다. -->
     <section class="step" id="done" aria-labelledby="done-title">
       <p class="kicker">등록 완료</p>
-      <h1 id="done-title">첫 구독을<br>등록했습니다.</h1>
+      <h1 id="done-title">이제 결제 전에<br>알려드릴게요.</h1>
       <article class="result" id="result"></article>
       <div class="actions">
-        <button class="primary" id="open-list">내 구독 목록 보기</button>
+        <button class="primary" id="open-panel">패널에서 내 구독 보기</button>
         <button class="text" id="add-another">하나 더 등록하기</button>
       </div>
-      <p class="privacy">등록한 내용은 이 브라우저에만 저장됩니다.</p>
+      <p class="hint">알림은 Chrome이 켜져 있을 때 옵니다. 패널의 <b>내 정보 → 캘린더에 넣기</b>로 휴대폰에서도 받을 수 있어요.
+        사업자라면 <b>내 정보</b>에 사업자등록번호를 넣어 두세요. 결제창에서 부가세 10%를 뺄 수 있습니다.</p>
+      <p class="privacy">등록한 내용은 이 브라우저에만 저장됩니다. 서버로 보내지 않습니다.</p>
     </section>
   </main>
   <script src="watch.js"></script>
+  <script src="presets.js"></script>
   <script src="onboarding.js"></script>
 </body>
 </html>
