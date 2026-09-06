@@ -1,177 +1,104 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>돈나가요 개인정보처리방침</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
-    color:#111315;line-height:1.75;word-break:keep-all;background:#fff;
-    max-width:720px;margin:0 auto;padding:64px 24px 96px;font-size:16px}
-  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.02em;color:rgba(0,0,0,.4)}
-  h1{font-size:34px;font-weight:600;letter-spacing:-.026em;margin:14px 0 8px;line-height:1.2}
-  .updated{color:rgba(0,0,0,.45);font-size:14px;margin-bottom:40px}
-  h2{font-size:20px;font-weight:600;letter-spacing:-.018em;margin:40px 0 12px}
-  p{margin-bottom:14px;color:rgba(0,0,0,.75)}
-  .lead{font-size:18px;font-weight:600;color:#fff;background:#16171A;
-    padding:22px 24px;border-radius:12px;margin-bottom:8px;line-height:1.6}
-  table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:14.5px}
-  th{text-align:left;font-weight:600;padding:10px 12px;background:#F1F2F5}
-  td{padding:10px 12px;color:rgba(0,0,0,.75);vertical-align:top}
-  tr+tr td{border-top:1px solid #F1F2F5}
-  .never{background:#F1F2F5;border-radius:12px;padding:20px 22px;margin:16px 0}
-  .never b{display:block;margin-bottom:8px}
-  .never li{margin-left:18px;color:rgba(0,0,0,.75);margin-bottom:4px}
-  footer{margin-top:56px;color:rgba(0,0,0,.45);font-size:14px}
-  code{background:#F1F2F5;padding:2px 6px;border-radius:4px;font-size:14px}
-</style>
-</head>
-<body>
-  <div class="eyebrow">돈나가요</div>
-  <h1>개인정보처리방침</h1>
-  <div class="updated">최종 수정일: 2026년 9월 2일 · 시행일: 2026년 9월 2일 · v1.3.2</div>
+<!DOCTYPE html><html lang="ko"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>개인정보처리방침 · Donna</title>
+<meta name="description" content="Donna 확장 프로그램이 무엇을 저장하고, 무엇을 서버로 보내지 않는지. Plus 결제 시 처리하는 정보.">
+<link rel="icon" type="image/png" sizes="32x32" href="./assets/donna-mark-48.png"><link rel="stylesheet" href="./style.css?v=20260906"></head><body>
+<div class="nav"><div class="wrap"><a class="logo" href="./"><img src="./assets/donna-mark-48.png" alt="">Donna</a><a class="m" href="./guide.html">사용법</a><a class="m" href="./plus.html">Plus</a><a class="m" href="./business.html">Business</a><a class="m" href="./blog.html">블로그</a><a class="btn" href="./go.html?c=privacy">Chrome에 추가</a></div></div>
+<main>
+<div class="wrap narrow page-head"><span class="eyebrow">개인정보</span><h1>개인정보처리방침</h1></div>
+<div class="wrap narrow legal post">
+<div class="updated">최종 수정일: 2026년 9월 6일 · 시행일: 2026년 9월 6일 · 확장 프로그램 v1.5.0</div>
 
-  <p class="lead">구독·결제 기록, 사업자등록번호 등 개인·결제 데이터는 외부로 전송하지 않습니다.
-    이 데이터는 사용자의 Chrome 브라우저 안에만 저장되며, 개발자를 포함한 누구도 열람할 수 없습니다.</p>
+<p class="lead">구독 목록, 결제 기록, 사업자등록번호는 사용자의 Chrome 안에만 저장됩니다. 개발자를 포함해 누구도 열람할 수 없습니다. 서버로 가는 것은 환율표 요청과, Plus 이용자의 라이선스 확인 요청 둘뿐이며 둘 다 구독 내용을 담지 않습니다.</p>
 
-  <h2>1. 저장되는 정보와 저장 위치</h2>
-  <p>확장 프로그램이 만드는 모든 데이터는 Chrome이 제공하는 로컬 저장소
-    (<code>chrome.storage.local</code>)에 저장됩니다. 이 저장소는 사용자의 컴퓨터에 있으며,
-    돈나가요는 이 데이터를 보관하는 자체 서버를 운영하지 않습니다. 단, 원화 환산을 위해 공개 환율 API에서 환율표를 내려받습니다.</p>
-  <table>
-    <tr><th>항목</th><th>용도</th><th>저장 위치</th></tr>
-    <tr><td>사업자등록번호</td><td>결제창에 세금 ID 입력란이 보일 때, 사용자가 버튼을 누르면 채워 넣기 위해</td><td>사용자 브라우저</td></tr>
-    <tr><td>사업자 유형·과세 유형</td><td>부가세 처리 표기를 정확히 하기 위해</td><td>사용자 브라우저</td></tr>
-    <tr><td>결제 기록<br>(결제일·서비스명·금액·통화·부가세액)</td><td>분기별 세무 자료(CSV)를 만들기 위해</td><td>사용자 브라우저</td></tr>
-    <tr><td>결제 주기와 자동 여부<br>(월/연 × 자동/수동)</td><td>다음 결제일을 예측해 <b>결제 전에</b> 미리 알리기 위해</td><td>사용자 브라우저</td></tr>
-    <tr><td>구독 알림 목록<br>(서비스명·금액·주기·다음 결제일·관리 주소)</td><td><b>결제 전에 미리 알리기 위해</b>. 사용자가 직접 등록한 일정이며, <b>세무 자료(분기 CSV)에는 들어가지 않습니다.</b></td><td>사용자 브라우저</td></tr>
-    <tr><td>금액을 마지막으로 확인한 시각<br>(날짜와 어느 화면에서 봤는지)</td><td>알림에 적는 금액이 언제 본 값인지 밝히기 위해. 자동 갱신은 화면을 남기지 않아, 밝히지 않으면 오래된 값을 오늘 값으로 읽게 됩니다.</td><td>사용자 브라우저</td></tr>
-    <tr><td>금액 변동 이력<br>(최대 6줄, 날짜와 금액)</td><td>가격이 올랐는지 사용자에게 보여주기 위해. 화면에서 읽은 금액이 이전과 다를 때만 한 줄 쌓입니다.</td><td>사용자 브라우저</td></tr>
-    <tr><td>해지로 아낀 금액 합계</td><td>해지한 구독이 1년 기준 얼마인지 보여주기 위해. 금액 합계 하나이며 어떤 서비스였는지는 이 값에 남지 않습니다.</td><td>사용자 브라우저</td></tr>
-    <tr><td>환율 캐시</td><td>외화 결제액의 원화 환산 추정을 위해</td><td>사용자 브라우저</td></tr>
-    <tr><td>알림 설정<br>(알림 사용 여부, 며칠 전에 받을지)</td><td>사용자가 고른 알림 시점대로 알리기 위해</td><td>사용자 브라우저</td></tr>
-  </table>
-  <p>사업자등록번호는 결제창 위에 뜨는 안내 화면에서도, 툴바 아이콘의
-    <b>'내 정보'</b> 화면에서도 넣고 고칠 수 있습니다. 어느 쪽이든 저장 위치는 같습니다.</p>
+<h2>1. 브라우저에 저장되는 정보</h2>
+<p>확장 프로그램이 만드는 데이터는 Chrome이 제공하는 로컬 저장소(<code>chrome.storage.local</code>)에 저장됩니다. 이 저장소는 사용자의 컴퓨터에 있으며, Donna는 이 데이터를 보관하는 서버를 운영하지 않습니다.</p>
+<table>
+  <tr><th>항목</th><th>용도</th></tr>
+  <tr><td>구독 알림 목록<br>(서비스명·금액·통화·주기·다음 결제일·결제 채널·관리 주소·상태)</td><td>결제 전에 미리 알리기 위해. 사용자가 직접 등록한 일정이며 세무 자료(분기 CSV)에는 들어가지 않습니다.</td></tr>
+  <tr><td>알림 설정<br>(알림 사용 여부, 며칠 전에 받을지)</td><td>사용자가 고른 시점대로 알리기 위해.</td></tr>
+  <tr><td>사업자등록번호, 사업자·과세 유형</td><td>결제창의 Tax ID 칸을 사용자가 버튼을 눌러 채우기 위해, 그리고 원화 예상액에서 부가세를 빼기 위해.</td></tr>
+  <tr><td>결제 기록<br>(결제일·서비스명·금액·통화·부가세액)</td><td>분기별 세무 자료(CSV)를 만들기 위해. Stripe 결제창에서 관측한 것만 쌓입니다.</td></tr>
+  <tr><td>금액을 마지막으로 확인한 시각, 금액 변동 이력(최대 6줄)</td><td>알림에 적는 금액이 언제 본 값인지 밝히고, 가격이 올랐는지 보여주기 위해.</td></tr>
+  <tr><td>환율 캐시</td><td>외화 결제액의 원화 환산 추정을 위해.</td></tr>
+  <tr><td>설치 식별자(<code>install_id</code>)</td><td>설치할 때 무작위로 만든 문자열입니다. Plus 라이선스를 이 설치와 연결하는 데만 쓰며, 사용자의 이름·이메일·기기 정보와 무관합니다.</td></tr>
+  <tr><td>Plus 상태(<code>plan</code>)</td><td>서버에서 확인한 라이선스 등급·만료일·마지막 확인 시각. 서버가 응답하지 않을 때 짧은 유예 기간을 두기 위해 저장합니다.</td></tr>
+</table>
 
-  <h2>2. 하지 않는 일</h2>
-  <div class="never">
-    <b>이 확장 프로그램은 다음을 하지 않습니다.</b>
-    <ul>
-      <li>구독·결제 기록, 사업자등록번호, 사용자 식별자를 서버나 제3자에게 전송하지 않습니다.</li>
-      <li>회원가입·로그인·계정 생성을 요구하지 않습니다.</li>
-      <li>카드번호·CVC·유효기간 등 결제수단 정보를 읽거나 저장하지 않습니다.</li>
-      <li>공동인증서, 홈택스 계정, 카드사 계정을 요구하지 않습니다.</li>
-      <li>광고·분석·추적 도구를 일절 포함하지 않습니다.</li>
-      <li>데이터를 판매하거나 제3자에게 이전하지 않습니다.</li>
-      <li>원격 코드를 내려받아 실행하지 않습니다. 모든 코드는 설치 패키지에 포함되어 있습니다.</li>
-    </ul>
-  </div>
-  <p>돈나가요가 처리하는 정보는 위에 설명한 결제 전 알림·구독 관리·세무 자료 정리 기능에만 사용됩니다.
-    돈나가요의 정보 사용은 <b>Chrome 웹 스토어 사용자 데이터 정책과 제한적 사용 요건</b>을 준수합니다.</p>
+<h2>2. 하지 않는 일</h2>
+<div class="never"><b>이 확장 프로그램은 다음을 하지 않습니다.</b>
+<ul>
+  <li>구독·결제 기록, 사업자등록번호를 서버나 제3자에게 전송하지 않습니다.</li>
+  <li>무료 이용에 회원가입·로그인을 요구하지 않습니다.</li>
+  <li>카드번호·CVC·유효기간·카드 소유자명을 읽거나 저장하지 않습니다. Plus 결제도 확장 프로그램 안에서 하지 않습니다.</li>
+  <li>카드 문자, 이메일, 은행 계좌, 마이데이터를 읽거나 연동하지 않습니다.</li>
+  <li>광고·분석·추적 도구를 포함하지 않습니다.</li>
+  <li>데이터를 판매하거나 제3자에게 이전하지 않습니다.</li>
+  <li>원격 코드를 내려받아 실행하지 않습니다. 글꼴을 포함한 모든 파일이 설치 패키지에 들어 있습니다.</li>
+</ul></div>
+<p>Donna의 정보 사용은 Chrome 웹 스토어 사용자 데이터 정책과 제한적 사용 요건을 준수합니다.</p>
 
-  <h2>3. 동작 범위</h2>
-  <p>이 확장 프로그램은 다음 결제 도메인에서만 동작합니다. 그 밖의 어떤 웹사이트도 읽지 않습니다.</p>
-  <p><b>Stripe</b> <code>checkout.stripe.com</code> · <code>buy.stripe.com</code> ·
-     <code>invoice.stripe.com</code> · <code>billing.stripe.com</code> · <code>pay.stripe.com</code></p>
-  <p><b>해외 결제사</b> <code>*.paddle.com</code> · <code>*.lemonsqueezy.com</code> ·
-     <code>*.onfastspring.com</code> · <code>*.chargebee.com</code> · <code>*.recurly.com</code> ·
-     <code>*.braintreegateway.com</code> · <code>*.paypal.com</code> · <code>*.gumroad.com</code> ·
-     <code>*.polar.sh</code> · <code>*.creem.io</code> · <code>*.2checkout.com</code> ·
-     <code>*.adyen.com</code> · <code>*.checkout.com</code> · <code>*.klarna.com</code> ·
-     <code>*.squareup.com</code> · <code>*.square.site</code> · <code>*.square.link</code> ·
-     <code>*.mollie.com</code> · <code>*.razorpay.com</code> · <code>*.xsolla.com</code> ·
-     <code>checkout.shopify.com</code> · <code>*.myshopify.com</code> · <code>shop.app</code> ·
-     <code>payments.amazon.com</code> · <code>apay.amazon.com</code> · <code>*.payments-amazon.com</code></p>
-  <p><b>국내 결제대행사</b> <code>*.tosspayments.com</code> · <code>*.inicis.com</code> ·
-     <code>*.kakaopay.com</code> · <code>online-pay.kakao.com</code> · <code>mpay.kakao.com</code> ·
-     <code>pay.naver.com</code> · <code>*.nicepay.co.kr</code> · <code>*.danalpay.com</code> ·
-     <code>*.teledit.com</code></p>
-  <p>이 중에는 결제 말고 로그인·설정 화면도 같은 도메인에 두는 곳이 있습니다(paypal.com, squareup.com 등).
-    그런 곳에서는 <b>도메인만 보고 나서지 않습니다.</b> 화면에 카드 입력칸과 총액 표기가
-    함께 보일 때만 결제 화면으로 판단하고, 그렇지 않으면 아무것도 표시하지 않습니다.</p>
-  <p>서비스가 결제 화면을 직접 만들어 쓰는 경우(Envato·Artlist 등)에는 위 목록으로 지정할 수 없습니다.
-    이때는 <b>사용자가 툴바 아이콘을 눌러 직접 켰을 때만</b> 동작합니다. 두 가지 방법이 있습니다.</p>
-  <ul>
-    <li><b>'이 결제창에서 켜기'</b>. 그 사이트 하나에 대해 브라우저가 권한을 묻고, 허용하신 뒤에 동작합니다.</li>
-    <li><b>'모든 결제창에서 자동으로 켜기'</b>. 브라우저가 권한을 한 번 묻고, 허용하시면
-      그다음부터 결제 화면으로 판단되는 곳에서 자동으로 동작합니다. <b>설치 시점에는 요청하지 않으며</b>,
-      같은 자리에서 언제든 다시 끌 수 있습니다.</li>
-  </ul>
-  <p>둘 중 어느 것도 누르지 않으면 위 목록 밖의 어떤 사이트에도 들어가지 않습니다.</p>
-  <p>세무 자료(기록함·분기 CSV)로 쌓는 것은 <b>Stripe 결제창에서 관측한 것만</b>입니다.</p>
-  <p>이 페이지들에서 확장 프로그램은 <b>화면에 표시된 금액·부가세·서비스명 텍스트</b>를 읽습니다.
-    이는 결제 금액을 기록으로 남기기 위한 것이며, 읽은 내용은 브라우저를 벗어나지 않습니다.</p>
-  <p>같은 화면에서 <b>페이지에 포함된 iframe·스크립트의 주소</b>도 함께 봅니다.
-    판매자가 자기 사이트에서 결제를 받아도 카드 입력칸은 결제사가 내려주기 때문에,
-    그 주소를 보면 이 화면이 결제창인지 아닌지를 알 수 있습니다. 주소의 도메인만 보며,
-    그 안의 내용은 읽지 않고 어디로도 전송하지 않습니다.</p>
-  <p>같은 목적으로 <b>카드 입력칸이 화면에 있는지 여부</b>도 봅니다. 여기서 보는 것은
-    칸에 붙은 이름표뿐입니다. name·id·placeholder·autocomplete·바깥 label의 글자처럼,
-    사람이 무엇을 치기 전에 이미 화면에 있는 표시들입니다.
-    <b>그 칸에 입력된 값은 읽지 않습니다.</b> 카드번호·CVC·유효기간·카드 소유자 이름은
-    읽지도, 저장하지도, 전송하지도 않습니다. 이 예/아니오는 '이 화면이 결제창인가'를
-    판단하는 데만 쓰이고 어디에도 남지 않습니다.</p>
+<h2>3. 외부 통신</h2>
+<p>확장 프로그램이 하는 외부 통신은 다음 두 가지뿐입니다.</p>
+<table>
+  <tr><th>요청</th><th>보내는 것</th><th>받는 것</th></tr>
+  <tr><td>환율 조회<br><code>open.er-api.com</code></td><td>없음. "지금 환율이 얼마인가"만 묻습니다. 12시간에 한 번.</td><td>미국 달러 기준 환율표</td></tr>
+  <tr><td>Plus 라이선스 확인<br><code>api.donna.co.kr</code></td><td><code>install_id</code> 하나. 구독 내용·금액·사업자번호·이메일은 보내지 않습니다. 하루 한 번, 그리고 사용자가 '다시 확인'을 눌렀을 때.</td><td>라이선스 등급, 상태, 만료일</td></tr>
+</table>
+<p>무료로만 쓰는 사용자는 라이선스 확인 요청도 <code>install_id</code> 외의 정보를 담지 않으며, 서버는 이 값으로 사용자를 식별할 수 없습니다.</p>
 
-  <p><b>결제 전 알림 기능</b>은 결제 수단과 무관하게 동작합니다. 다만 위 도메인 밖의 페이지는 자동으로 읽지 않습니다. 사용자가 그 페이지에서 <b>툴바 아이콘을 눌러 명시적으로 요청</b>했을 때만 한 번 읽습니다. 백그라운드에서 웹사이트를 감시하지 않습니다.</p>
+<h2>4. Plus 결제 시 처리하는 정보</h2>
+<p>Donna Plus 결제는 <code>donna.co.kr/plus</code> 웹 페이지에서만 이루어집니다. 이때 회사는 다음 정보를 서버에 보관합니다.</p>
+<table>
+  <tr><th>항목</th><th>용도</th><th>보관 기간</th></tr>
+  <tr><td>이메일 주소</td><td>영수증·갱신 안내·해지 링크 발송, 라이선스 확인</td><td>해지 후 1년, 또는 삭제 요청 시 즉시</td></tr>
+  <tr><td><code>install_id</code></td><td>라이선스를 확장 프로그램 설치와 연결</td><td>해지 후 1년</td></tr>
+  <tr><td>결제 기록(주문번호·금액·승인 일시)</td><td>정산과 환불 처리, 전자상거래법상 보관 의무</td><td>5년(관련 법령)</td></tr>
+</table>
+<p>카드 정보는 결제대행사 토스페이먼츠가 처리·보관하며 회사는 카드번호를 받지도, 저장하지도 않습니다. 회사가 받는 것은 자동 결제를 위한 빌링키뿐이며 암호화해 보관합니다. 개인정보 처리 위탁: 토스페이먼츠(결제 처리), <span class="fill">이메일 발송 서비스명</span>(메일 발송).</p>
 
-  <h2>4. 외부 통신</h2>
-  <p>확장 프로그램이 하는 유일한 외부 통신은 환율 조회입니다.
-    <code>open.er-api.com</code>에서 미국 달러 기준 환율표를 12시간에 한 번 내려받습니다.</p>
-  <p>이 요청에는 <b>사용자를 식별할 수 있는 어떤 정보도 포함되지 않습니다.</b>
-    사업자등록번호, 결제 금액, 서비스명, 사용자 식별자 중 어느 것도 전송되지 않습니다.
-    "지금 환율이 얼마인가"만 묻고 답을 받아 옵니다.</p>
+<h2>5. 동작 범위</h2>
+<p>결제창 자동 감지는 다음 결제 도메인에서만 동작합니다. 그 밖의 웹사이트는 읽지 않습니다.</p>
+<p><b>Stripe</b> <code>checkout.stripe.com</code> · <code>buy.stripe.com</code> · <code>invoice.stripe.com</code> · <code>billing.stripe.com</code> · <code>pay.stripe.com</code></p>
+<p><b>해외 결제사</b> <code>*.paddle.com</code> · <code>*.lemonsqueezy.com</code> · <code>*.onfastspring.com</code> · <code>*.chargebee.com</code> · <code>*.recurly.com</code> · <code>*.braintreegateway.com</code> · <code>*.paypal.com</code> · <code>*.gumroad.com</code> · <code>*.polar.sh</code> · <code>*.creem.io</code> · <code>*.2checkout.com</code> · <code>*.adyen.com</code> · <code>*.checkout.com</code> · <code>*.klarna.com</code> · <code>*.squareup.com</code> · <code>*.square.site</code> · <code>*.square.link</code> · <code>*.mollie.com</code> · <code>*.razorpay.com</code> · <code>*.xsolla.com</code> · <code>checkout.shopify.com</code> · <code>*.myshopify.com</code> · <code>shop.app</code> · <code>payments.amazon.com</code> · <code>apay.amazon.com</code> · <code>*.payments-amazon.com</code></p>
+<p><b>국내 결제대행사</b> <code>*.tosspayments.com</code> · <code>*.inicis.com</code> · <code>*.kakaopay.com</code> · <code>online-pay.kakao.com</code> · <code>mpay.kakao.com</code> · <code>pay.naver.com</code> · <code>*.nicepay.co.kr</code> · <code>*.danalpay.com</code> · <code>*.teledit.com</code></p>
+<p>이 중에는 로그인·설정 화면도 같은 도메인에 두는 곳이 있습니다(paypal.com, squareup.com 등). 그런 곳에서는 도메인만 보고 나서지 않고, 화면에 카드 입력칸과 총액 표기가 함께 보일 때만 결제 화면으로 판단합니다.</p>
+<p>서비스가 결제 화면을 직접 만들어 쓰는 경우에는 사용자가 툴바 아이콘을 눌러 <b>'이 결제창에서 켜기'</b>(그 사이트 하나) 또는 <b>'모든 결제창에서 자동으로 켜기'</b>를 직접 허용했을 때만 동작합니다. 설치 시점에는 요청하지 않으며 언제든 다시 끌 수 있습니다.</p>
+<p>결제 페이지에서 읽는 것은 화면에 표시된 금액·부가세·서비스명 텍스트, 페이지에 포함된 iframe·스크립트의 도메인, 그리고 카드 입력칸이 있는지 여부(칸의 이름표만)입니다. <b>칸에 입력된 값은 읽지 않습니다.</b> 읽은 내용은 브라우저를 벗어나지 않습니다.</p>
 
-  <h2>5. 권한을 요청하는 이유</h2>
-  <table>
-    <tr><th>권한</th><th>이유</th></tr>
-    <tr><td><code>storage</code></td><td>결제 기록과 설정을 사용자 브라우저에 저장하기 위해. 서버가 없으므로 이 권한이 없으면 기록이 남지 않습니다.</td></tr>
-    <tr><td><code>alarms</code></td><td>자동 갱신 결제일과 세무 신고 마감이 다가올 때 확인하기 위해. 하루 두 번 깨어납니다.</td></tr>
-    <tr><td><code>notifications</code></td><td>갱신 결제가 발생하기 전이나 신고 마감이 임박했을 때 알리기 위해. 확장 프로그램의 '내 정보' 화면에서 알림을 전부 끄거나, 며칠 전에 받을지 고를 수 있습니다. 브라우저 설정에서도 언제든 끌 수 있습니다.</td></tr>
-    <tr><td>activeTab · scripting</td><td>사용자가 툴바 아이콘을 누르고 <b>'이 결제창에서 켜기'</b>를 선택했을 때, <b>그 순간 그 탭에서만</b> 화면에 보이는 글자를 읽어 구독 이름·금액·주기·다음 결제일을 채우기 위해. 누르지 않으면 아무것도 읽지 않으며, 다른 탭은 볼 수 없고, 읽은 내용은 전송되지 않습니다.</td></tr>
-    <tr><td><code>optional_host_permissions</code></td><td>서비스가 직접 만든 결제 화면에서 동작하기 위해. 사용자가 '이 결제창에서 켜기'(그 사이트 하나) 또는 '모든 결제창에서 자동으로 켜기'를 직접 눌러 허용했을 때만 사용합니다. 설치 시점에는 요청하지 않으며, 팝업에서 언제든 다시 끌 수 있습니다.</td></tr>
-    <tr><td>결제 도메인 접근</td><td>결제창의 금액·결제 주기·부가세를 읽어 다음 결제 전에 알리고 기록하기 위해. 세금 ID 입력란이 화면에 보일 때 사용자가 버튼을 누르면 저장된 번호를 채워 넣습니다.</td></tr>
-    <tr><td><code>open.er-api.com</code> 접근</td><td>외화 결제액을 원화로 환산 추정하기 위한 환율 조회.</td></tr>
-  </table>
+<h2>6. 권한을 요청하는 이유</h2>
+<table>
+  <tr><th>권한</th><th>이유</th></tr>
+  <tr><td><code>sidePanel</code></td><td>툴바 아이콘을 눌렀을 때 팝업 대신 브라우저 오른쪽 패널에 구독 목록을 보여주기 위해.</td></tr>
+  <tr><td><code>storage</code></td><td>구독 목록·결제 기록·설정을 사용자 브라우저에 저장하기 위해.</td></tr>
+  <tr><td><code>alarms</code></td><td>결제일과 체험 종료일이 다가왔는지 확인하기 위해. 하루 두 번 깨어납니다.</td></tr>
+  <tr><td><code>notifications</code></td><td>결제 전과 체험 종료 전에 알리기 위해. 설정에서 전부 끄거나 시점을 바꿀 수 있습니다.</td></tr>
+  <tr><td><code>activeTab</code> · <code>scripting</code></td><td>사용자가 툴바 아이콘을 누르고 '이 결제창에서 켜기'를 선택했을 때, 그 순간 그 탭에서만 화면의 글자를 읽어 서비스명·금액·주기를 채우기 위해.</td></tr>
+  <tr><td><code>optional_host_permissions</code></td><td>서비스가 직접 만든 결제 화면에서 동작하기 위해. 사용자가 직접 허용했을 때만 사용합니다.</td></tr>
+  <tr><td>결제 도메인 접근</td><td>결제창의 금액·주기·부가세를 읽어 등록을 제안하고 기록하기 위해.</td></tr>
+  <tr><td><code>open.er-api.com</code></td><td>환율 조회.</td></tr>
+  <tr><td><code>api.donna.co.kr</code></td><td>Plus 라이선스 확인. 확장 프로그램은 이 주소에 <code>install_id</code>만 보냅니다.</td></tr>
+</table>
 
-  <h2>6. 데이터 보관과 삭제</h2>
-  <p>데이터는 사용자가 삭제하기 전까지 브라우저에 남습니다.
-    확장 프로그램을 삭제하면 Chrome이 저장소를 함께 제거하며, 그 시점에 모든 데이터가 사라집니다.
-    개발자에게는 사본이 없으므로 복구할 수 없습니다.</p>
-  <p>데이터는 사용한 Chrome 프로필 안에만 존재합니다. 다른 브라우저나 다른 기기에는 동기화되지 않습니다.</p>
+<h2>7. 보관과 삭제</h2>
+<p>브라우저 안의 데이터는 사용자가 삭제하기 전까지 남습니다. 확장 프로그램을 삭제하면 Chrome이 저장소를 함께 제거하며, 개발자에게 사본이 없으므로 복구할 수 없습니다. 데이터는 사용한 Chrome 프로필 안에만 있고 다른 기기에 동기화되지 않습니다.</p>
+<p>결제 기록 화면의 <b>백업</b>으로 파일 한 장을 내려받아 다른 브라우저에서 <b>불러오기</b>로 합칠 수 있습니다. 이 파일은 사용자의 컴퓨터에만 있습니다.</p>
+<p>서버에 보관되는 Plus 관련 정보(이메일, <code>install_id</code>, 결제 기록)는 <a href="mailto:stevejk911@gmail.com">stevejk911@gmail.com</a>으로 요청하면 법령상 보관 의무가 있는 결제 기록을 제외하고 즉시 삭제합니다.</p>
 
-  <h2>6-B. 다른 기기로 옮기기</h2>
-  <p>기록함의 <b>기록 백업</b>으로 파일 한 장을 내려받아, 다른 브라우저에서 <b>불러오기</b>로 합칠 수 있습니다.
-    불러오기는 덮어쓰기가 아니라 합치기라서 기존 기록이 지워지지 않습니다.
-    이 파일은 사용자의 컴퓨터에만 있으며 어디로도 전송되지 않습니다.</p>
-  <p>계정 로그인을 통한 자동 동기화는 제공하지 않습니다.
-    그렇게 하려면 결제 내역과 사업자등록번호를 서버에 보관해야 하는데,
-    그 순간 "개인·결제 데이터 외부 전송 없음"이라는 이 도구의 약속이 깨지기 때문입니다.</p>
+<h2>8. 캘린더 파일</h2>
+<p>구독의 결제일을 캘린더 파일(.ics)로 내려받는 기능은 사용자 컴퓨터에서 파일을 만들어 사용자 컴퓨터에 저장합니다. 파일에는 구독의 이름·금액·결제일만 들어가고, 사업자등록번호나 결제수단 정보는 포함되지 않습니다.</p>
 
-  <h2>6-C. 캘린더 파일 내보내기</h2>
-  <p>알림은 Chrome이 켜져 있을 때만 갑니다. 컴퓨터가 꺼져 있어도 알림을 받으실 수 있도록
-    구독의 결제일을 <b>캘린더 파일(.ics)</b>로 내려받는 기능을 제공합니다.</p>
-  <p>이 파일은 <b>사용자 컴퓨터에서 만들어져 사용자 컴퓨터에 저장</b>되며, 어디로도 전송되지 않습니다.
-    파일에는 사용자가 등록한 구독의 이름·금액·결제일만 들어가고, 사업자등록번호나 결제수단 정보는
-    포함되지 않습니다. 이 파일을 어느 캘린더에 넣을지, 넣지 않을지는 전적으로 사용자가 정합니다.</p>
+<h2>9. 아동</h2>
+<p>이 확장 프로그램은 만 14세 미만을 대상으로 하지 않으며 연령 정보를 수집하지 않습니다.</p>
 
-  <h2>7. 아동</h2>
-  <p>이 확장 프로그램은 사업자의 세무 처리를 돕는 도구로, 만 14세 미만을 대상으로 하지 않으며
-    연령 정보를 수집하지 않습니다.</p>
+<h2>10. 방침이 바뀌는 경우</h2>
+<p>데이터 처리 방식이 바뀌면 이 페이지를 갱신하고, 확장 프로그램 안에서 변경 내용을 알린 뒤 사용자의 확인을 받습니다.</p>
 
-  <h2>8. 이 방침이 바뀌는 경우</h2>
-  <p>데이터 처리 방식이 바뀌면 이 페이지를 갱신하고, 확장 프로그램 안에서
-    변경 내용을 알린 뒤 사용자의 확인을 받습니다. 사용자가 모르는 사이에 처리 방식이 바뀌는 일은 없습니다.</p>
+<h2>11. 서비스의 성격</h2>
+<p>이 확장 프로그램은 자료를 정리해 전달하는 도구이며 세무 대리·세무 자문을 제공하지 않습니다. 표시하는 부가세 처리 구분은 분류 근거의 제시이며 최종 판단은 세무대리인 또는 납세자 본인에게 있습니다.</p>
 
-  <h2>9. 서비스의 성격에 관한 고지</h2>
-  <p>이 확장 프로그램은 자료를 정리해 전달하는 도구이며 세무 대리·세무 자문을 제공하지 않습니다.
-    확장 프로그램이 표시하는 부가세 처리 구분은 판단이 아니라 분류 근거의 제시이며,
-    최종 판단은 세무대리인 또는 납세자 본인에게 있습니다.</p>
-
-  <footer>
-    문의: <a href="mailto:stevejk911@gmail.com">stevejk911@gmail.com</a><br>
-    돈나가요 · 대한민국
-  </footer>
-</body>
-</html>
+<h2>개인정보 보호책임자</h2>
+<p><span class="fill">이름</span> · <a href="mailto:stevejk911@gmail.com">stevejk911@gmail.com</a> · <span class="fill">상호</span></p>
+</div></main>
+<footer><div class="wrap"><p><b style="color:var(--ink)">Donna</b> · 해외 AI·SaaS 구독 결제 전 알림</p><div class="fl"><a href="./guide.html">사용법</a><a href="./plus.html">Plus</a><a href="./business.html">Business</a><a href="./blog.html">블로그</a><a href="./privacy.html">개인정보처리방침</a><a href="./terms.html">이용약관</a></div></div></footer>
+</body></html>

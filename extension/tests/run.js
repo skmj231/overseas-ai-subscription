@@ -8,7 +8,7 @@ const R = require(path.join(root, "rules.js"));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, "1.4.0");
+assert.equal(manifest.version, "1.5.0");
 /* 사이드패널: 아이콘을 누르면 팝업이 아니라 패널이 열려야 한다. 팝업이 남아 있으면 그쪽이 먼저 잡힌다. */
 assert.ok(manifest.permissions.includes("sidePanel"), "sidePanel 권한 누락");
 assert.equal(manifest.side_panel && manifest.side_panel.default_path, "popup.html");
@@ -125,5 +125,38 @@ for (const p of P.LIST) {
 }
 assert.match(P.avatarHtml(P.find("claude")), /mask-image:url\(logos\/anthropic\.svg\)/);
 assert.match(P.avatarHtml(P.find("cursor")), />C</);
+
+// ── Donna Plus · 무료 한도 ──
+const PLAN = (() => { const g = {}; new Function("self", fs.readFileSync(path.join(root, "plan.js"), "utf8"))(g); return g.SVSTPlan; })();
+const mk = (n, status) => Object.fromEntries(Array.from({ length: n }, (_, i) => ["w" + i, { name: "S" + i, status: status || "active" }]));
+assert.equal(PLAN.FREE_LIMIT, 3);
+assert.equal(PLAN.activeCount({ ...mk(3), x: { status: "canceled" } }), 3, "해지 확인된 것은 세지 않는다");
+assert.ok(PLAN.canAdd(mk(2), null, null).ok && PLAN.canAdd(mk(2), null, null).left === 1);
+assert.deepEqual(PLAN.canAdd(mk(3), null, null), { ok: false, reason: "limit", count: 3, limit: 3 });
+assert.ok(PLAN.canAdd(mk(3), null, "w0").ok, "기존 항목 수정은 한도와 무관");
+assert.ok(PLAN.canAdd(mk(3), { tier: "free", status: "none" }, null).ok === false);
+const NOW = Date.parse("2026-09-06T00:00:00Z");
+const plus = { tier: "plus", status: "active", current_period_end: "2026-12-06T00:00:00Z", checkedAt: NOW };
+assert.ok(PLAN.isPlus(plus, NOW) && PLAN.canAdd(mk(9), plus, null, NOW).ok);
+assert.ok(PLAN.isPlus({ ...plus, status: "canceled" }, NOW), "해지해도 결제한 기간까지는 Plus");
+assert.ok(!PLAN.isPlus({ ...plus, status: "canceled" }, Date.parse("2026-12-07T00:00:00Z")));
+assert.ok(PLAN.isPlus({ ...plus }, Date.parse("2026-12-10T00:00:00Z")), "만료 뒤 7일 유예");
+assert.ok(!PLAN.isPlus({ ...plus }, Date.parse("2026-12-14T00:00:00Z")), "유예 지나면 무료");
+assert.ok(!PLAN.isPlus({ ...plus, status: "past_due" }, NOW));
+assert.ok(PLAN.needsRecheck(null) && PLAN.needsRecheck({ checkedAt: NOW - 25 * 3600000 }, NOW) && !PLAN.needsRecheck({ checkedAt: NOW - 3600000 }, NOW));
+const fromSrv = PLAN.fromServer({ tier: "plus", status: "active", current_period_end: "2026-12-06T00:00:00Z" }, null, NOW);
+assert.equal(fromSrv.tier, "plus"); assert.equal(fromSrv.checkedAt, NOW);
+assert.deepEqual(PLAN.fromServer(null, plus, NOW), plus, "응답 없으면 이전 상태 유지");
+assert.equal(PLAN.fromServer(null, plus, Date.parse("2027-01-01T00:00:00Z")).tier, "free", "유예 지나면 내린다");
+assert.equal(PLAN.fromServer({ tier: "free", status: "none" }, plus, NOW).tier, "free", "서버가 무료라면 무료");
+assert.match(PLAN.newInstallId(), /^[a-z0-9]{26}$/);
+assert.notEqual(PLAN.newInstallId(), PLAN.newInstallId());
+assert.match(PLAN.plusUrl("abc", "gate"), /^https:\/\/donna\.co\.kr\/plus\.html\?install=abc&utm_source=extension/);
+assert.match(PLAN.licenseUrl("abc"), /\/v1\/license\?install_id=abc$/);
+assert.equal(PLAN.statusText(null, mk(2)), "무료 · 구독 2 / 3");
+assert.match(PLAN.statusText(plus, mk(5), NOW), /^Plus · 12월 6일까지 · 다음 결제 ₩6,000$/);
+assert.match(PLAN.statusText({ ...plus, status: "canceled" }, mk(5), NOW), /이용 후 종료$/);
+assert.ok(fs.existsSync(path.join(root, "fonts", "PretendardVariable.woff2")), "글꼴 파일 누락");
+assert.ok(manifest.web_accessible_resources[0].resources.includes("fonts/PretendardVariable.woff2"));
 
 console.log("Donna 확장프로그램 핵심 테스트 통과");

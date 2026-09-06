@@ -446,6 +446,14 @@
   // ---------- UI 뼈대 ----------
   function ensureUI() {
     if (document.getElementById("svst-badge")) return;
+    /* 글꼴은 패키지 안의 파일을 쓴다. panel.css의 __MSG_@@extension_id__가 치환되지 않는 경로로
+       주입돼도 깨지지 않게 여기서 한 번 더 선언한다. 외부 요청은 없다. */
+    if (!document.getElementById("svst-font")) {
+      const st = document.createElement("style");
+      st.id = "svst-font";
+      st.textContent = `@font-face{font-family:"Pretendard Variable";font-weight:45 920;font-display:swap;src:url("${chrome.runtime.getURL("fonts/PretendardVariable.woff2")}") format("woff2-variations")}`;
+      (document.head || document.documentElement).appendChild(st);
+    }
     const badge = document.createElement("div");
     badge.id = "svst-badge";
     const brandIcon = chrome.runtime.getURL("icon48.png");
@@ -764,6 +772,18 @@
        부가세는 사업자만, 그것도 부가세 줄이 보일 때만 쓸모가 있다.
        '나도 모르게 또 빠져나갔다'는 모두에게 해당한다. 그래서 이걸 먼저 묻는다.
        사업자등록번호를 묻지 않고 여기까지 끝난다. */
+    if (S.limitHit) {
+      card.innerHTML = screen({
+        rail: railFor(scan, 0),
+        ctx: esc(scan.merchant || "이 서비스"),
+        tone: "plain",
+        label: "무료 한도",
+        msg: "무료로는 구독 3개까지 등록할 수 있어요.",
+        body: "패널에서 Donna Plus(3개월 6,000원)를 시작하면 이 구독도 바로 등록됩니다. 등록해 둔 구독은 그대로입니다.",
+        acts: btn("open-panel", "패널 열기") + ghost("close", "닫기")
+      });
+      return bind(card, scan, dec);
+    }
     if (!watchState(scan) && !scan.success && (knowsAmount(scan) || scan.checkoutLike)) {
       const known = knowsAmount(scan);
 
@@ -1139,9 +1159,13 @@
            세무 쪽 저장소(subs)와 섞지 않는다. 알림은 알림 목록(watch)에만 들어간다. */
         if (a === "watch-on") {
           const ok = await registerWatch(scan);
-          await setWatchState(scan, ok ? "on" : "off");
+          /* 무료 한도(3개)를 다 쓴 경우. 여기서는 결제를 열지 않고 사실만 알린다 —
+             결제창 위에 또 다른 결제 안내를 띄우는 것은 사람을 헷갈리게 한다. */
+          if (ok === "limit") { S.limitHit = true; await setWatchState(scan, "off"); return render(); }
+          await setWatchState(scan, ok === true ? "on" : "off");
           return render();
         }
+        if (a === "open-panel") { chrome.runtime.sendMessage({ type: "openPanel" }); return; }
         if (a === "watch-skip") { await setWatchState(scan, "off"); return render(); }
         if (a === "cyc-month" || a === "cyc-year") {
           S.cycleLock = { interval: a === "cyc-year" ? "year" : "month",
@@ -1279,6 +1303,7 @@
     };
     try {
       const res = await chrome.runtime.sendMessage({ type: "addWatch", data: payload });
+      if (res && !res.ok && res.reason === "limit") return "limit";
       return !!(res && res.ok);
     } catch (e) { return false; }
   }
@@ -1446,7 +1471,7 @@
     const sig = [scan.vat, scan.success, scan.hasTaxField, scan.hasBizToggle, scan.hasTaxTrigger, scan.interval,
       scan.total && scan.total.val, dec.action, dec.supplier, dec.charge,
       !!S.consent, !!S.profile, S.profile && S.profile.pendingBrn,
-      S.view, watchState(scan)].join("|");
+      S.view, watchState(scan), !!S.limitHit].join("|");
     /* 화면을 보고 있는 중에 내용을 통째로 갈아치우면, 방금 읽던 글이 사라지고
        다른 이야기가 나타난다 — 이것도 "무작위로 뜬다"는 인상의 절반이다.
        그래서 사용자가 카드에 손을 댄 뒤(stickOpen)에는 다시 그리지 않고,

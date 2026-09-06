@@ -9,8 +9,9 @@
    subs = Stripe에서 관측한 결제(세무 자료로 나감)
    watch = 사용자가 알려준 구독 일정(알림 전용, 어떤 파일로도 나가지 않음)
    아래 두 루프는 서로를 건드리지 않는다. */
-importScripts("watch.js");
+importScripts("watch.js", "plan.js");
 const WATCH = self.SVSTWatch;
+const PLAN = self.SVSTPlan;
 
 /* ── 사이드패널 ──
    툴바 아이콘을 누르면 팝업 대신 오른쪽 사이드패널이 열린다(ChatGPT·Claude 확장과 같은 자리).
@@ -54,6 +55,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   /* 결제창 패널이나 온보딩 화면의 버튼에서 온다. 클릭 직후에만 열 수 있고(브라우저 규칙),
      await를 한 번이라도 거치면 그 권한이 사라지므로 여기서 바로 연다. */
+  /* 패널의 'Plus 상태 다시 확인'과 결제 완료 페이지에서 온다. */
+  if (msg && msg.type === "checkLicense") {
+    checkLicense(true).then(plan => sendResponse({ ok: true, plan })).catch(() => sendResponse({ ok: false }));
+    return true;
+  }
   if (msg && msg.type === "openPanel") {
     const windowId = sender && sender.tab ? sender.tab.windowId : chrome.windows.WINDOW_ID_CURRENT;
     if (chrome.sidePanel && chrome.sidePanel.open) {
@@ -100,7 +106,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     (async () => {
       const d = msg.data;
       const key = String(d.key || "").slice(0, 40) || "sub" + Date.now();
-      const { watch = {} } = await chrome.storage.local.get("watch");
+      const { watch = {}, plan = null } = await chrome.storage.local.get(["watch", "plan"]);
+      const gate = PLAN.canAdd(watch, plan, key);
+      if (!gate.ok) return sendResponse({ ok: false, reason: gate.reason, limit: gate.limit });
       const made = WATCH.makeWatch(d, todayISO());
       watch[key] = watch[key]
         ? { ...watch[key], name: made.name, amountOrig: made.amountOrig, currency: made.currency,
@@ -440,10 +448,43 @@ async function tick() {
   await checkWatch();
   await checkDeadlines();
   await checkMonthly();
+  await checkLicense(false).catch(() => {});
+}
+
+// ---------- Donna Plus 라이선스 ----------
+/* 설치 식별자는 처음 한 번만 만든다. 이름·이메일·기기와 무관한 무작위 문자열이고,
+   서버에 보내는 것은 이 값뿐이다(구독 내용·금액·사업자번호는 가지 않는다). */
+async function ensureInstallId() {
+  const { installId } = await chrome.storage.local.get("installId");
+  if (installId) return installId;
+  const id = PLAN.newInstallId(n => Array.from(crypto.getRandomValues(new Uint8Array(n))));
+  await chrome.storage.local.set({ installId: id });
+  return id;
+}
+
+/* 하루 한 번, 또는 사용자가 눌렀을 때. 서버가 없거나 안 잡히면 이전 상태를 유지하고
+   유예(7일)가 지나면 무료로 내린다. 그래도 등록해 둔 구독은 건드리지 않는다. */
+async function checkLicense(force) {
+  const { plan = null } = await chrome.storage.local.get("plan");
+  if (!force && !PLAN.needsRecheck(plan)) return plan;
+  const id = await ensureInstallId();
+  let res = null;
+  try {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch(PLAN.licenseUrl(id), { signal: ctrl.signal, cache: "no-store",
+      headers: { "Accept": "application/json", "X-Donna-Version": chrome.runtime.getManifest().version } });
+    clearTimeout(t);
+    if (r.ok) res = await r.json();
+    else if (r.status === 404) res = { tier: "free", status: "none" }; // 서버는 있는데 이 설치는 무료
+  } catch (e) { res = null; }
+  const next = PLAN.fromServer(res, plan);
+  if (JSON.stringify(next) !== JSON.stringify(plan)) await chrome.storage.local.set({ plan: next });
+  return next;
 }
 
 chrome.runtime.onInstalled.addListener((details) => {
   chrome.alarms.create("svst-daily", { periodInMinutes: 60 * 12 });
+  ensureInstallId().then(() => checkLicense(true)).catch(() => {});
   tick();
   /* 업데이트 때마다 띄우면 기존 사용자를 방해한다. 처음 설치한 사람에게만
      예시 체험과 첫 구독 등록 화면을 연다. */

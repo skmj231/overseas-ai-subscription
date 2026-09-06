@@ -310,7 +310,7 @@
         title: left === 0 ? `${w.name} · 오늘 무료 체험이 끝나요` : `${w.name} · ${left}일 뒤 무료 체험이 끝나요`,
         message: (amt ? `그 뒤로 ${cyc} ${amt}이 자동으로 빠져나갑니다.` : `그 뒤로 ${cyc} 자동으로 결제됩니다.`)
           + " 계속 쓰지 않을 거면 지금 끊는 게 안전합니다.",
-        buttons: ["해지하러 가기", "계속 씁니다"],
+        buttons: ["해지하러 가기", "계속 쓸래요"],
         actions: ["cancel-go", "keep"]
       };
     }
@@ -332,7 +332,7 @@
       return {
         title: left === 0 ? `${w.name} · 오늘 자동 결제` : `${w.name} · ${left}일 뒤 자동 결제`,
         message: line + " 해외 서비스는 결제되고 나면 환불이 어렵습니다.",
-        buttons: verifiable ? ["금액 확인하기", "계속 씁니다"] : ["해지하러 가기", "계속 씁니다"],
+        buttons: verifiable ? ["금액 확인하기", "계속 쓸래요"] : ["해지하러 가기", "계속 쓸래요"],
         actions: verifiable ? ["verify", "keep"] : ["cancel-go", "keep"]
       };
     }

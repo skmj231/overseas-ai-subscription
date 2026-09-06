@@ -1,35 +1,30 @@
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>어드민 · 돈나가요</title>
+<title>어드민 · Donna</title>
 <meta name="description" content="설치 추이와 스캐너 상태를 한 화면에서 봅니다.">
-<meta property="og:title" content="어드민 · 돈나가요">
+<meta property="og:title" content="어드민 · Donna">
 <meta property="og:description" content="설치 추이와 스캐너 상태를 한 화면에서 봅니다.">
 <meta property="og:type" content="website">
 <meta name="color-scheme" content="light">
 <meta name="robots" content="noindex, nofollow">
-<link rel="stylesheet" href="./style.css">
+<link rel="icon" type="image/png" sizes="32x32" href="./assets/donna-mark-48.png"><link rel="stylesheet" href="./style.css?v=20260906">
 </head><body>
-<div class="nav"><div class="wrap">
-  <a class="logo" href="./">돈나가요</a>
-  <a class="m" href="./guide.html">사용법</a>
-  <a class="m" href="./blog.html">블로그</a>
-  <a class="btn" href="./go.html?c=nav">깔아불기</a>
-</div></div>
+<div class="nav"><div class="wrap"><a class="logo" href="./"><img src="./assets/donna-mark-48.png" alt="">Donna</a><a class="m" href="./guide.html">사용법</a><a class="m" href="./plus.html">Plus</a><a class="m" href="./business.html">Business</a><a class="m" href="./blog.html">블로그</a><a class="btn" href="./go.html?c=admin">Chrome에 추가</a></div></div>
 
-<section style="border:0;padding-top:48px"><div class="wrap">
+<section class="tight"><div class="wrap">
   <div class="eyebrow">어드민</div>
   <h1 style="font-size:34px">지금 어디까지 왔나</h1>
   <p class="lead">여기 적는 숫자는 이 브라우저에만 저장됩니다. 서버로 가지 않습니다.</p>
 
-  <div class="tiles">
+  <div class="stat-tiles">
     <div class="tile"><div class="k">현재 사용자</div><div class="v" id="t1">0</div><div class="d" id="t1d"></div></div>
     <div class="tile"><div class="k">누적 설치</div><div class="v" id="t2">0</div><div class="d" id="t2d"></div></div>
     <div class="tile"><div class="k">랜딩 방문</div><div class="v" id="t3">0</div><div class="d" id="t3d"></div></div>
     <div class="tile"><div class="k">설치 전환율</div><div class="v" id="t4">0%</div><div class="d" id="t4d"></div></div>
   </div>
 
-  <div class="panel">
+  <div class="apanel">
     <h3>오늘 기록 넣기</h3>
     <div class="form">
       <div><label for="f_d">날짜</label><input id="f_d" type="date"></div>
@@ -47,7 +42,7 @@
     방문과 클릭은 아직 집계 도구가 없으면 0으로 두셔도 됩니다. 같은 날짜를 다시 넣으면 덮어씁니다.</p>
   </div>
 
-  <div class="panel">
+  <div class="apanel">
     <h3>날마다 설치</h3>
     <div class="chart" id="c1"></div><div class="axis" id="a1"></div>
     <h3 style="margin-top:34px">날마다 제거</h3>
@@ -57,7 +52,7 @@
     <p class="hint" style="margin-top:12px">최근 30개 기록만 그립니다. 막대에 손을 올리면 값이 보입니다.</p>
   </div>
 
-  <div class="panel">
+  <div class="apanel">
     <h3>기록</h3>
     <div class="scroll"><table>
       <thead><tr><th>날짜</th><th class="n">사용자</th><th class="n">설치</th><th class="n">제거</th><th class="n">방문</th><th class="n">클릭</th><th class="n"></th></tr></thead>
@@ -69,7 +64,7 @@
     </div>
   </div>
 
-  <div class="panel">
+  <div class="apanel">
     <h3>어디서 들어오나</h3>
     <p class="hint">웹스토어 대시보드에 국가별 사용자 수가 나옵니다. 내가 아닌 사람이 깔았는지는 이 표로 확인합니다.
     한국 밖에서 하나라도 들어오면 확실한 신호입니다.</p>
@@ -84,7 +79,7 @@
     </table></div>
   </div>
 
-  <div class="panel">
+  <div class="apanel">
     <h3>스캐너 상태</h3>
     <p class="hint">확장은 어떤 결제창을 읽었는지 밖으로 보내지 않습니다. 그래서 사용량 대신
     <b>무엇을 읽을 수 있는지</b>와 <b>지금도 제대로 읽는지</b>를 여기서 확인합니다.</p>
@@ -121,7 +116,7 @@
     </ul>
   </div>
 
-  <div class="panel">
+  <div class="apanel">
     <h3>바로가기</h3>
     <div class="tools">
       <a class="btn sm ghost" href="https://chrome.google.com/webstore/devconsole" target="_blank" rel="noopener">웹스토어 대시보드</a>
@@ -130,10 +125,7 @@
     </div>
   </div>
 </div></section>
-<footer><div class="wrap">
-  <p>돈나가요 · 크롬 확장 프로그램 · 무료<br>
-  <a href="./privacy.html">개인정보처리방침</a> · <a href="mailto:stevejk911@gmail.com">stevejk911@gmail.com</a></p>
-</div></footer>
+<footer><div class="wrap"><p><b style="color:var(--ink)">Donna</b> · 해외 AI·SaaS 구독 결제 전 알림<br><a href="mailto:stevejk911@gmail.com">stevejk911@gmail.com</a></p><div class="fl"><a href="./guide.html">사용법</a><a href="./plus.html">Plus</a><a href="./business.html">Business</a><a href="./blog.html">블로그</a><a href="./privacy.html">개인정보처리방침</a><a href="./terms.html">이용약관</a></div></div></footer>
 <script>
 (function(){
 var KEY='saas_admin_v1';

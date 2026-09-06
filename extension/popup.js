@@ -424,6 +424,7 @@ const WT = self.SVSTWatch;
 let WATCH = {};
 
 const PS = self.SVSTPresets;
+const PL = self.SVSTPlan;
 const $w = (id) => document.getElementById(id);
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
 const koDate = (iso) => { if (!iso) return ""; const [y, m, d] = iso.split("-").map(Number); return `${m}월 ${d}일 ${DOW[new Date(y, m - 1, d).getDay()]}요일`; };
@@ -730,7 +731,44 @@ function renderSugg(q) {
   });
 }
 
+/* 무료 한도. 수정은 언제나 되고, 새로 만들 때만 센다. */
+function gateOk(key) {
+  const g = PL.canAdd(WATCH, ST.plan, key);
+  if (g.ok) return true;
+  openPlus(g);
+  return false;
+}
+let PLUS_NEXT = null; // Plus 확인 뒤 이어서 열 등록 폼 인자
+function openPlus(g, next) {
+  PLUS_NEXT = next || null;
+  const n = g && g.count != null ? g.count : PL.activeCount(WATCH);
+  $w("plus-lead").textContent = ST.plan && ST.plan.status === "past_due"
+    ? "Plus 결제가 실패해 추가 등록이 멈췄어요. 등록해 둔 구독과 알림은 그대로입니다."
+    : `지금 ${n}개를 등록해 두셨어요. 네 번째부터는 Donna Plus가 필요해요. 등록해 둔 구독은 그대로입니다.`;
+  $w("plus-err").textContent = "";
+  $w("plus-sheet").classList.add("on");
+  $w("sheet-bg").classList.add("on");
+}
+function closePlus() { $w("plus-sheet").classList.remove("on"); $w("sheet-bg").classList.remove("on"); }
+async function recheckPlus() {
+  $w("plus-err").textContent = "";
+  $w("plus-recheck").textContent = "확인하는 중…";
+  const res = await new Promise(r => chrome.runtime.sendMessage({ type: "checkLicense" }, r));
+  $w("plus-recheck").textContent = "이미 결제했어요 · 상태 다시 확인";
+  if (res && res.plan) ST.plan = res.plan;
+  if (PL.isPlus(ST.plan)) {
+    closePlus(); renderMe();
+    grabNote("Plus가 켜졌습니다. 이제 개수 제한 없이 등록할 수 있어요.");
+    if (PLUS_NEXT) { const a = PLUS_NEXT; PLUS_NEXT = null; openForm(a.key, a.presetId, a.manual); }
+  } else {
+    $w("plus-err").textContent = res && res.ok
+      ? "아직 Plus 결제가 확인되지 않았어요. 결제 후 1분쯤 지나 다시 눌러 주세요."
+      : "지금은 확인할 수 없어요. 인터넷 연결을 확인하고 다시 시도해 주세요.";
+  }
+}
+
 function openForm(key, presetId, manual) {
+  if (!key && !PL.canAdd(WATCH, ST.plan, null).ok) { openPlus(PL.canAdd(WATCH, ST.plan, null), { key, presetId, manual }); return; }
   EDIT_KEY = key || null;
   const w = key ? WATCH[key] : null;
   $w("w-form-title").textContent = w ? "구독 수정" : "무엇을 쓰고 있나요?";
@@ -878,6 +916,7 @@ async function grabFromPage() {
     if (!d) throw new Error("읽지 못함");
     const p = WT.parsePage(d.text, d.title, d.url, self.SVST);
     if (!p.name && p.amountOrig == null) return grabNote("이 페이지에서는 구독을 찾지 못했습니다.");
+    if (!gateOk(null)) return;
 
     const key = "w" + Date.now().toString(36);
     WATCH[key] = WT.makeWatch({
@@ -920,6 +959,7 @@ async function saveWatch() {
   const krw = isNaN(amt) ? null : WT.estimateKrw(amt, cur, ST.rates, { vat: vatApplies() });
   const preset = F.preset ? PS.LIST.find(x => x.id === F.preset) : null;
   const key = EDIT_KEY || ("w" + Date.now().toString(36));
+  if (!EDIT_KEY && !gateOk(null)) return;
   const w = WT.makeWatch({
     name, amountOrig: isNaN(amt) ? null : amt, currency: cur, amountKrw: krw,
     interval: F.interval, kind: F.kind, channel: F.channel, auto: $w("w-auto").checked,
@@ -952,7 +992,17 @@ function alertsText(w) {
 /* ── 내 정보 ──
    전에는 사업자등록번호를 넣는 자리가 결제창 위 패널뿐이었다.
    그래서 결제하러 가지 않으면 번호를 등록할 방법이 아예 없었다. 여기서도 되게 한다. */
+function renderPlan() {
+  const plus = PL.isPlus(ST.plan);
+  $w("me-plan-state").textContent = PL.statusText(ST.plan, WATCH);
+  const btn = $w("me-plan-btn");
+  btn.textContent = plus ? "관리" : (ST.plan && ST.plan.status === "past_due" ? "결제 수단 바꾸기" : "Plus 시작");
+  $w("me-plan-hint").textContent = plus
+    ? "해지해도 결제한 기간이 끝날 때까지 쓰고, 등록한 구독은 지워지지 않습니다."
+    : "구독 3개까지 무료. 네 번째부터 3개월 6,000원. 결제는 donna.co.kr에서 합니다.";
+}
 function renderMe() {
+  renderPlan();
   const p = ST.profile || {};
   $w("me-brn").value = p.brn || "";
   $w("me-type").value = p.type || "solo";
@@ -1085,6 +1135,15 @@ function downloadIcs() {
 
 function bindWatch() {
   $w("w-cancel").addEventListener("click", closeForm);
+  $w("plus-cancel").addEventListener("click", closePlus);
+  $w("plus-recheck").addEventListener("click", recheckPlus);
+  $w("plus-go").addEventListener("click", () => chrome.tabs.create({ url: PL.plusUrl(ST.installId, "gate") }));
+  $w("me-plan-btn").addEventListener("click", () => {
+    const plus = PL.isPlus(ST.plan);
+    const url = plus && ST.plan.manageUrl ? ST.plan.manageUrl : PL.plusUrl(ST.installId, plus ? "manage" : "settings");
+    chrome.tabs.create({ url });
+  });
+  $w("me-plan-state").addEventListener("click", () => { chrome.runtime.sendMessage({ type: "checkLicense" }, res => { if (res && res.plan) { ST.plan = res.plan; renderPlan(); } }); });
   $w("w-save").addEventListener("click", saveWatch);
   $w("w-enable").addEventListener("click", enableHere);
   $w("w-all").addEventListener("click", toggleAllSites);
@@ -1131,7 +1190,10 @@ async function init() {
      넓다고 가로를 다 쓰면 글줄이 길어져 오히려 못 읽는다. */
   if (window.innerWidth > 620) document.body.classList.add("wide");
 
-  const st = await chrome.storage.local.get(["ledger", "subs", "stats", "tasks", "profile", "suppliers", "watch", "settings"]);
+  const st = await chrome.storage.local.get(["ledger", "subs", "stats", "tasks", "profile", "suppliers", "watch", "settings", "plan", "installId"]);
+  ST.plan = st.plan || null;
+  ST.installId = st.installId || null;
+  if (!ST.installId) chrome.runtime.sendMessage({ type: "checkLicense" }, res => { if (res && res.plan) { ST.plan = res.plan; } chrome.storage.local.get("installId").then(x => { ST.installId = x.installId || null; }); });
   ST.ledger = st.ledger || [];
   ST.subs = st.subs || {};
   ST.stats = st.stats || { saved: 0 };
@@ -1154,6 +1216,8 @@ async function init() {
      여기서 새로고침 없이 바로 보이도록, 저장소가 바뀌면 그 부분만 다시 그린다. */
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
+    if (changes.plan) { ST.plan = changes.plan.newValue || null; if (VIEW === "me") renderPlan(); }
+    if (changes.installId) ST.installId = changes.installId.newValue || null;
     if (changes.watch) { WATCH = changes.watch.newValue || {}; if (!$w("w-form").classList.contains("on")) { if (VIEW === "detail") renderDetail(DETAIL_KEY); else if (VIEW === "watch") renderWatch(); } }
     if (changes.ledger) ST.ledger = changes.ledger.newValue || [];
     if (changes.subs) ST.subs = changes.subs.newValue || {};

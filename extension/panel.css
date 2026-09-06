@@ -48,7 +48,7 @@
   box-shadow: 0 0 0 1px rgba(17,19,21,.10),
               0 4px 14px -6px rgba(17,19,21,.30);
   color: #111315;
-  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Apple SD Gothic Neo', 'Pretendard Variable', Pretendard, 'Segoe UI', Roboto, system-ui, sans-serif;
   transition: transform .16s ease, background .2s ease;
 }
 #svst-badge:hover { transform: translateY(-2px); }
@@ -120,7 +120,7 @@
   box-shadow: 0 0 0 1px rgba(17,19,21,.09),
               0 10px 30px -12px rgba(17,19,21,.28);
   color: #111315;
-  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Apple SD Gothic Neo', 'Pretendard Variable', Pretendard, 'Segoe UI', Roboto, system-ui, sans-serif;
   font-size: 14.5px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;

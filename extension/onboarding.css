@@ -1,26 +1,26 @@
 /* Donna 온보딩 — 값은 시안(Onboarding1~3.dc.html, Register.dc.html)에서 그대로. */
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap");
+@font-face { font-family: "Pretendard Variable"; font-weight: 45 920; font-style: normal; font-display: swap; src: url("fonts/PretendardVariable.woff2") format("woff2-variations"); }
 :root{--bg:#F2F2F4;--card:#fff;--ink:#111114;--sub:#8A8A91;--faint:#C7C7CC;--line:#EDEDF0;--soft:#F5F5F7;--yellow:#FFD84D;--yellow-ink:#3A2E00;--green:#22C55E;--orange:#FF6B2C;--red:#FF4D3D;
---sans:Manrope,-apple-system,"SF Pro Text","Apple SD Gothic Neo",Pretendard,system-ui,sans-serif}
+--sans:-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, "Segoe UI", Roboto, system-ui, sans-serif}
 *{box-sizing:border-box}
 html{background:var(--bg)}
 body{margin:0;color:var(--ink);background:var(--bg);font-family:var(--sans);letter-spacing:-.01em;-webkit-font-smoothing:antialiased;line-height:1.5;word-break:keep-all}
 button,input,select{font:inherit;color:inherit;background:transparent;border:0;outline:0}
 button{cursor:pointer}
-b{font-weight:800}
+b{font-weight:700}
 .shell{width:min(100% - 112px,960px);margin:0 auto;padding:40px 0 80px}
 .step{display:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:40px;align-items:center;min-height:560px}
 .step.on{display:grid}
 #register.step{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}
 .col{display:flex;flex-direction:column;gap:22px;min-width:0}
 .col.center{align-items:center}
-.brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800}
+.brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700}
 .brand img{width:26px;height:26px;border-radius:8px}
 .brand .tag{margin-left:6px}
-.tag{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.02em;align-self:flex-start}
+.tag{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.02em;align-self:flex-start}
 .tag.soft{background:var(--soft);color:var(--sub)}
 .tag.green{background:var(--green);color:#fff;height:22px;font-size:11px}
-h1{margin:0;font-size:44px;line-height:1.08;letter-spacing:-.045em;font-weight:800;text-wrap:balance}
+h1{margin:0;font-size:44px;line-height:1.08;letter-spacing:-.045em;font-weight:700;text-wrap:balance}
 #register-title,#done-title{font-size:40px;line-height:1.1}
 #done-title{font-size:42px}
 .lead{margin:0;color:var(--sub);font-size:17px;font-weight:600;line-height:1.6;max-width:380px}
@@ -34,19 +34,19 @@ h1{margin:0;font-size:44px;line-height:1.08;letter-spacing:-.045em;font-weight:8
 .pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 16px;border-radius:999px;font-weight:700;font-size:15px}
 .pill.gray{background:var(--soft);color:var(--ink)}
 .card,.demo-card,.result{background:var(--card);border-radius:24px;box-shadow:0 10px 30px rgba(20,20,30,.06),0 1px 2px rgba(20,20,30,.04)}
-.avatar{width:44px;height:44px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#fff;flex-shrink:0}
+.avatar{width:44px;height:44px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0}
 .avatar .logo{display:block;background:#fff;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
 
 /* 1. 스택 카드 */
 .stack{position:relative;height:420px;display:flex;align-items:center;justify-content:center}
 .back-yellow{position:absolute;width:300px;height:300px;border-radius:28px;background:var(--yellow);color:var(--yellow-ink);transform:rotate(8deg) translate(48px,-30px);box-shadow:0 20px 50px rgba(255,216,77,.35)}
-.back-yellow .k{position:absolute;top:22px;left:26px;font-size:12px;font-weight:800;letter-spacing:.06em;opacity:.7}
-.back-yellow .v{position:absolute;top:44px;left:26px;font-size:30px;font-weight:800;letter-spacing:-.04em}
+.back-yellow .k{position:absolute;top:22px;left:26px;font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.7}
+.back-yellow .v{position:absolute;top:44px;left:26px;font-size:30px;font-weight:700;letter-spacing:-.04em}
 .back-white{position:absolute;width:300px;height:300px;border-radius:28px;background:#fff;transform:rotate(-7deg) translate(-56px,46px);box-shadow:0 20px 50px rgba(0,0,0,.08)}
 .back-white span{position:absolute;bottom:22px;left:26px;font-size:14px;font-weight:700;color:var(--sub)}
 .demo-card{position:relative;width:320px;padding:26px 26px 22px;display:flex;flex-direction:column;gap:10px;box-shadow:0 30px 70px rgba(0,0,0,.14)}
-.demo-card .eyebrow{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--orange)}
-.demo-card .name{font-size:26px;font-weight:800;letter-spacing:-.035em}
+.demo-card .eyebrow{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--orange)}
+.demo-card .name{font-size:26px;font-weight:700;letter-spacing:-.035em}
 .demo-card p{margin:0;font-size:15px;font-weight:600;color:var(--sub)}.demo-card p b{color:var(--ink)}
 .demo-card .spacer{height:54px}
 
@@ -54,7 +54,7 @@ h1{margin:0;font-size:44px;line-height:1.08;letter-spacing:-.045em;font-weight:8
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .grid button{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:18px;border-radius:24px;background:#fff;text-align:left;box-shadow:0 10px 30px rgba(20,20,30,.06),0 1px 2px rgba(20,20,30,.04)}
 .grid button.on{box-shadow:0 0 0 3px var(--ink),0 10px 30px rgba(0,0,0,.08)}
-.grid button .nm{font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grid button .nm{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .grid button .pr{font-size:12.5px;font-weight:700;color:var(--sub)}
 .grid button.plus{align-items:center;justify-content:center;background:transparent;border:2px dashed #D9D9DE;box-shadow:none}
 .grid button.plus .avatar{background:#fff;color:var(--ink);font-size:22px}
@@ -70,7 +70,7 @@ h1{margin:0;font-size:44px;line-height:1.08;letter-spacing:-.045em;font-weight:8
 .picked-box{background:var(--soft);border-radius:20px;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
 .picked-box .p{display:flex;align-items:center;gap:12px;cursor:pointer}
 .picked-box .p .m{flex:1;min-width:0}
-.picked-box .p .nm{font-size:17px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.picked-box .p .nm{font-size:17px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .picked-box .p .s{font-size:12.5px;font-weight:700;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .picked-box .p .krw{text-align:right;flex-shrink:0}
 .picked-box .p .krw b{font-size:16px;font-variant-numeric:tabular-nums}
@@ -80,7 +80,7 @@ h1{margin:0;font-size:44px;line-height:1.08;letter-spacing:-.045em;font-weight:8
 .seg button.on{background:var(--ink);color:#fff}
 .seg.outline button.on{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
 .adv{display:none;flex-direction:column;gap:12px}.adv.on{display:flex}
-.sheet label{display:block;font-size:13px;font-weight:800;color:var(--sub);margin-bottom:8px;padding-left:4px}
+.sheet label{display:block;font-size:13px;font-weight:700;color:var(--sub);margin-bottom:8px;padding-left:4px}
 .sheet .row{display:flex;gap:8px}.sheet .row>*{flex:1;min-width:0}
 .krw{margin:0;font-size:12.5px;font-weight:600;color:var(--sub)}.krw b{color:var(--ink)}.krw:empty{display:none}
 .datenav{display:flex;align-items:center;justify-content:space-between;padding-left:4px;position:relative}
@@ -96,18 +96,18 @@ h1{margin:0;font-size:44px;line-height:1.08;letter-spacing:-.045em;font-weight:8
 .week .d.past{color:var(--faint)}
 .week .d.on{background:var(--ink);color:#fff}
 .error{min-height:0;margin:0;color:var(--red);font-size:13px;font-weight:700}.error:empty{display:none}
-.submit{height:54px;border-radius:18px;background:var(--ink);color:#fff;font-weight:800;font-size:16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.submit{height:54px;border-radius:18px;background:var(--ink);color:#fff;font-weight:700;font-size:16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%}
 
 /* 3. 결과 카드 (시안 Onboarding3) */
 .result{width:340px;padding:26px;display:flex;flex-direction:column;gap:18px;box-shadow:0 30px 70px rgba(0,0,0,.12)}
 .result .head{display:flex;align-items:center;gap:12px}
 .result .head .avatar{width:52px;height:52px;font-size:20px}
-.result .head .nm{font-size:22px;font-weight:800;letter-spacing:-.03em}
+.result .head .nm{font-size:22px;font-weight:700;letter-spacing:-.03em}
 .result .head .s{font-size:13px;font-weight:700;color:var(--sub)}
 .result .box{background:var(--soft);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
 .result .box .r{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .result .box .r span{font-size:13px;font-weight:700;color:var(--sub)}
-.result .box .r b{font-size:14px;font-weight:800;text-align:right}
+.result .box .r b{font-size:14px;font-weight:700;text-align:right}
 .result .box .r .tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .result .pill{height:46px;width:100%}
 

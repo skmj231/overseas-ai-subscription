@@ -70,3 +70,10 @@
 - 형태: 카드 24px 라운드, 히어로 28px, 버튼은 필. 목록 카드는 로고 원 + 상태 필 + 이름 + 원화. 곧 결제되는 카드는 진행 바(지난 결제 → 알림 단계 → 결제)와 버튼이 펼쳐진 채로 보인다.
 - 등록은 바텀시트: 로고 8개 → 날짜 → 채널. 금액·주기는 접어 둔다. 등록 버튼 글자에 "9월 17일 결제 · 5일 전 · 1일 전 알림"이 미리 적힌다.
 - 로고: `extension/logos/`의 단색 SVG(SimpleIcons 규격)를 CSS mask로 흰색 처리해 브랜드색 원 위에 얹는다. 없는 서비스는 이니셜. 새 로고는 SVG 한 장 + `presets.js`의 `logo` 값이면 된다.
+
+## 1.5.0 — 요금과 Plus
+- 활성 구독 3개까지 무료(해지 확인된 것은 세지 않음). 네 번째부터 Donna Plus, 3개월 6,000원.
+- 결제는 donna.co.kr/plus.html에서만. 확장은 `install_id` 하나로 `api.donna.co.kr/v1/license`를 하루 한 번 묻는다. 서버 없음·장애 시 마지막 상태를 7일 유지.
+- Plus 해지·만료·결제 실패는 로컬 데이터를 지우지 않는다. 추가 등록만 막는다. 수정은 언제나 된다.
+- 글꼴: 시스템 서체 우선(SF Pro·Apple SD Gothic Neo), 비 Apple 환경은 패키지에 넣은 Pretendard. 외부 요청 없음.
+- 서버 설계: `docs/PLUS-SERVER.md`. 스토어 제출: `store-submission/README.md`.

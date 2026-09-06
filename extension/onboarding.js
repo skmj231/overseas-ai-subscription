@@ -6,6 +6,7 @@
  */
 const WT = self.SVSTWatch;
 const PS = self.SVSTPresets;
+const PL = self.SVSTPlan;
 const $ = id => document.getElementById(id);
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -176,11 +177,15 @@ $("form").addEventListener("submit", async e => {
     auto: true, source: "manual"
   }, todayISO());
 
-  const st = await chrome.storage.local.get(["watch"]);
+  const st = await chrome.storage.local.get(["watch", "plan"]);
   const watch = st.watch || {};
   const normalized = name.toLocaleLowerCase().replace(/\s+/g, "");
   const existing = Object.keys(watch).find(k => String(watch[k].name || "").toLocaleLowerCase().replace(/\s+/g, "") === normalized);
   const key = existing || ("w" + Date.now().toString(36));
+  if (!existing && !PL.canAdd(watch, st.plan || null, null).ok) {
+    $("error").textContent = "무료로는 구독 3개까지 등록할 수 있어요. 패널에서 Donna Plus(3개월 6,000원)를 시작하면 이어서 등록됩니다.";
+    return;
+  }
   watch[key] = existing ? { ...watch[key], ...made } : made;
   await chrome.storage.local.set({ watch, onboardingCompleted: { at: Date.now(), result: "registered" } });
 
