@@ -8,7 +8,7 @@ const R = require(path.join(root, "rules.js"));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, "1.5.0");
+assert.equal(manifest.version, "1.5.1");
 /* 사이드패널: 아이콘을 누르면 팝업이 아니라 패널이 열려야 한다. 팝업이 남아 있으면 그쪽이 먼저 잡힌다. */
 assert.ok(manifest.permissions.includes("sidePanel"), "sidePanel 권한 누락");
 assert.equal(manifest.side_panel && manifest.side_panel.default_path, "popup.html");
@@ -158,5 +158,7 @@ assert.match(PLAN.statusText(plus, mk(5), NOW), /^Plus · 12월 6일까지 · �
 assert.match(PLAN.statusText({ ...plus, status: "canceled" }, mk(5), NOW), /이용 후 종료$/);
 assert.ok(fs.existsSync(path.join(root, "fonts", "PretendardVariable.woff2")), "글꼴 파일 누락");
 assert.ok(manifest.web_accessible_resources[0].resources.includes("fonts/PretendardVariable.woff2"));
+
+assert.ok(manifest.host_permissions.includes("https://api.donna.co.kr/*"), "라이선스 서버 접근 권한 누락 — 확장이 CORS로 막힌다");
 
 console.log("Donna 확장프로그램 핵심 테스트 통과");

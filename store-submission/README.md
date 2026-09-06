@@ -1,8 +1,8 @@
-# Donna 1.5.0 제출 순서
+# Donna 1.5.1 제출 순서
 
 ## 올릴 파일
 
-- 확장 프로그램: `releases/donna-extension-v1.5.0.zip`
+- 확장 프로그램: `releases/donna-extension-v1.5.1.zip`
 - 스토어 아이콘(128): `extension/icon128.png`
 - 작은 홍보 이미지 440×280: `assets/store/promo-small-440x280.png`
 - 큰 홍보 이미지 1400×560: `assets/store/promo-marquee-1400x560.png`
