@@ -5,13 +5,13 @@
 ## 0. 준비물
 
 - 토스페이먼츠 가입에 필요한 것: 사업자등록증(659-13-02509), 통신판매업신고증(2025-서울강남-02655), 대표자 신분증, 정산 계좌(사업자 명의), 서비스 URL(https://donna.co.kr), 이용약관·개인정보처리방침 URL(이미 있음).
-- Railway 계정(GitHub 로그인), Resend 계정(이메일), donna.co.kr DNS 관리 화면(Cloudflare로 보임).
+- Railway 계정(GitHub 로그인), Resend 계정(이메일), donna.co.kr DNS 관리 화면(가비아).
 - 이 저장소가 GitHub `skmj231/overseas-ai-subscription`에 푸시돼 있을 것. `server/` 폴더가 배포 대상이다.
 
 ## 1. 토스페이먼츠 — 테스트 키로 먼저 (30분)
 
 1. https://developers.tosspayments.com 가입 → 로그인 → **내 개발정보**.
-2. **API 키** 탭에서 테스트 키 두 개를 복사한다.
+2. **API 개별 연동 키** 탭에서 테스트 키 두 개를 복사한다. (결제위젯 연동 키는 이 방식에서 동작하지 않는다 — SDK가 "API 개별 연동 키의 클라이언트 키로 연동해주세요"로 거절한다.)
    - 클라이언트 키 `test_ck_…` → `TOSS_CLIENT_KEY`
    - 시크릿 키 `test_sk_…` → `TOSS_SECRET_KEY`
    - 테스트 키는 계약 없이 빌링(자동결제)까지 전부 동작한다. 실제 결제는 일어나지 않는다.
@@ -30,12 +30,12 @@
    `BILLING_KEY_SECRET`은 한 번 정하면 **절대 바꾸지 않는다**(바꾸면 저장된 빌링키를 못 읽어 모든 갱신이 실패한다). 두 값은 1Password 같은 곳에 따로 보관.
    `EXTENSION_ID`는 웹 스토어 항목 ID(`jkecjjpgplgpcfdbllaldllcliliojfn`).
 5. **Settings → Networking → Custom Domain**에 `api.donna.co.kr`을 추가하면 CNAME 대상이 나온다.
-6. Cloudflare DNS에 `api` CNAME → Railway가 준 값. Proxy는 **DNS only(회색 구름)** 로 두는 편이 단순하다(Railway가 TLS를 낸다).
+6. 가비아 DNS에 `api` CNAME → Railway가 준 값. Railway가 요구하는 TXT `_railway-verify.api`도 같이 넣는다(Railway가 TLS를 낸다).
 7. 배포 로그에 `donna-plus-api :8787 (production)`이 보이고 `https://api.donna.co.kr/healthz`가 `{"ok":true}`를 주면 끝. 마이그레이션은 부팅 때 자동으로 돈다.
 
 ## 3. Resend — 이메일 (20분)
 
-1. https://resend.com 가입 → **Domains → Add Domain** `donna.co.kr` → 나오는 DKIM·SPF 레코드를 Cloudflare DNS에 추가 → Verified.
+1. https://resend.com 가입 → **Domains → Add Domain** `donna.co.kr` → 나오는 DKIM·SPF 레코드를 가비아 DNS에 추가 → Verified.
 2. **API Keys**에서 키 생성 → Railway `MAIL_API_KEY`. `MAIL_FROM=Donna <no-reply@donna.co.kr>`.
 3. 키가 비어 있으면 서버는 메일을 보내지 않고 로그에만 찍는다(테스트 중에는 그래도 된다).
 
@@ -46,7 +46,10 @@
 ## 5. 테스트 결제 E2E (20분)
 
 1. Chrome에 확장 1.5.0을 압축해제 로드. 구독 3개 등록 → 4번째에서 Plus 시트 → **Plus 시작하기** → `donna.co.kr/plus.html?install=…` 열림.
-2. 이메일 입력 → 동의 → **카드 등록하고 시작하기** → 토스 테스트 결제창. 테스트 카드: 아무 카드번호(예 `4330-1234-1234-1234`), 유효기간 미래, 생년월일 아무 값. 
+2. 이메일 입력 → 동의 → **카드 등록하고 시작하기** → 토스 테스트 결제창.
+   테스트 카드는 **아무 숫자나 넣으면 실패한다.** 토스 문서 기준으로 자동결제 등록은 *카드번호 앞 여섯 자리(BIN)가 실제 카드사의 것*이어야 통과한다.
+   가장 확실한 방법: **본인 카드의 앞 6자리**를 쓰고 나머지 10자리는 아무 숫자, 유효기간은 미래, 생년월일·비밀번호 앞 2자리는 아무 값, 휴대폰 인증번호는 `000000`.
+   테스트 키(`test_ck_`/`test_sk_`)에서는 실제로 출금되지 않는다.
 3. `plus-done.html`로 돌아오면 확장 설정 → Plus → **상태 다시 확인** → "Plus · 12월 6일까지"로 바뀌고 등록이 열린다.
 4. 관리 페이지(설정 → 관리): 결제 내역에 6,000원 1건, 영수증 링크. 해지 → 메일 도착 → 다시 켜기. 7일 이내 환불 → 토스 대시보드에 취소 표시.
 5. Railway 로그에서 `tick {"reminded":0,"charged":0,…}`이 매시 찍히는지 확인.

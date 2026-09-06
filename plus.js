@@ -19,10 +19,12 @@
   // 토스 결제창에서 돌아왔는데 실패한 경우
   const err = q.get("error");
   if (err) {
-    const reason = q.get("reason") || "";
+    const reason = q.get("reason") || "", code = q.get("code") || "";
+    const tail = reason ? ` (${reason})` : code ? ` (${code})` : "";
     say(err === "canceled" ? "결제창을 닫으셨어요. 다시 시도하려면 아래 버튼을 눌러 주세요."
-      : err === "payment" ? `카드 승인이 되지 않았어요.${reason ? " (" + reason + ")" : ""} 다른 카드로 다시 시도해 주세요.`
-      : `카드 등록 중 문제가 생겼어요.${reason ? " (" + reason + ")" : ""} 잠시 뒤 다시 시도해 주세요.`, "err");
+      : err === "card" ? `카드가 등록되지 않았어요.${tail} 카드 번호와 유효기간을 다시 확인해 주세요.`
+      : err === "payment" ? `카드 승인이 되지 않았어요.${tail} 다른 카드로 다시 시도해 주세요.`
+      : `카드 등록 중 문제가 생겼어요.${tail} 잠시 뒤 다시 시도해 주세요.`, "err");
     form.scrollIntoView({ block: "center" });
   }
 

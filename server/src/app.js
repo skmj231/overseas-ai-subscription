@@ -71,9 +71,15 @@ export function makeApp({ service, env, toss, db, log = console }) {
       res.redirect(302, u.toString());
     }
   }));
+  /* 토스는 사용자가 창을 닫은 것(USER_CANCEL)과 카드가 거절된 것을 같은 failUrl로 보낸다.
+     코드를 그대로 넘기지 않으면 "결제창을 닫으셨어요"만 보여 원인을 못 찾는다. */
   app.get("/v1/billing/fail", (req, res) => {
+    const code = String(req.query.code || "");
     const u = new URL(`${env.SITE_URL || "https://donna.co.kr"}/plus.html`);
-    u.searchParams.set("error", "canceled"); if (req.query.message) u.searchParams.set("reason", String(req.query.message).slice(0, 120));
+    u.searchParams.set("error", /USER_CANCEL|PAY_PROCESS_CANCELED/i.test(code) ? "canceled" : "card");
+    if (code) u.searchParams.set("code", code.slice(0, 60));
+    if (req.query.message) u.searchParams.set("reason", String(req.query.message).slice(0, 160));
+    log.error("billing/fail", code, String(req.query.message || ""));
     res.redirect(302, u.toString());
   });
 
