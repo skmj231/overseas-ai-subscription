@@ -1,6 +1,6 @@
 # Donna Plus 결제 서버 설계 (api.donna.co.kr)
 
-작성 2026-09-06. 확장 1.5.0과 donna.co.kr/plus.html이 기대하는 계약이다. 서버는 아직 없다. 이 문서대로 만들면 확장·사이트는 고치지 않아도 된다.
+작성 2026-09-06. 구현: `server/` (Node 22 + Express 5 + Postgres). 확장 1.5.0·plus.html·plus-manage.html과 계약이 맞춰져 있다. 배포 순서는 `docs/PLUS-LAUNCH.md`.
 
 ## 원칙
 
@@ -16,8 +16,8 @@
 | 상품명 | Donna Plus 3개월 이용권 (`plan = "plus_3m"`) |
 | 가격 | 6,000원 / 3개월, 부가세 포함 |
 | 갱신 | 최초 승인일 기준 3개월마다 같은 날 (말일 보정) |
-| 갱신 안내 | 갱신 7일 전 이메일 |
-| 실패 재시도 | 하루 1회, 7일. 그 뒤 `past_due` → 확장은 무료 한도로 |
+| 갱신 안내 | 갱신 7일 전·3일 전 이메일 |
+| 실패 재시도 | 실패 즉시 메일, 3일 뒤·7일 뒤 재시도. 그 뒤 `past_due` → 확장은 무료 한도로 |
 | 환불 | 결제 후 7일 이내이고 4개 이상 구독을 등록하지 않았으면 전액. 그 외 남은 기간 이용 |
 | 기기 | 같은 이메일로 확인한 install_id 3개까지 |
 
@@ -26,47 +26,37 @@
 ## 흐름
 
 ```
-plus.html ──POST /v1/checkout/session {email, install_id}──▶ 서버
-   ◀── {checkout_url}  (토스 빌링키 발급 창: customerKey = customer.id)
-토스 successUrl ──▶ GET /v1/billing/issue?customerKey&authKey ──▶ 빌링키 발급(POST /v1/billing/authorizations/issue)
-   └─▶ 첫 승인 6,000원 (POST /v1/billing/{billingKey}, orderId = sub_{id}_1)
-   └─▶ subscriptions.status = active, current_period_end = +3개월
-   └─▶ 302 → https://donna.co.kr/plus-done.html
-확장 ──GET /v1/license?install_id──▶ {tier:"plus", status:"active", current_period_end}
-스케줄러(매시) ──▶ current_period_end - 7d: 안내 메일 / current_period_end 도래: 다음 회차 승인
+plus.html ──POST /v1/checkout/session {email, install_id}──▶ 서버: customers upsert, subscriptions(pending), checkout_sessions
+   ◀── {client_key, customer_key, customer_email, success_url, fail_url}
+plus.js: TossPayments(client_key).payment({customerKey}).requestBillingAuth({method:"CARD", successUrl, failUrl, customerEmail})
+토스 → GET /v1/billing/issue?sid&customerKey&authKey
+   └─▶ POST tosspayments /v1/billing/authorizations/issue → billingKey(AES-256-GCM으로 저장)
+   └─▶ POST tosspayments /v1/billing/{billingKey} 6,000원, orderId = sub_<id>_1, Idempotency-Key = orderId
+   └─▶ active, current_period_end = +3개월, 영수증 메일, install_id 연결 → 302 plus-done.html
+확장 ──GET /v1/license?install_id──▶ {tier, status, current_period_end, cancel_at_period_end, manage_url, email(마스킹)}
+스케줄러(매시, advisory lock) ──▶ 7일·3일 전 안내 메일 / 만료일 승인 / 실패 3일·7일 뒤 재시도 / 해지 예약 만료 처리
 ```
 
-## API
+## API (구현됨: `server/src/app.js`)
 
-모든 응답 `Content-Type: application/json`. `Access-Control-Allow-Origin`은 `https://donna.co.kr`과 `chrome-extension://<확장 ID>` 두 개만. `/v1/license`는 확장이 서비스 워커에서 `fetch`로 부르므로 CORS 헤더가 없으면 실패한다.
+CORS: `https://donna.co.kr`과 `chrome-extension://<EXTENSION_ID>`만. 모든 응답 `Cache-Control: no-store`.
 
-### `POST /v1/checkout/session`
-요청 `{ email, install_id?, plan: "plus_3m", return_url, cancel_url }`
-- email 검증, `customers` upsert, install_id가 있으면 `installations`에 연결(없으면 결제 뒤 확장에서 '상태 다시 확인'을 눌러도 연결이 안 되므로 plus-done에서 이메일 인증 링크를 보낸다).
-- 토스 빌링키 발급 창 주소를 만든다. `customerKey`는 `customers.id`(UUID). `successUrl = /v1/billing/issue?sid=...`, `failUrl = cancel_url`.
-- 응답 `{ checkout_url }`. 실패 시 4xx + `{ error }`.
+| 메서드·경로 | 누가 | 하는 일 |
+|---|---|---|
+| `POST /v1/checkout/session` | plus.html | `{email, install_id?, return_url?, cancel_url?}` → 결제창 파라미터. 이미 Plus면 `{already:true, manage_url}`. IP당 10회/시간 |
+| `GET /v1/billing/issue?sid&customerKey&authKey` | 토스 successUrl | 빌링키 발급 + (새 구독) 첫 승인 / (카드 변경) 교체 후 past_due면 즉시 재시도 → 302 |
+| `GET /v1/billing/fail?sid&message` | 토스 failUrl | plus.html?error=canceled로 302 |
+| `GET /v1/license?install_id` | 확장 | 라이선스 뷰. 모르는 설치는 free. IP당 120회/시간 |
+| `GET /v1/subscription?token` | plus-manage | 상태·카드·결제내역·연결 기기·환불 가능 여부 |
+| `POST /v1/subscription/cancel` `{token}` | plus-manage·메일 | 다음 갱신 중단(기간 끝까지 이용), 확인 메일 |
+| `POST /v1/subscription/resume` `{token}` | plus-manage | 해지 예약 취소 |
+| `POST /v1/subscription/refund` `{token}` | plus-manage | 첫 결제 7일 이내 전액 환불, 즉시 종료 |
+| `POST /v1/subscription/change-card` `{token, return_url?}` | plus-manage | 카드 변경용 결제창 파라미터 |
+| `POST /v1/installations/link` `{token, install_id}` | plus-manage | 기기 연결(3대 초과 시 가장 오래 안 본 것 해제) |
+| `POST /v1/webhooks/toss` | 토스 | `PAYMENT_STATUS_CHANGED` → 결제를 다시 조회해 payments 상태만 갱신 |
+| `GET /healthz` | Railway | DB 핑 |
 
-### `GET /v1/billing/issue?sid&customerKey&authKey` (토스 successUrl)
-- `POST https://api.tosspayments.com/v1/billing/authorizations/issue` → billingKey. 암호화해 `subscriptions.billing_key_encrypted`에 저장.
-- 첫 승인 `POST https://api.tosspayments.com/v1/billing/{billingKey}` `{ customerKey, amount: 6000, orderId: "sub_{subscription_id}_1", orderName: "Donna Plus 3개월 이용권", customerEmail }`. `Idempotency-Key = orderId`.
-- 성공: `subscriptions.status = active`, `current_period_start = now`, `current_period_end = now + 3개월`; `payments` 기록; 영수증 메일; 302 `return_url`.
-- 실패: `subscriptions.status = incomplete`; 302 `cancel_url?error=payment`.
-
-### `GET /v1/license?install_id=`
-확장이 하루 한 번 부른다. 응답은 항상 200(설치를 못 찾으면 무료).
-```json
-{ "tier": "plus", "status": "active", "current_period_end": "2026-12-06T00:00:00Z",
-  "cancel_at_period_end": false, "manage_url": "https://donna.co.kr/plus-manage.html?token=...", "email": "a@b.c" }
-```
-- `status`: `active` | `canceled`(기간 끝까지 이용) | `past_due` | `expired` | `none`
-- `manage_url`: 확장 설정의 '관리' 버튼이 연다. 토큰은 24시간짜리 서명 링크. 해지·결제수단 변경 페이지(아직 없음, `plus-manage.html`).
-- 캐시 금지 헤더. 응답에 구독 내용을 넣을 일은 없다.
-
-### `POST /v1/subscription/cancel` (manage 페이지·메일 링크)
-`{ token }` → `cancel_at_period_end = true`, `status = canceled`. 즉시 해지가 아니라 다음 갱신 중단. 확인 메일.
-
-### `POST /v1/subscription/refund` (7일 이내 환불)
-토스 `POST /v1/payments/{paymentKey}/cancel`. 조건 검증은 서버가 한다(결제일 +7일, 확장이 보고한 구독 수는 서버가 모른다 → 사용자 신고 기반, 분쟁 시 수동).
+관리 토큰: HMAC-SHA256 서명, 30일. 라이선스 응답의 `manage_url`과 모든 메일 하단에 들어간다.
 
 ## 데이터
 
@@ -82,14 +72,15 @@ payments       (id uuid pk, subscription_id fk, order_id text unique, payment_ke
 audit          (id, subject, action, at, meta jsonb)
 ```
 - `public_install_id`는 확장이 만든 26자 문자열. 한 고객에 최대 3개.
-- 빌링키는 KMS 또는 libsodium secretbox로 암호화. 키는 환경변수가 아닌 KMS 우선.
+- 빌링키는 AES-256-GCM(`BILLING_KEY_SECRET`)으로 암호화해 저장. 키를 바꾸면 기존 빌링키를 못 읽는다.
 
-## 스케줄러 (매시)
+## 스케줄러 (`service.tick`, 매시)
 
-1. `current_period_end - 7일` 안에 들어온 `active` 구독 → 갱신 안내 메일(한 번만, `audit`로 중복 방지).
-2. `current_period_end <= now` and not `cancel_at_period_end` → 승인 시도. `orderId = sub_{id}_{n}`, `Idempotency-Key = orderId`. 성공하면 기간 +3개월, 실패하면 `fail_count++`, `next_retry_at = +24h`, 실패 메일.
-3. `fail_count >= 7` → `status = past_due`. 확장은 다음 라이선스 확인 때 무료 한도로 돌아간다(데이터는 그대로).
-4. `cancel_at_period_end` and `current_period_end <= now` → `status = expired`.
+1. `canceled`이고 `current_period_end <= now` → `expired`.
+2. `active`이고 해지 예약이 아니면 만료 7일·3일 전에 안내 메일(단계별 한 번, `audit` unique index로 중복 방지).
+3. `active`이고 `current_period_end <= now` → 승인. 성공하면 기간을 **원래 만료일부터** +3개월(늦게 성공해도 손해 없음), `period_no++`.
+4. 실패 → `past_due`, `fail_count=1`, `next_retry_at = 첫 실패 + 3일`. 두 번째 실패 → `+7일`. 세 번째 실패 또는 카드 자체 문제(`HARD_FAIL` 코드) → 재시도 중단. 매 실패마다 메일. 카드를 바꾸면 그 자리에서 재시도.
+5. 첫 결제(회차 1) 실패는 재시도하지 않고 `incomplete`로 두고 plus.html로 돌려보낸다.
 
 ## 보안 체크리스트
 
@@ -103,15 +94,15 @@ audit          (id, subject, action, at, meta jsonb)
 ## 환경변수
 
 ```
-TOSS_SECRET_KEY, TOSS_CLIENT_KEY, DATABASE_URL, BILLING_KEY_KMS_ID (또는 BILLING_KEY_SECRET),
+TOSS_SECRET_KEY, TOSS_CLIENT_KEY, DATABASE_URL, BILLING_KEY_SECRET(32바이트 hex),
 MAIL_API_KEY, MAIL_FROM=Donna <no-reply@donna.co.kr>, SITE_URL=https://donna.co.kr,
 EXTENSION_ID=<웹스토어 ID>, LICENSE_TOKEN_SECRET
 ```
 
-## 남은 페이지
+## 페이지·메일
 
-- `plus-manage.html` — 상태, 다음 결제일, 해지, 결제수단 변경, 영수증 목록. `manage_url` 토큰으로 진입.
-- 이메일 4종: 결제 완료(영수증), 갱신 7일 전, 결제 실패, 해지 확인.
+- `plus-manage.html` — 상태, 다음 결제일, 해지·재개, 결제수단 변경, 7일 환불, 결제 내역, 기기 연결.
+- 메일 6종(`server/src/mail.js`, Resend): 결제 완료·갱신 영수증, 갱신 안내(7일·3일 전), 결제 실패, 해지 확인, 환불 완료, 카드 변경.
 
 ## 확장 쪽 계약 요약 (`extension/plan.js`)
 

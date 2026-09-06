@@ -1140,10 +1140,13 @@ function bindWatch() {
   $w("plus-go").addEventListener("click", () => chrome.tabs.create({ url: PL.plusUrl(ST.installId, "gate") }));
   $w("me-plan-btn").addEventListener("click", () => {
     const plus = PL.isPlus(ST.plan);
-    const url = plus && ST.plan.manageUrl ? ST.plan.manageUrl : PL.plusUrl(ST.installId, plus ? "manage" : "settings");
+    const url = plus && ST.plan.manageUrl ? ST.plan.manageUrl + "&install=" + encodeURIComponent(ST.installId || "") : PL.plusUrl(ST.installId, plus ? "manage" : "settings");
     chrome.tabs.create({ url });
   });
-  $w("me-plan-state").addEventListener("click", () => { chrome.runtime.sendMessage({ type: "checkLicense" }, res => { if (res && res.plan) { ST.plan = res.plan; renderPlan(); } }); });
+  $w("me-plan-recheck").addEventListener("click", () => {
+    const b = $w("me-plan-recheck"); b.textContent = "확인 중…";
+    chrome.runtime.sendMessage({ type: "checkLicense" }, res => { if (res && res.plan) { ST.plan = res.plan; renderPlan(); } b.textContent = "상태 다시 확인"; });
+  });
   $w("w-save").addEventListener("click", saveWatch);
   $w("w-enable").addEventListener("click", enableHere);
   $w("w-all").addEventListener("click", toggleAllSites);
