@@ -310,14 +310,21 @@ function toCsv() {
   return "﻿" + lines.join("\r\n");
 }
 
+/* 파일 저장. 앵커를 문서에 붙이고 URL 해제를 미룬다 —
+   붙이지 않거나 click 직후 곧바로 revokeObjectURL을 부르면 다운로드가 시작되기 전에
+   블롭이 사라져 사이드패널에서 조용히 아무 일도 일어나지 않는다. */
+function saveFile(name, text, mime) {
+  const url = URL.createObjectURL(new Blob([text], { type: mime }));
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.rel = "noopener"; a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 4000);
+}
+
 function doDownload() {
   const q = QUARTER === "all" ? { label: "전체" } : quarterRange(QUARTER);
-  const blob = new Blob([toCsv()], { type: "text/csv;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `savestripe_${q.label}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  saveFile(`savestripe_${q.label}.csv`, toCsv(), "text/csv;charset=utf-8");
 }
 
 function download() {
@@ -363,12 +370,7 @@ const BACKUP_KEYS = ["profile", "ledger", "subs", "suppliers", "tasks", "stats",
 async function doBackup() {
   const data = await chrome.storage.local.get(BACKUP_KEYS);
   const payload = { app: "overseas-ai-subscription", version: 1, exportedAt: new Date().toISOString(), data };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `Donna_백업_${todayISO()}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  saveFile(`Donna_백업_${todayISO()}.json`, JSON.stringify(payload, null, 2), "application/json");
   flash("backup", "저장됨 ✓", "기록 백업");
 }
 
@@ -1089,7 +1091,7 @@ function buildIcs() {
   let n = 0;
   for (const key of Object.keys(WATCH)) {
     const w = WATCH[key];
-    if (!w || !w.due || !w.interval) continue;
+    if (!w || !w.due) continue;   // 주기를 몰라도 날짜만 있으면 1회성 일정으로 넣는다
     if (w.status !== WT.STATUS.ACTIVE && w.status !== WT.STATUS.PENDING) continue;
     const d = w.due.replace(/-/g, "");
     const amt = WT.amountText(w);
@@ -1099,7 +1101,7 @@ function buildIcs() {
     L.push(`UID:svst-${encodeURIComponent(key)}-${d}@overseas-ai-subscription`);
     L.push(`DTSTAMP:${stamp}`);
     L.push(`DTSTART;VALUE=DATE:${d}`);
-    L.push(`RRULE:FREQ=${w.interval === "year" ? "YEARLY" : "MONTHLY"};INTERVAL=1`);
+    if (w.interval) L.push(`RRULE:FREQ=${w.interval === "year" ? "YEARLY" : "MONTHLY"};INTERVAL=1`);
     L.push(fold(`SUMMARY:${icsEscape(w.name + (amt ? " " + amt : "") +
       (w.kind === "trial" ? " 무료 체험 종료" : w.auto === false ? " 결제일" : " 자동 결제"))}`));
     L.push(fold(`DESCRIPTION:${icsEscape(
@@ -1123,13 +1125,9 @@ function buildIcs() {
 
 function downloadIcs() {
   const { text, count } = buildIcs();
-  if (!count) { $w("me-err").textContent = "캘린더에 넣을 구독이 아직 없습니다."; return; }
-  const blob = new Blob([text], { type: "text/calendar;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `Donna_결제일_${todayISO()}.ics`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  if (!count) { $w("me-err").textContent = "캘린더에 넣을 구독이 없습니다. 다음 결제일이 있는 구독만 들어갑니다."; return; }
+  $w("me-err").textContent = "";
+  saveFile(`Donna_결제일_${todayISO()}.ics`, text, "text/calendar;charset=utf-8");
   flash("me-ics", `${count}건 저장됨 ✓`, "캘린더에 넣기");
 }
 

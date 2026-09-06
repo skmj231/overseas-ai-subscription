@@ -8,7 +8,7 @@ const R = require(path.join(root, "rules.js"));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, "1.5.1");
+assert.equal(manifest.version, "1.5.2");
 /* 사이드패널: 아이콘을 누르면 팝업이 아니라 패널이 열려야 한다. 팝업이 남아 있으면 그쪽이 먼저 잡힌다. */
 assert.ok(manifest.permissions.includes("sidePanel"), "sidePanel 권한 누락");
 assert.equal(manifest.side_panel && manifest.side_panel.default_path, "popup.html");
@@ -160,5 +160,16 @@ assert.ok(fs.existsSync(path.join(root, "fonts", "PretendardVariable.woff2")), "
 assert.ok(manifest.web_accessible_resources[0].resources.includes("fonts/PretendardVariable.woff2"));
 
 assert.ok(manifest.host_permissions.includes("https://api.donna.co.kr/*"), "라이선스 서버 접근 권한 누락 — 확장이 CORS로 막힌다");
+
+/* 내려받기: 앵커를 문서에 붙이지 않거나 click 직후 곧바로 URL을 해제하면
+   사이드패널에서 다운로드가 시작되기 전에 블롭이 사라져 아무 일도 일어나지 않는다.
+   캘린더(.ics)·분기 CSV·백업 JSON이 전부 이 경로를 쓴다. */
+for (const f of ["popup.js", "onboarding.js"]) {
+  const src = fs.readFileSync(path.join(root, f), "utf8");
+  assert.match(src, /function saveFile\(/, f + ": 공용 저장 함수 없음");
+  assert.match(src, /document\.body\.appendChild\(a\)/, f + ": 앵커를 문서에 붙이지 않으면 다운로드가 안 된다");
+  assert.ok(!/click\(\);\s*URL\.revokeObjectURL/.test(src), f + ": click 직후 즉시 해제하면 다운로드가 취소된다");
+  assert.ok(!/URL\.createObjectURL/.test(src.replace(/function saveFile\([\s\S]*?\n\}/, "")), f + ": 저장은 saveFile()만 거쳐야 한다");
+}
 
 console.log("Donna 확장프로그램 핵심 테스트 통과");

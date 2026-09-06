@@ -1,8 +1,8 @@
-# Donna 1.5.1 제출 순서
+# Donna 1.5.2 제출 순서
 
 ## 올릴 파일
 
-- 확장 프로그램: `releases/donna-extension-v1.5.1.zip`
+- 확장 프로그램: `releases/donna-extension-v1.5.2.zip`
 - 스토어 아이콘(128): `extension/icon128.png`
 - 작은 홍보 이미지 440×280: `assets/store/promo-small-440x280.png`
 - 큰 홍보 이미지 1400×560: `assets/store/promo-marquee-1400x560.png`
@@ -20,7 +20,7 @@
    - 아이콘·홍보 이미지·스크린샷 교체
 3. **개인정보 보호 관행** — 아래 표대로 답한다.
 4. **결제 및 배포**: "이 항목에 앱 내 결제가 있습니다"는 **아니오**(결제는 웹사이트에서만). 설명에 가격이 명시돼 있다.
-5. 변경사항 설명에 `release-notes-1.5.1-ko.txt` 붙여넣기.
+5. 변경사항 설명에 `release-notes-1.5.2-ko.txt` 붙여넣기.
 6. 경고가 없으면 **검토를 위해 제출**.
 
 ## 단일 목적 설명 (Single purpose)

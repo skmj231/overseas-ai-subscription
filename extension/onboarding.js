@@ -207,20 +207,36 @@ $("form").addEventListener("submit", async e => {
   show("done");
 });
 
+/* 파일 저장. 앵커를 문서에 붙이고 URL 해제를 미룬다 —
+   붙이지 않거나 click 직후 곧바로 revokeObjectURL을 부르면 다운로드가 시작되기 전에
+   블롭이 사라져 조용히 아무 일도 일어나지 않는다. */
+function saveFile(name, text, mime) {
+  const url = URL.createObjectURL(new Blob([text], { type: mime }));
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.rel = "noopener"; a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 4000);
+}
+
 /* 캘린더 파일 한 장. 패널의 것과 같은 규격이지만 방금 등록한 구독 하나만 담는다. */
 function downloadIcs(w, key) {
-  if (!w.due || !w.interval) return;
+  const btn = $("ics");
+  if (!w.due) {                       // 날짜를 모르면 넣을 일정이 없다. 조용히 끝내지 않는다.
+    if (btn) { btn.textContent = "날짜를 채우면 캘린더에 넣을 수 있습니다"; btn.disabled = true; }
+    return;
+  }
   const stamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
   const d = w.due.replace(/-/g, "");
   const escI = v => String(v).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
   const days = WT.alertDaysBefore(w, LEAD);
   const L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Donna//KR", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:해외 구독 결제일",
     "BEGIN:VEVENT", `UID:svst-${encodeURIComponent(key)}-${d}@overseas-ai-subscription`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${d}`,
-    `RRULE:FREQ=${w.interval === "year" ? "YEARLY" : "MONTHLY"};INTERVAL=1`,
     `SUMMARY:${escI(w.name + (w.kind === "trial" ? " 무료 체험 종료" : " 자동 결제"))}`];
+  // 주기를 모르면 반복 없이 1회성 일정으로 넣는다.
+  if (w.interval) L.push(`RRULE:FREQ=${w.interval === "year" ? "YEARLY" : "MONTHLY"};INTERVAL=1`);
   for (const day of days) L.push("BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${escI(w.name)}`, `TRIGGER:-P${day}D`, "END:VALARM");
   L.push("END:VEVENT", "END:VCALENDAR");
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([L.join("\r\n") + "\r\n"], { type: "text/calendar;charset=utf-8" }));
-  a.download = `Donna_${w.name}.ics`; a.click(); URL.revokeObjectURL(a.href);
+  saveFile(`Donna_${w.name}.ics`, L.join("\r\n") + "\r\n", "text/calendar;charset=utf-8");
+  if (btn) btn.textContent = "캘린더 파일을 내려받았습니다";
 }
