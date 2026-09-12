@@ -1,0 +1,12 @@
+const rows=document.querySelector('#rows');
+const money=new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0});
+let started=false;
+function row(data={name:'',amount:'',cycle:'monthly',usage:'active'}){
+  const el=document.createElement('div');el.className='sub-row';
+  el.innerHTML=`<div class="field wide"><label>서비스</label><input aria-label="서비스 이름" placeholder="예: ChatGPT" value="${data.name}"></div><div class="field"><label>결제액</label><input aria-label="결제 금액" type="number" min="0" inputmode="numeric" placeholder="30000" value="${data.amount}"></div><div class="field"><label>주기</label><select aria-label="결제 주기"><option value="monthly">매월</option><option value="yearly">매년</option></select></div><div class="field"><label>최근 사용</label><select aria-label="최근 사용"><option value="active">30일 이내</option><option value="review">30일 넘음</option><option value="unknown">기억 안 남</option></select></div><button aria-label="구독 삭제">삭제</button>`;
+  el.querySelectorAll('select')[0].value=data.cycle;el.querySelectorAll('select')[1].value=data.usage;
+  el.addEventListener('input',calculate);el.querySelector('button').onclick=()=>{el.remove();calculate()};rows.append(el);
+}
+function calculate(){if(!started){started=true;donnaTrack('calculator_started')};let monthly=0,review=0,count=0,flag=0;[...rows.children].forEach(el=>{const amount=Number(el.querySelector('input[type=number]').value)||0;const cycle=el.querySelectorAll('select')[0].value;const usage=el.querySelectorAll('select')[1].value;const normalized=cycle==='yearly'?amount/12:amount;if(amount){count++;monthly+=normalized;if(usage!=='active'){review+=normalized;flag++}}});
+  document.querySelector('#result').hidden=count===0;document.querySelector('#monthly').textContent=money.format(monthly);document.querySelector('#annual').textContent=money.format(monthly*12);document.querySelector('#review').textContent=money.format(review);document.querySelector('#message').textContent=flag?`${flag}개 서비스, 월 ${money.format(review)}부터 계속 쓸지 확인해보세요.`:'최근 사용이 불분명한 서비스가 아직 없습니다. 카드 내역의 반복 결제를 더 추가해보세요.';clearTimeout(calculate.timer);calculate.timer=setTimeout(()=>{if(count)donnaTrack('calculator_completed',{subscription_count:count,review_count:flag})},900)}
+document.querySelector('#add').onclick=()=>{row();rows.lastElementChild.querySelector('input').focus()};row({name:'ChatGPT',amount:'',cycle:'monthly'});row({name:'Claude',amount:'',cycle:'monthly'});
