@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <meta name="color-scheme" content="light">
 <link rel="icon" type="image/png" sizes="32x32" href="./assets/donna-mark-48.png">
-<link rel="stylesheet" href="./style.css?v=20260906">
+<link rel="stylesheet" href="./style.css?v=20260912b">
 </head>
 <body>
 <div class="nav">
@@ -33,43 +33,50 @@
 <section class="tight" style="padding-top:0">
 <div class="wrap narrow">
   <div class="quick-help-label">지금 겪는 문제부터 고르세요</div>
-<div class="quick-help">
-<a href="./help/chatgpt-refund/">
-<b>ChatGPT 자동결제</b>
-<span>한국 기준 환불 요청 →</span>
-</a>
-<a href="./help/chatgpt-cancel/">
-<b>ChatGPT 구독 해지</b>
-<span>결제처별 갱신 중단 →</span>
-</a>
-<a href="./help/openai-unknown-charge/">
-<b>모르는 OpenAI 결제</b>
-<span>거래 추적·카드 보호 →</span>
-</a>
-<a href="./help/chatgpt-duplicate-charge/">
-<b>ChatGPT 이중 결제</b>
-<span>중복 원인 확인 →</span>
-</a>
-<a href="./help/" style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--yellow)">
-<b>전체 해결 가이드</b>
-<span>Claude·Gemini·Midjourney 포함 →</span>
-</a>
-</div>
-<div class="cards" style="margin-top:18px">
-<div class="card">
-<h3 style="margin-top:0">공식 출처 우선</h3>
-<p>서비스·Apple·Google의 원문을 대조합니다.</p>
-</div>
-<div class="card">
-<h3 style="margin-top:0">최종 확인일 공개</h3>
-<p>정책을 다시 확인한 날짜와 변경 이력을 남깁니다.</p>
-</div>
-<div class="card">
-<h3 style="margin-top:0">완료 기준까지</h3>
-<p>접수보다 실제 취소·환불 확인을 기준으로 씁니다.</p>
-</div>
-</div>
-  <div style="margin-top:40px">
+  <div class="issue-hub">
+    <a class="issue-feature" href="./help/">
+      <span class="eyebrow yellow">전체 해결 가이드</span>
+      <h2>결제 문제를<br>실제로 끝내는 순서</h2>
+      <p>ChatGPT·Claude·Gemini·Midjourney·Higgsfield의 해지, 환불, 모르는 결제를 상황별로 찾습니다.</p>
+      <b>내 상황에 맞는 가이드 찾기 →</b>
+    </a>
+    <div class="issue-links">
+      <a href="./help/chatgpt-refund/"><b>방금 자동결제됨</b><span>한국 기준 환불 요청 →</span></a>
+      <a href="./help/chatgpt-cancel/"><b>다음 결제 막기</b><span>결제처별 갱신 중단 →</span></a>
+      <a href="./help/openai-unknown-charge/"><b>내 결제인지 모름</b><span>거래 추적·카드 보호 →</span></a>
+      <a href="./help/chatgpt-duplicate-charge/"><b>두 번 결제됨</b><span>중복 원인 확인 →</span></a>
+    </div>
+  </div>
+  <div class="editorial-principles">
+    <div><b>공식 출처</b><span>원문 직접 대조</span></div>
+    <div><b>최종 확인일</b><span>변경 이력 공개</span></div>
+    <div><b>완료 기준</b><span>실제 취소·환불까지</span></div>
+  </div>
+  <div class="blog-list-head"><span class="eyebrow">새로 확인한 가이드</span><h2>서비스별 해지·환불</h2><p>2026년 9월 12일 공식 문서를 기준으로 다시 확인했습니다.</p></div>
+  <div class="blog-entries">
+    <a class="entry featured-guide" href="./help/chatgpt-refund/">
+      <div class="service-thumb chatgpt"><span>C</span><small>ChatGPT</small></div>
+      <div class="tx"><div class="k">환불 · 최종 확인 2026년 9월 12일</div><h3>ChatGPT 자동결제 환불, 한국에서는 어디까지 가능한가</h3><p>환불 전에 남길 증빙부터 웹·App Store·Google Play별 접수, 갱신 중단, 입금 확인까지 순서대로 진행합니다.</p></div>
+    </a>
+    <a class="entry featured-guide" href="./help/claude-cancel-refund/">
+      <div class="service-thumb claude"><span>AI</span><small>Claude</small></div>
+      <div class="tx"><div class="k">해지·환불 · 최종 확인 2026년 9월 12일</div><h3>Claude Pro·Max 해지와 환불, 결제한 곳부터 찾기</h3><p>웹·iPhone·Android 절차를 분리하고, 계정 접근이 안 되거나 은행 분쟁이 진행 중일 때의 대응까지 정리했습니다.</p></div>
+    </a>
+    <a class="entry featured-guide" href="./help/gemini-cancel-refund/">
+      <div class="service-thumb gemini"><span>✦</span><small>Gemini</small></div>
+      <div class="tx"><div class="k">해지·환불 · 최종 확인 2026년 9월 12일</div><h3>Gemini 구독 해지 전 Google One 저장공간부터 확인하세요</h3><p>Google AI 플랜을 끊었을 때 함께 끝나는 혜택과 저장공간 영향을 먼저 확인하고 안전하게 취소합니다.</p></div>
+    </a>
+    <a class="entry featured-guide" href="./help/midjourney-cancel-refund/">
+      <div class="service-thumb midjourney"><span>M</span><small>Midjourney</small></div>
+      <div class="tx"><div class="k">연간 결제 · 최종 확인 2026년 9월 12일</div><h3>Midjourney 연간 결제가 갱신됐다면 확인할 네 가지</h3><p>월간·연간 플랜, 다음 갱신일, 사용량, 계정 화면의 환불 자격을 확인한 뒤 지원 문의 자료를 준비합니다.</p></div>
+    </a>
+    <a class="entry featured-guide" href="./help/higgsfield-cancel-refund/">
+      <div class="service-thumb higgsfield"><span>H</span><small>Higgsfield</small></div>
+      <div class="tx"><div class="k">크레딧 · 최종 확인 2026년 9월 12일</div><h3>Higgsfield 결제 후 7일 이내라면 크레딧부터 쓰지 마세요</h3><p>최초 구매·7일 이내·크레딧 미사용 조건을 점검하고 취소 화면과 지원 이메일에 넣을 정보를 준비합니다.</p></div>
+    </a>
+  </div>
+  <div class="blog-list-head archive"><span class="eyebrow">기존 글</span><h2>구독비와 세무를 정리하는 법</h2></div>
+  <div class="blog-entries">
     <a class="entry" href="./blog-leak-check.html">
       <img class="th" src="./thumb-leak-check.png" alt="" loading="lazy" width="1200" height="630">
       <div class="tx">
