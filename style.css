@@ -339,9 +339,15 @@ footer a:hover{color:var(--ink)}
 .blog-entries{display:grid;gap:12px}
 .blog-entries .entry{margin-bottom:0}
 .service-thumb{height:126px;border-radius:16px;background:var(--soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px}
-.service-thumb span{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:750;font-size:17px}
+.service-thumb span{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;overflow:hidden}
+.service-thumb span img{display:block;width:28px;height:28px;object-fit:contain}
 .service-thumb small{font-size:11px;color:var(--sub);font-weight:700}
 .service-thumb.chatgpt span{background:#10A37F}.service-thumb.claude span{background:#D97757}.service-thumb.gemini span{background:#4285F4}.service-thumb.midjourney span{background:#5B5BD6}.service-thumb.higgsfield span{background:#111114}
+.service-thumb.chatgpt img,.service-thumb.gemini img,.service-thumb.midjourney img{filter:brightness(0) invert(1)}
+.service-thumb.claude img{width:26px;height:26px}
+.service-thumb.midjourney img{width:31px;height:31px}
+.service-thumb.higgsfield span{border-radius:14px;background:transparent}
+.service-thumb.higgsfield img{width:52px;height:52px}
 .entry.featured-guide{border:1px solid transparent}.entry.featured-guide:hover{border-color:#d7d7dc}
 .visual-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:12px;align-items:center;margin:28px 0}
 .visual-flow div{background:var(--card);border-radius:20px;padding:22px;text-align:center;box-shadow:var(--shadow)}
