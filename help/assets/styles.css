@@ -53,3 +53,68 @@
  .self-done{display:block}.self-done span{display:block;margin-top:7px;text-align:left}
  .situation-list p{grid-template-columns:1fr;gap:5px}
 }
+/* editorial-depth-layout-20260913 */
+.guide-main .guide-intro{
+  margin:28px 0 54px;
+  padding:0 2px 30px;
+  border-bottom:1px solid var(--line);
+}
+.guide-main .guide-intro p:first-child{font-size:18px;color:var(--ink)}
+.guide-main .guide-intro p,
+.guide-main .table-context p,
+.guide-main .step-bridge p,
+.guide-main .situation-intro p,
+.guide-main .support-context p,
+.guide-main .completion-note p{
+  font-size:16px;
+  line-height:1.85;
+  letter-spacing:-.012em;
+}
+.guide-main .table-context{margin:22px 2px 52px}
+.guide-main .step-bridge{margin:0 2px 18px}
+.guide-main .situation-intro{margin:0 2px 22px}
+.guide-main .support-context{margin:20px 2px 22px}
+.guide-main .completion-note{margin:20px 2px 34px}
+.steps{
+  gap:0;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+.steps li{
+  min-height:76px;
+  padding:22px 4px 22px 54px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+}
+.steps li+li{border-top:1px solid var(--line)}
+.steps li::before{left:4px;top:22px}
+.steps li b{font-size:17px;margin-bottom:7px}
+.steps li small{font-size:15px;line-height:1.75}
+.situation-list.card{
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.situation-list p{
+  display:block;
+  padding:22px 2px;
+  border-top:1px solid var(--line);
+}
+.situation-list p:last-child{border-bottom:1px solid var(--line)}
+.situation-list p+p{border-top:1px solid var(--line)}
+.situation-list b{display:block;margin-bottom:8px;font-size:17px}
+.situation-list span{display:block;font-size:15px;line-height:1.78}
+.table-wrap{margin-top:18px}
+@media(max-width:640px){
+ .guide-main .guide-intro p:first-child{font-size:17px}
+ .guide-main .guide-intro p,
+ .guide-main .table-context p,
+ .guide-main .step-bridge p,
+ .guide-main .situation-intro p,
+ .guide-main .support-context p,
+ .guide-main .completion-note p{font-size:15.5px;line-height:1.8}
+ .steps li{padding-left:48px}
+}
