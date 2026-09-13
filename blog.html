@@ -189,8 +189,8 @@
   var clearButton=document.getElementById('blog-search-clear');
   var feedback=document.querySelector('.inline-search-feedback');
   var empty=document.querySelector('.inline-search-empty');
-  var topicButtons=Array.prototype.slice.call(document.querySelectorAll('[data-topic]'));
-  var serviceButtons=Array.prototype.slice.call(document.querySelectorAll('[data-service]'));
+  var topicButtons=Array.prototype.slice.call(document.querySelectorAll('.inline-topic-chips button[data-topic]'));
+  var serviceButtons=Array.prototype.slice.call(document.querySelectorAll('.inline-service-filter button[data-service]'));
   var selectedTopic='';
   var selectedService='';
   var selectedServiceLabel=document.getElementById('selected-service-label');
