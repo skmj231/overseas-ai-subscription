@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url><loc>https://donna.co.kr/help/</loc><lastmod>2026-09-11</lastmod></url>
+<url><loc>https://donna.co.kr/help/</loc><lastmod>2026-09-13</lastmod></url>
 <url><loc>https://donna.co.kr/help/chatgpt-cancel-refund</loc><lastmod>2026-09-11</lastmod></url>
 <url><loc>https://donna.co.kr/help/chatgpt-cancel</loc><lastmod>2026-09-12</lastmod></url>
 <url><loc>https://donna.co.kr/help/chatgpt-refund</loc><lastmod>2026-09-12</lastmod></url>
@@ -11,4 +11,8 @@
 <url><loc>https://donna.co.kr/help/midjourney-cancel-refund</loc><lastmod>2026-09-11</lastmod></url>
 <url><loc>https://donna.co.kr/help/higgsfield-cancel-refund</loc><lastmod>2026-09-11</lastmod></url>
 <url><loc>https://donna.co.kr/help/calculator</loc><lastmod>2026-09-11</lastmod></url>
+<url><loc>https://donna.co.kr/help/perplexity-cancel-refund/</loc><lastmod>2026-09-13</lastmod></url>
+<url><loc>https://donna.co.kr/help/cursor-cancel-refund/</loc><lastmod>2026-09-13</lastmod></url>
+<url><loc>https://donna.co.kr/help/github-copilot-cancel-refund/</loc><lastmod>2026-09-13</lastmod></url>
+<url><loc>https://donna.co.kr/help/notion-cancel-refund/</loc><lastmod>2026-09-13</lastmod></url>
 </urlset>
