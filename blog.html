@@ -6,7 +6,7 @@
 <title>해외 AI·SaaS 결제 문제 해결 가이드 · Donna</title>
 <meta name="description" content="해외 AI 툴을 사용할 때 생기는 해지, 환불, 모르는 결제와 이중 청구 문제를 실제 해결 순서대로 안내하는 Donna 가이드.">
 <link rel="icon" href="./assets/donna-mark-48.png">
-<link rel="stylesheet" href="./style.css?v=20260913i">
+<link rel="stylesheet" href="./style.css?v=20260913j">
 </head>
 <body class="blog-feed-page">
 <div class="nav"><div class="wrap"><a class="logo" href="./"><img src="./assets/donna-mark-48.png" alt="">Donna</a><a class="m" href="./guide.html">사용법</a><a class="m" href="./plus.html">Plus</a><a class="m on" href="./blog.html">블로그</a><a class="btn" href="./go.html?c=blog">Chrome에 추가</a></div></div>
@@ -36,33 +36,89 @@
   var PAGE_SIZE=10;
   var groups=Array.prototype.slice.call(document.querySelectorAll('.feed-date-group'));
   var items=[];
-  var symbols={'로그인 불가':'⌁','이중 결제':'×2','모르는 결제':'?','연간 자동갱신':'↻','무료 체험':'⏱','해지·환불':'✓','실전 가이드':'→'};
-  var palettes=['#ffdd4a','#c8f0dc','#dce8ff','#ffe0d2','#e7ddff','#dcefe8'];
+  var topicClass={'로그인 불가':'access','이중 결제':'duplicate','모르는 결제':'unknown','연간 갱신':'renewal','무료체험':'trial','해지·환불':'cancel','실전 가이드':'editorial'};
+  var palettes=['#ffdf57','#bfead7','#d6e3ff','#ffd8c8','#e6dbff','#cde8e6','#f5d6df','#dce9bd','#cbdcf7','#f0d0a9'];
+  var logos={
+    'ChatGPT':'./logos/openai.svg',
+    'Claude':'https://www.google.com/s2/favicons?domain=claude.ai&sz=128',
+    'Gemini':'./logos/googlegemini.svg',
+    'Midjourney':'./logos/midjourney.svg',
+    'Higgsfield':'./logos/higgsfield.svg',
+    'Perplexity':'./logos/perplexity.svg',
+    'Cursor':'./logos/cursor.svg',
+    'GitHub Copilot':'./logos/githubcopilot.svg',
+    'Notion':'./logos/notion.svg',
+    'Canva':'https://www.google.com/s2/favicons?domain=canva.com&sz=128',
+    'Runway':'https://www.google.com/s2/favicons?domain=runwayml.com&sz=128',
+    'ElevenLabs':'./logos/elevenlabs.svg',
+    'Figma':'./logos/figma.svg',
+    'Adobe Creative Cloud':'https://www.google.com/s2/favicons?domain=adobe.com&sz=128',
+    'CapCut':'https://www.google.com/s2/favicons?domain=capcut.com&sz=128',
+    'Suno':'./logos/suno.svg',
+    'Gamma':'https://www.google.com/s2/favicons?domain=gamma.app&sz=128',
+    'Grammarly':'./logos/grammarly.svg',
+    'Jasper':'https://www.google.com/s2/favicons?domain=jasper.ai&sz=128',
+    'Zapier':'./logos/zapier.svg'
+  };
+  var editorialThumbs={
+    'blog-cancel-remaining-days.html':'./thumb-cancel-remaining-days.png',
+    'blog-card-statement.html':'./thumb-card-statement.png',
+    'blog-expense-without-invoice.html':'./thumb-expense-without-invoice.png',
+    'blog-find-subscriptions.html':'./thumb-find-subscriptions.png',
+    'blog-how-to-cancel.html':'./thumb-how-to-cancel.png',
+    'blog-leak-check.html':'./thumb-leak-check.png',
+    'blog-open-questions.html':'./thumb-open-questions.png',
+    'blog-refund-email.html':'./thumb-refund-email.png',
+    'blog-tax-docs.html':'./thumb-tax-docs.png',
+    'blog-vat-not-refundable.html':'./thumb-vat-not-refundable.png',
+    'blog-where-to-put-brn.html':'./thumb-where-to-put-brn.png'
+  };
+  var scenes={
+    access:'<span class="scene-chain"><i></i><i></i><b></b></span><span class="scene-lock"><i></i></span>',
+    duplicate:'<span class="scene-receipt receipt-a"><i></i><i></i></span><span class="scene-receipt receipt-b"><i></i><i></i></span><span class="scene-count">×2</span>',
+    unknown:'<span class="scene-statement"><i></i><i></i><i></i></span><span class="scene-search">?</span>',
+    renewal:'<span class="scene-orbit"></span><span class="scene-calendar"><b>12</b><small>개월</small></span>',
+    trial:'<span class="scene-timeline"><i></i><i></i><i></i><i></i></span><span class="scene-hourglass"><i></i></span>',
+    cancel:'<span class="scene-subscription"><i></i><i></i></span><span class="scene-arrow">→</span><span class="scene-refund">₩</span>'
+  };
   groups.forEach(function(group){
     var date=(group.querySelector('time')||{}).dateTime||'';
-    Array.prototype.slice.call(group.querySelectorAll('.post-feed > li')).forEach(function(li){
+    Array.prototype.slice.call(group.querySelectorAll('.post-feed > li')).forEach(function(li,index){
       li.dataset.published=date;
       var row=li.querySelector('.feed-row');
       var meta=li.querySelector('.feed-meta');
       if(row && meta && !row.querySelector('.feed-thumb')){
         var service=(meta.querySelector('em')||{}).textContent||'Donna';
         var topic=(meta.querySelector('i')||{}).textContent||'가이드';
+        var kind=topicClass[topic]||'editorial';
+        var href=(row.getAttribute('href')||'').split('/').pop()||'';
         var hash=0;
-        for(var c=0;c<service.length;c++){hash=(hash+service.charCodeAt(c))%palettes.length;}
+        for(var c=0;c<(service+topic).length;c++){hash=(hash+(c+1)*(service+topic).charCodeAt(c))%997;}
         var thumb=document.createElement('span');
-        thumb.className='feed-thumb';
-        thumb.style.setProperty('--thumb-accent',palettes[hash]);
+        thumb.className='feed-thumb thumb-'+kind+' thumb-variant-'+(hash%4);
+        thumb.style.setProperty('--thumb-accent',palettes[hash%palettes.length]);
         thumb.setAttribute('aria-hidden','true');
-        var mark=document.createElement('span');
-        mark.className='thumb-mark';
-        mark.textContent=symbols[topic]||'→';
-        var name=document.createElement('span');
-        name.className='thumb-name';
-        name.textContent=service;
-        var kind=document.createElement('span');
-        kind.className='thumb-kind';
-        kind.textContent=topic;
-        thumb.appendChild(mark);thumb.appendChild(name);thumb.appendChild(kind);
+        if(kind==='editorial' && editorialThumbs[href]){
+          var editorialImage=document.createElement('img');
+          editorialImage.className='editorial-thumb-image';
+          editorialImage.src=editorialThumbs[href];
+          editorialImage.alt='';
+          thumb.appendChild(editorialImage);
+        }else{
+          var logo=document.createElement('span');
+          logo.className='thumb-logo';
+          var logoImage=document.createElement('img');
+          logoImage.src=logos[service]||'./assets/donna-mark-48.png';
+          logoImage.alt='';
+          logo.appendChild(logoImage);
+          var scene=document.createElement('span');
+          scene.className='thumb-scene';
+          scene.innerHTML=scenes[kind]||scenes.unknown;
+          var label=document.createElement('span');
+          label.className='thumb-kind';
+          label.textContent=topic;
+          thumb.appendChild(logo);thumb.appendChild(scene);thumb.appendChild(label);
+        }
         row.insertBefore(thumb,row.firstChild);
       }
       items.push(li);
@@ -74,18 +130,14 @@
   var prev=document.querySelector('.page-prev');
   var next=document.querySelector('.page-next');
   var status=document.querySelector('.page-status');
-
   function pageButton(n){
     var button=document.createElement('button');
-    button.type='button';
-    button.textContent=n;
-    button.dataset.page=n;
+    button.type='button';button.textContent=n;button.dataset.page=n;
     button.setAttribute('aria-label',n+'페이지');
     button.addEventListener('click',function(){render(n,true);});
     return button;
   }
   for(var p=1;p<=totalPages;p++){numbers.appendChild(pageButton(p));}
-
   function render(page,move){
     current=Math.min(Math.max(page,1),totalPages);
     var start=(current-1)*PAGE_SIZE;
@@ -100,13 +152,9 @@
       button.classList.toggle('active',active);
       if(active){button.setAttribute('aria-current','page');}else{button.removeAttribute('aria-current');}
     });
-    prev.disabled=current===1;
-    next.disabled=current===totalPages;
+    prev.disabled=current===1;next.disabled=current===totalPages;
     status.textContent='전체 '+items.length+'개 중 '+(start+1)+'–'+end+'번째 글';
-    if(move){
-      history.replaceState(null,'','#page='+current);
-      document.querySelector('.blog-feed-main').scrollIntoView({behavior:'smooth',block:'start'});
-    }
+    if(move){history.replaceState(null,'','#page='+current);document.querySelector('.blog-feed-main').scrollIntoView({behavior:'smooth',block:'start'});}
   }
   prev.addEventListener('click',function(){render(current-1,true);});
   next.addEventListener('click',function(){render(current+1,true);});

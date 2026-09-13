@@ -681,3 +681,94 @@ td.n,th.n{text-align:right}
   .feed-pagination .page-prev:after{content:"‹";font-size:23px}
   .feed-pagination .page-next span{font-size:23px}
 }
+
+/* content-led-thumbnails-20260913 */
+.feed-thumb:before,.feed-thumb:after{content:none}
+.feed-thumb{
+  position:relative;
+  min-height:142px;
+  overflow:hidden;
+  border:1px solid rgba(17,18,20,.055);
+  background:linear-gradient(145deg,color-mix(in srgb,var(--thumb-accent) 88%,white),var(--thumb-accent));
+  color:#111214;
+}
+.thumb-logo{
+  position:absolute;
+  z-index:5;
+  left:9px;
+  top:9px;
+  width:34px;
+  height:34px;
+  padding:7px;
+  box-sizing:border-box;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:rgba(255,255,255,.9);
+  box-shadow:0 5px 14px rgba(17,18,20,.09);
+}
+.thumb-logo img{display:block;width:100%;height:100%;object-fit:contain}
+.thumb-scene{position:absolute;inset:0;display:block}
+.thumb-kind{
+  z-index:6;
+  left:10px;
+  right:10px;
+  bottom:9px;
+  color:#111214;
+  font-size:10px;
+  font-weight:850;
+  letter-spacing:-.02em;
+}
+.thumb-variant-1 .thumb-scene{transform:translate(3px,-2px) rotate(1.5deg)}
+.thumb-variant-2 .thumb-scene{transform:translate(-2px,3px) rotate(-1.5deg)}
+.thumb-variant-3 .thumb-scene{transform:translate(2px,2px) scale(.97)}
+.editorial-thumb-image{display:block;width:100%;height:100%;object-fit:cover}
+
+/* 로그인 불가: 끊어진 연결과 잠금 */
+.scene-chain{position:absolute;left:13px;right:13px;top:70px;height:22px}
+.scene-chain i{position:absolute;top:8px;width:25px;height:8px;border:3px solid #111214;border-radius:999px}
+.scene-chain i:first-child{left:6px;transform:rotate(-18deg)}
+.scene-chain i:nth-child(2){right:6px;transform:rotate(18deg)}
+.scene-chain b{position:absolute;left:45px;top:-3px;width:3px;height:28px;background:#111214;transform:rotate(28deg);border-radius:4px}
+.scene-lock{position:absolute;right:14px;top:35px;width:32px;height:28px;border-radius:9px;background:#111214}
+.scene-lock i{position:absolute;left:8px;top:-14px;width:14px;height:16px;border:4px solid #111214;border-bottom:0;border-radius:10px 10px 0 0}
+
+/* 이중 결제: 실제로 겹친 두 청구서 */
+.scene-receipt{position:absolute;width:50px;height:67px;border-radius:7px;background:#fff;border:1px solid rgba(17,18,20,.13);box-shadow:0 6px 14px rgba(17,18,20,.09)}
+.scene-receipt i{display:block;height:3px;margin:10px 9px 0;border-radius:3px;background:rgba(17,18,20,.2)}
+.receipt-a{left:18px;top:48px;transform:rotate(-8deg)}
+.receipt-b{right:13px;top:39px;transform:rotate(8deg)}
+.scene-count{position:absolute;right:8px;top:9px;min-width:34px;height:28px;padding:0 6px;box-sizing:border-box;border-radius:999px;display:grid;place-items:center;background:#111214;color:#fff;font-size:11px;font-weight:900}
+
+/* 모르는 결제: 명세서에서 결제 정체 찾기 */
+.scene-statement{position:absolute;left:14px;right:14px;top:50px;height:60px;padding:9px;box-sizing:border-box;border-radius:10px;background:#111214;box-shadow:0 7px 16px rgba(17,18,20,.14)}
+.scene-statement i{display:block;width:52px;height:4px;margin:0 0 7px;border-radius:5px;background:rgba(255,255,255,.34)}
+.scene-statement i:nth-child(2){width:67px}.scene-statement i:nth-child(3){width:38px}
+.scene-search{position:absolute;right:8px;top:25px;width:34px;height:34px;border:5px solid #fff;border-radius:50%;display:grid;place-items:center;background:var(--thumb-accent);font-size:16px;font-weight:900;box-shadow:0 5px 13px rgba(17,18,20,.16)}
+.scene-search:after{content:"";position:absolute;width:12px;height:5px;right:-9px;bottom:-4px;border-radius:4px;background:#fff;transform:rotate(45deg)}
+
+/* 연간 갱신: 12개월 달력과 반복 */
+.scene-orbit{position:absolute;left:15px;top:42px;width:72px;height:72px;border:5px solid rgba(17,18,20,.22);border-right-color:#111214;border-radius:50%}
+.scene-orbit:after{content:"";position:absolute;right:-2px;top:-5px;border-left:7px solid #111214;border-top:5px solid transparent;border-bottom:5px solid transparent;transform:rotate(-28deg)}
+.scene-calendar{position:absolute;right:10px;top:59px;width:47px;height:48px;border-radius:9px;background:#fff;box-shadow:0 6px 14px rgba(17,18,20,.1);text-align:center;padding-top:7px;box-sizing:border-box}
+.scene-calendar b,.scene-calendar small{display:block}.scene-calendar b{font-size:18px}.scene-calendar small{font-size:8px;color:#6d7076}
+
+/* 무료체험: 종료 시점을 보여주는 타임라인 */
+.scene-timeline{position:absolute;left:12px;right:12px;top:74px;height:4px;border-radius:4px;background:rgba(17,18,20,.18)}
+.scene-timeline i{position:absolute;top:-5px;width:14px;height:14px;border:3px solid var(--thumb-accent);box-sizing:border-box;border-radius:50%;background:#111214}
+.scene-timeline i:first-child{left:0}.scene-timeline i:nth-child(2){left:31%}.scene-timeline i:nth-child(3){left:61%}.scene-timeline i:nth-child(4){right:0;background:#fff;border-color:#111214}
+.scene-hourglass{position:absolute;right:15px;top:34px;width:24px;height:31px;border-top:4px solid #111214;border-bottom:4px solid #111214}
+.scene-hourglass:before,.scene-hourglass:after{content:"";position:absolute;left:4px;width:16px;height:3px;background:#111214;border-radius:3px}
+.scene-hourglass:before{top:8px;transform:rotate(38deg)}.scene-hourglass:after{bottom:8px;transform:rotate(-38deg)}
+
+/* 해지·환불: 다음 갱신 중단과 최근 결제 환불 분리 */
+.scene-subscription{position:absolute;left:12px;top:51px;width:48px;height:57px;border-radius:9px;background:#fff;border:1px solid rgba(17,18,20,.12);box-shadow:0 6px 14px rgba(17,18,20,.08)}
+.scene-subscription i{display:block;height:4px;margin:11px 9px 0;border-radius:3px;background:rgba(17,18,20,.23)}
+.scene-arrow{position:absolute;left:54px;top:69px;font-size:25px;font-weight:800}
+.scene-refund{position:absolute;right:10px;top:57px;width:35px;height:35px;border-radius:50%;display:grid;place-items:center;background:#111214;color:#fff;font-size:14px;font-weight:850}
+
+@media(max-width:760px){
+ .feed-thumb{min-height:124px}
+ .thumb-logo{width:32px;height:32px}
+ .editorial-thumb-image{object-position:center}
+}
