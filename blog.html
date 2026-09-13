@@ -6,14 +6,52 @@
 <title>해외 AI·SaaS 결제 문제 해결 가이드 · Donna</title>
 <meta name="description" content="해외 AI 툴을 사용할 때 생기는 해지, 환불, 모르는 결제와 이중 청구 문제를 실제 해결 순서대로 안내하는 Donna 가이드.">
 <link rel="icon" href="./assets/donna-mark-48.png">
-<link rel="stylesheet" href="./style.css?v=20260913k">
+<link rel="stylesheet" href="./style.css?v=20260913n">
 </head>
 <body class="blog-feed-page">
 <div class="nav"><div class="wrap"><a class="logo" href="./"><img src="./assets/donna-mark-48.png" alt="">Donna</a><a class="m" href="./guide.html">사용법</a><a class="m" href="./plus.html">Plus</a><a class="m on" href="./blog.html">블로그</a><a class="btn" href="./go.html?c=blog">Chrome에 추가</a></div></div>
 <header class="wrap blog-feed-head">
   <div><span class="eyebrow">Donna 해결 가이드</span><h1>해외 AI 툴 사용할 때,<br>결제 문제 해결합니다.</h1><p>해지부터 환불, 모르는 결제와 이중 청구까지. 직접 해결할 수 있는 순서만 쉽게 정리합니다.</p></div>
-  <a class="blog-search-button" href="./help/"><span>⌕</span> 문제·서비스로 글 검색</a>
 </header>
+
+<section id="search" class="wrap blog-inline-search" aria-labelledby="blog-search-title">
+  <div class="inline-search-head">
+    <div><span>바로 찾기</span><h2 id="blog-search-title">지금 겪는 문제를 찾아보세요.</h2></div>
+    <p>서비스 이름이나 결제 상황 중 하나만 입력해도 됩니다.</p>
+  </div>
+  <label class="inline-search-box">
+    <span aria-hidden="true">⌕</span>
+    <input id="blog-search-input" type="search" autocomplete="off" placeholder="예: ChatGPT 환불, 모르는 결제, 무료체험 취소" aria-label="블로그 글 검색">
+    <button id="blog-search-clear" type="button" hidden>지우기</button>
+  </label>
+  <div class="inline-topic-chips" aria-label="문제 유형으로 찾기">
+    <button type="button" class="active" data-topic="">전체</button>
+    <button type="button" data-topic="모르는 결제">모르는 결제</button>
+    <button type="button" data-topic="이중 결제">이중 결제</button>
+    <button type="button" data-topic="연간 갱신">연간 갱신</button>
+    <button type="button" data-topic="무료체험">무료체험</button>
+    <button type="button" data-topic="해지·환불">해지·환불</button>
+    <button type="button" data-topic="로그인 불가">로그인 불가</button>
+  </div>
+  <details class="inline-service-filter">
+    <summary>서비스로 고르기 <span>20개</span></summary>
+    <div>
+      <button type="button" class="active" data-service="">전체</button>
+      <button type="button" data-service="ChatGPT">ChatGPT</button><button type="button" data-service="Claude">Claude</button>
+      <button type="button" data-service="Gemini">Gemini</button><button type="button" data-service="Midjourney">Midjourney</button>
+      <button type="button" data-service="Higgsfield">Higgsfield</button><button type="button" data-service="Perplexity">Perplexity</button>
+      <button type="button" data-service="Cursor">Cursor</button><button type="button" data-service="GitHub Copilot">GitHub Copilot</button>
+      <button type="button" data-service="Notion">Notion</button><button type="button" data-service="Canva">Canva</button>
+      <button type="button" data-service="Runway">Runway</button><button type="button" data-service="ElevenLabs">ElevenLabs</button>
+      <button type="button" data-service="Figma">Figma</button><button type="button" data-service="Adobe Creative Cloud">Adobe Creative Cloud</button>
+      <button type="button" data-service="CapCut">CapCut</button><button type="button" data-service="Suno">Suno</button>
+      <button type="button" data-service="Gamma">Gamma</button><button type="button" data-service="Grammarly">Grammarly</button>
+      <button type="button" data-service="Jasper">Jasper</button><button type="button" data-service="Zapier">Zapier</button>
+    </div>
+  </details>
+  <div class="inline-search-feedback" aria-live="polite"></div>
+  <p class="inline-search-empty" hidden>조건에 맞는 글이 없습니다. 서비스 이름을 짧게 입력하거나 ‘전체’를 눌러 다시 확인해 보세요.</p>
+</section>
 <main class="wrap blog-feed-main">
 <section class="feed-date-group">
     <div class="feed-date"><time datetime="2026-09-13">2026. 09. 13</time></div>
@@ -134,15 +172,28 @@
         thumb.appendChild(signature);
         row.insertBefore(thumb,row.firstChild);
       }
+      li.dataset.search=((li.textContent||'')+' '+service+' '+topic).toLowerCase();
+      li.dataset.service=service;
+      li.dataset.topic=topic;
       items.push(li);
     });
   });
-  var totalPages=Math.max(1,Math.ceil(items.length/PAGE_SIZE));
+  var filtered=items.slice();
   var current=1;
   var numbers=document.querySelector('.page-numbers');
   var prev=document.querySelector('.page-prev');
   var next=document.querySelector('.page-next');
   var status=document.querySelector('.page-status');
+  var searchInput=document.getElementById('blog-search-input');
+  var clearButton=document.getElementById('blog-search-clear');
+  var feedback=document.querySelector('.inline-search-feedback');
+  var empty=document.querySelector('.inline-search-empty');
+  var topicButtons=Array.prototype.slice.call(document.querySelectorAll('[data-topic]'));
+  var serviceButtons=Array.prototype.slice.call(document.querySelectorAll('[data-service]'));
+  var selectedTopic='';
+  var selectedService='';
+
+  function normalize(value){return (value||'').toLowerCase().replace(/\\s+/g,' ').trim();}
   function pageButton(n){
     var button=document.createElement('button');
     button.type='button';button.textContent=n;button.dataset.page=n;
@@ -150,15 +201,21 @@
     button.addEventListener('click',function(){render(n,true);});
     return button;
   }
-  for(var p=1;p<=totalPages;p++){numbers.appendChild(pageButton(p));}
+  function rebuildPages(totalPages){
+    numbers.innerHTML='';
+    for(var p=1;p<=totalPages;p++){numbers.appendChild(pageButton(p));}
+  }
   function render(page,move){
+    var totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));
     current=Math.min(Math.max(page,1),totalPages);
+    rebuildPages(totalPages);
     var start=(current-1)*PAGE_SIZE;
-    var end=Math.min(start+PAGE_SIZE,items.length);
-    items.forEach(function(li,index){li.hidden=index<start||index>=end;});
+    var end=Math.min(start+PAGE_SIZE,filtered.length);
+    var visible=filtered.slice(start,end);
+    items.forEach(function(li){li.hidden=visible.indexOf(li)===-1;});
     groups.forEach(function(group){
-      var visible=Array.prototype.some.call(group.querySelectorAll('.post-feed > li'),function(li){return !li.hidden;});
-      group.hidden=!visible;
+      var hasVisible=Array.prototype.some.call(group.querySelectorAll('.post-feed > li'),function(li){return !li.hidden;});
+      group.hidden=!hasVisible;
     });
     Array.prototype.forEach.call(numbers.children,function(button){
       var active=Number(button.dataset.page)===current;
@@ -166,12 +223,41 @@
       if(active){button.setAttribute('aria-current','page');}else{button.removeAttribute('aria-current');}
     });
     prev.disabled=current===1;next.disabled=current===totalPages;
-    status.textContent='전체 '+items.length+'개 중 '+(start+1)+'–'+end+'번째 글';
-    if(move){history.replaceState(null,'','#page='+current);document.querySelector('.blog-feed-main').scrollIntoView({behavior:'smooth',block:'start'});}
+    document.querySelector('.feed-pagination').hidden=filtered.length===0;
+    empty.hidden=filtered.length!==0;
+    status.textContent=filtered.length ? '전체 '+filtered.length+'개 중 '+(start+1)+'–'+end+'번째 글' : '';
+    feedback.textContent=(selectedTopic||selectedService||normalize(searchInput.value)) ? filtered.length+'개의 해결 글을 찾았습니다.' : '';
+    if(move){document.querySelector('.blog-feed-main').scrollIntoView({behavior:'smooth',block:'start'});}
   }
+  function applyFilters(move){
+    var query=normalize(searchInput.value);
+    clearButton.hidden=!query;
+    filtered=items.filter(function(li){
+      return (!query||li.dataset.search.indexOf(query)>-1)&&
+             (!selectedTopic||li.dataset.topic===selectedTopic)&&
+             (!selectedService||li.dataset.service===selectedService);
+    });
+    render(1,move);
+  }
+  topicButtons.forEach(function(button){
+    button.addEventListener('click',function(){
+      selectedTopic=button.dataset.topic||'';
+      topicButtons.forEach(function(item){item.classList.toggle('active',item===button);});
+      applyFilters(false);
+    });
+  });
+  serviceButtons.forEach(function(button){
+    button.addEventListener('click',function(){
+      selectedService=button.dataset.service||'';
+      serviceButtons.forEach(function(item){item.classList.toggle('active',item===button);});
+      applyFilters(false);
+    });
+  });
+  searchInput.addEventListener('input',function(){applyFilters(false);});
+  clearButton.addEventListener('click',function(){searchInput.value='';searchInput.focus();applyFilters(false);});
   prev.addEventListener('click',function(){render(current-1,true);});
   next.addEventListener('click',function(){render(current+1,true);});
-  var initial=Number((location.hash.match(/page=(\d+)/)||[])[1])||1;
+  var initial=Number((location.hash.match(/page=(\\d+)/)||[])[1])||1;
   render(initial,false);
 })();
 </script>
