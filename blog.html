@@ -6,7 +6,7 @@
 <title>해외 AI·SaaS 결제 문제 해결 가이드 · Donna</title>
 <meta name="description" content="해외 AI 툴을 사용할 때 생기는 해지, 환불, 모르는 결제와 이중 청구 문제를 실제 해결 순서대로 안내하는 Donna 가이드.">
 <link rel="icon" href="./assets/donna-mark-48.png">
-<link rel="stylesheet" href="./style.css?v=20260913j">
+<link rel="stylesheet" href="./style.css?v=20260913k">
 </head>
 <body class="blog-feed-page">
 <div class="nav"><div class="wrap"><a class="logo" href="./"><img src="./assets/donna-mark-48.png" alt="">Donna</a><a class="m" href="./guide.html">사용법</a><a class="m" href="./plus.html">Plus</a><a class="m on" href="./blog.html">블로그</a><a class="btn" href="./go.html?c=blog">Chrome에 추가</a></div></div>
@@ -37,7 +37,18 @@
   var groups=Array.prototype.slice.call(document.querySelectorAll('.feed-date-group'));
   var items=[];
   var topicClass={'로그인 불가':'access','이중 결제':'duplicate','모르는 결제':'unknown','연간 갱신':'renewal','무료체험':'trial','해지·환불':'cancel','실전 가이드':'editorial'};
-  var palettes=['#ffdf57','#bfead7','#d6e3ff','#ffd8c8','#e6dbff','#cde8e6','#f5d6df','#dce9bd','#cbdcf7','#f0d0a9'];
+  var schemes=[
+    ['#ff6b3d','#111214','#ffc93d'],
+    ['#cbbcff','#1765d8','#ff9fbe'],
+    ['#ffd34f','#ff6042','#111214'],
+    ['#83d4c2','#183f2b','#f3e9dc'],
+    ['#b9ddff','#6348e8','#ff7c45'],
+    ['#f3b9dc','#0aa77d','#111214'],
+    ['#c9f763','#34462f','#a98bff'],
+    ['#ff8f6b','#6f5dff','#ffe274'],
+    ['#77d2e8','#0f3fbd','#f5efdf'],
+    ['#e9c18f','#222222','#ff6847']
+  ];
   var logos={
     'ChatGPT':'./logos/openai.svg',
     'Claude':'https://www.google.com/s2/favicons?domain=claude.ai&sz=128',
@@ -98,27 +109,32 @@
         thumb.className='feed-thumb thumb-'+kind+' thumb-variant-'+(hash%4);
         thumb.style.setProperty('--thumb-accent',palettes[hash%palettes.length]);
         thumb.setAttribute('aria-hidden','true');
-        if(kind==='editorial' && editorialThumbs[href]){
-          var editorialImage=document.createElement('img');
-          editorialImage.className='editorial-thumb-image';
-          editorialImage.src=editorialThumbs[href];
-          editorialImage.alt='';
-          thumb.appendChild(editorialImage);
-        }else{
-          var logo=document.createElement('span');
-          logo.className='thumb-logo';
-          var logoImage=document.createElement('img');
-          logoImage.src=logos[service]||'./assets/donna-mark-48.png';
-          logoImage.alt='';
-          logo.appendChild(logoImage);
-          var scene=document.createElement('span');
-          scene.className='thumb-scene';
-          scene.innerHTML=scenes[kind]||scenes.unknown;
-          var label=document.createElement('span');
-          label.className='thumb-kind';
-          label.textContent=topic;
-          thumb.appendChild(logo);thumb.appendChild(scene);thumb.appendChild(label);
-        }
+        var scheme=schemes[(hash+index)%schemes.length];
+        var art=(hash+index)%7;
+        thumb.className='feed-thumb graphic-thumb art-'+art;
+        thumb.style.setProperty('--c1',scheme[0]);
+        thumb.style.setProperty('--c2',scheme[1]);
+        thumb.style.setProperty('--c3',scheme[2]);
+        thumb.setAttribute('aria-hidden','true');
+
+        var artwork=document.createElement('span');
+        artwork.className='thumb-art';
+        artwork.innerHTML='<i></i><i></i><b></b><em></em>';
+
+        var logo=document.createElement('span');
+        logo.className='thumb-logo';
+        var logoImage=document.createElement('img');
+        logoImage.src=logos[service]||'./assets/donna-mark-48.png';
+        logoImage.alt='';
+        logo.appendChild(logoImage);
+
+        var signature=document.createElement('span');
+        signature.className='thumb-signature';
+        signature.textContent=service==='Donna'?'DONNA':service;
+
+        thumb.appendChild(artwork);
+        thumb.appendChild(logo);
+        thumb.appendChild(signature);
         row.insertBefore(thumb,row.firstChild);
       }
       items.push(li);
