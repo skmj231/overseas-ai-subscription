@@ -1051,3 +1051,6 @@ td.n,th.n{text-align:right}
   .inline-service-filter>div{flex-wrap:nowrap;overflow-x:auto;margin-right:-20px;padding-right:20px;scrollbar-width:none}
   .inline-service-filter>div::-webkit-scrollbar{display:none}
 }
+
+/* compact-feed-spacing-20260913 */
+.blog-feed-page .feed-date-group{padding:0}
