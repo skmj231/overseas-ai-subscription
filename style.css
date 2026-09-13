@@ -513,3 +513,19 @@ td.n,th.n{text-align:right}
  .feed-copy small{font-size:13px}
  .feed-arrow{width:28px;height:28px;font-size:14px}
 }
+/* blog-feed-refinement-20260913 */
+.blog-feed-page .blog-feed-head a,
+.blog-feed-page .post-feed a,
+.blog-feed-page .post-feed a *{text-decoration:none!important}
+.blog-feed-page .feed-row{grid-template-columns:minmax(0,1fr) 36px}
+.blog-feed-page .feed-meta{gap:6px;margin-bottom:10px}
+.blog-feed-page .feed-meta em,
+.blog-feed-page .feed-meta i{display:inline-flex;align-items:center;min-height:25px;padding:0 9px;border-radius:7px;line-height:1;text-decoration:none!important}
+.blog-feed-page .feed-meta em{background:#111214;color:#fff}
+.blog-feed-page .feed-meta i{background:#ececef;color:#61656c}
+.blog-feed-page .feed-date{justify-content:flex-start}
+.blog-feed-page .blog-feed-main{padding-top:6px}
+@media(max-width:720px){
+ .blog-feed-page .feed-row{grid-template-columns:minmax(0,1fr) 28px}
+ .blog-feed-page .feed-meta em,.blog-feed-page .feed-meta i{min-height:23px;padding:0 7px;font-size:11px}
+}
