@@ -529,3 +529,155 @@ td.n,th.n{text-align:right}
  .blog-feed-page .feed-row{grid-template-columns:minmax(0,1fr) 28px}
  .blog-feed-page .feed-meta em,.blog-feed-page .feed-meta i{min-height:23px;padding:0 7px;font-size:11px}
 }
+/* blog-card-pagination-20260913 */
+.blog-feed-page .post-feed{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  overflow:visible;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.blog-feed-page .post-feed li{
+  min-width:0;
+  overflow:hidden;
+  border:1px solid #e5e5e8;
+  border-radius:22px;
+  background:#fff;
+  box-shadow:0 12px 34px rgba(23,24,27,.045);
+}
+.blog-feed-page .post-feed li+li{border-top:1px solid #e5e5e8}
+.blog-feed-page .feed-row{
+  position:relative;
+  height:100%;
+  box-sizing:border-box;
+  grid-template-columns:104px minmax(0,1fr);
+  gap:17px;
+  align-items:stretch;
+  padding:14px;
+}
+.blog-feed-page .feed-copy{align-self:center;padding:4px 30px 4px 0}
+.blog-feed-page .feed-copy strong{
+  display:-webkit-box;
+  overflow:hidden;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  font-size:17px;
+  line-height:1.42;
+}
+.blog-feed-page .feed-copy small{
+  display:-webkit-box;
+  overflow:hidden;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  font-size:12.5px;
+  line-height:1.5;
+}
+.blog-feed-page .feed-arrow{
+  position:absolute;
+  right:15px;
+  bottom:15px;
+  width:28px;
+  height:28px;
+  font-size:14px;
+}
+.feed-thumb{
+  --thumb-accent:#ffdd4a;
+  position:relative;
+  min-height:142px;
+  overflow:hidden;
+  border-radius:15px;
+  background:var(--thumb-accent);
+  color:#111214;
+  isolation:isolate;
+}
+.feed-thumb:before,.feed-thumb:after{
+  content:"";
+  position:absolute;
+  border:1px solid rgba(17,18,20,.13);
+  border-radius:999px;
+  z-index:-1;
+}
+.feed-thumb:before{width:112px;height:112px;right:-54px;top:-44px}
+.feed-thumb:after{width:72px;height:72px;left:-33px;bottom:-31px}
+.thumb-mark{
+  position:absolute;
+  right:10px;
+  top:10px;
+  min-width:31px;
+  height:31px;
+  padding:0 7px;
+  box-sizing:border-box;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:#111214;
+  color:#fff;
+  font-size:12px;
+  font-weight:850;
+  letter-spacing:-.03em;
+}
+.thumb-name{
+  position:absolute;
+  left:11px;
+  right:10px;
+  bottom:29px;
+  overflow:hidden;
+  font-size:13px;
+  font-weight:850;
+  line-height:1.16;
+  letter-spacing:-.025em;
+  text-overflow:ellipsis;
+}
+.thumb-kind{
+  position:absolute;
+  left:11px;
+  right:8px;
+  bottom:11px;
+  overflow:hidden;
+  color:rgba(17,18,20,.58);
+  font-size:10px;
+  font-weight:750;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.feed-pagination{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  margin:52px 0 0;
+}
+.page-numbers{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap}
+.feed-pagination button{
+  width:42px;
+  height:42px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:#111214;
+  font:inherit;
+  font-size:16px;
+  font-weight:780;
+  cursor:pointer;
+}
+.feed-pagination .page-prev,.feed-pagination .page-next{width:auto;padding:0 8px;font-size:14px}
+.feed-pagination .page-next span{font-size:23px;vertical-align:-2px}
+.feed-pagination button.active{background:#fff;border:1px solid #d8d9dc;color:#e84335;box-shadow:0 5px 16px rgba(23,24,27,.05)}
+.feed-pagination button:disabled{opacity:.28;cursor:default}
+.page-status{text-align:center;margin:14px 0 0;color:#8b8e94;font-size:12px;font-weight:650}
+@media(max-width:760px){
+  .blog-feed-page .post-feed{grid-template-columns:1fr}
+  .blog-feed-page .feed-row{grid-template-columns:88px minmax(0,1fr);gap:13px;padding:12px}
+  .feed-thumb{min-height:124px}
+  .blog-feed-page .feed-copy{padding-right:22px}
+  .blog-feed-page .feed-copy strong{font-size:16px}
+  .blog-feed-page .feed-copy small{display:none}
+  .feed-pagination{gap:4px;margin-top:36px}
+  .feed-pagination button{width:32px;height:36px;font-size:14px}
+  .feed-pagination .page-prev,.feed-pagination .page-next{font-size:0;padding:0;width:34px}
+  .feed-pagination .page-prev:after{content:"‹";font-size:23px}
+  .feed-pagination .page-next span{font-size:23px}
+}
