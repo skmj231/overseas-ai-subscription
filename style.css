@@ -886,3 +886,168 @@ td.n,th.n{text-align:right}
   .blog-feed-page .graphic-thumb{min-height:124px}
   .graphic-thumb .thumb-logo{width:36px;height:36px;padding:7px}
 }
+
+
+/* inline-blog-search-20260913 */
+.blog-feed-page .blog-feed-head{align-items:flex-start;padding-bottom:34px}
+.blog-inline-search{
+  max-width:980px;
+  margin:0 auto 50px;
+  padding-top:0;
+  padding-bottom:0;
+}
+.inline-search-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:30px;
+  margin-bottom:17px;
+  padding:0 4px;
+}
+.inline-search-head span{
+  display:block;
+  margin-bottom:4px;
+  color:#8d9096;
+  font-size:12px;
+  font-weight:750;
+}
+.inline-search-head h2{
+  margin:0;
+  font-size:26px;
+  line-height:1.25;
+  letter-spacing:-.045em;
+}
+.inline-search-head p{
+  margin:0 0 3px;
+  color:#85888e;
+  font-size:13px;
+}
+.inline-search-box{
+  display:grid;
+  grid-template-columns:26px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  height:66px;
+  box-sizing:border-box;
+  padding:0 20px;
+  border:1px solid #dfe0e3;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 14px 40px rgba(23,24,27,.045);
+  transition:border-color .18s ease,box-shadow .18s ease;
+}
+.inline-search-box:focus-within{
+  border-color:#111214;
+  box-shadow:0 16px 42px rgba(23,24,27,.085);
+}
+.inline-search-box>span{font-size:25px;font-weight:700;transform:translateY(-1px)}
+.inline-search-box input{
+  min-width:0;
+  width:100%;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:#111214;
+  font:inherit;
+  font-size:17px;
+  letter-spacing:-.02em;
+}
+.inline-search-box input::placeholder{color:#a4a6ab}
+.inline-search-box button{
+  border:0;
+  padding:8px 5px;
+  background:transparent;
+  color:#85888e;
+  font:inherit;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+}
+.inline-topic-chips{
+  display:flex;
+  gap:7px;
+  overflow-x:auto;
+  margin-top:12px;
+  padding:0 1px 4px;
+  scrollbar-width:none;
+}
+.inline-topic-chips::-webkit-scrollbar{display:none}
+.inline-topic-chips button,
+.inline-service-filter button{
+  flex:none;
+  border:1px solid #e0e1e4;
+  border-radius:999px;
+  background:#fff;
+  color:#555960;
+  font:inherit;
+  font-size:13px;
+  font-weight:750;
+  cursor:pointer;
+  transition:background .16s ease,color .16s ease,border-color .16s ease;
+}
+.inline-topic-chips button{height:37px;padding:0 14px}
+.inline-topic-chips button:hover,
+.inline-service-filter button:hover{border-color:#b9bbc0;color:#111214}
+.inline-topic-chips button.active,
+.inline-service-filter button.active{border-color:#111214;background:#111214;color:#fff}
+.inline-service-filter{
+  margin-top:8px;
+  border-top:1px solid #e3e4e6;
+}
+.inline-service-filter summary{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:max-content;
+  padding:13px 2px 5px;
+  color:#5f6269;
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+  list-style:none;
+}
+.inline-service-filter summary::-webkit-details-marker{display:none}
+.inline-service-filter summary:after{content:"＋";font-size:16px;font-weight:500}
+.inline-service-filter[open] summary:after{content:"−"}
+.inline-service-filter summary span{
+  padding:3px 7px;
+  border-radius:999px;
+  background:#e9eaec;
+  color:#777a80;
+  font-size:10px;
+}
+.inline-service-filter>div{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  padding:8px 0 4px;
+}
+.inline-service-filter button{height:35px;padding:0 13px}
+.inline-search-feedback{
+  min-height:17px;
+  margin-top:10px;
+  color:#73767d;
+  font-size:12px;
+  font-weight:700;
+}
+.inline-search-empty{
+  margin:18px 0 0;
+  padding:24px;
+  border-radius:18px;
+  background:#fff;
+  color:#676a71;
+  font-size:14px;
+  text-align:center;
+}
+@media(max-width:720px){
+  .blog-feed-page .blog-feed-head{padding-bottom:25px}
+  .blog-inline-search{margin-bottom:35px}
+  .inline-search-head{display:block;margin-bottom:13px}
+  .inline-search-head h2{font-size:23px}
+  .inline-search-head p{margin-top:7px;font-size:12px}
+  .inline-search-box{height:58px;padding:0 15px;border-radius:17px}
+  .inline-search-box input{font-size:15px}
+  .inline-topic-chips{margin-right:-20px;padding-right:20px}
+  .inline-service-filter>div{flex-wrap:nowrap;overflow-x:auto;margin-right:-20px;padding-right:20px;scrollbar-width:none}
+  .inline-service-filter>div::-webkit-scrollbar{display:none}
+}
