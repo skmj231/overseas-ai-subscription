@@ -233,7 +233,7 @@
     var query=normalize(searchInput.value);
     clearButton.hidden=!query;
     filtered=items.filter(function(li){
-      return (!query||li.dataset.search.indexOf(query)>-1)&&
+      return (!query||query.split(' ').every(function(token){return li.dataset.search.indexOf(token)>-1;}))&&
              (!selectedTopic||li.dataset.topic===selectedTopic)&&
              (!selectedService||li.dataset.service===selectedService);
     });
