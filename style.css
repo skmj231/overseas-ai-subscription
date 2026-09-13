@@ -1326,3 +1326,6 @@ td.n,th.n{text-align:right}
   }
   .inline-service-filter button{height:34px;padding:0 10px}
 }
+
+/* remove-legacy-service-arrow */
+.inline-service-filter summary:after{content:none!important}
