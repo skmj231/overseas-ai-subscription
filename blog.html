@@ -106,9 +106,6 @@
         var hash=0;
         for(var c=0;c<(service+topic).length;c++){hash=(hash+(c+1)*(service+topic).charCodeAt(c))%997;}
         var thumb=document.createElement('span');
-        thumb.className='feed-thumb thumb-'+kind+' thumb-variant-'+(hash%4);
-        thumb.style.setProperty('--thumb-accent',palettes[hash%palettes.length]);
-        thumb.setAttribute('aria-hidden','true');
         var scheme=schemes[(hash+index)%schemes.length];
         var art=(hash+index)%7;
         thumb.className='feed-thumb graphic-thumb art-'+art;
