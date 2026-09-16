@@ -158,7 +158,12 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
     const sub = await liveSub(inst.customer_id);
     const cust = await db.one("SELECT email FROM customers WHERE id=$1", [inst.customer_id]);
     const v = licenseView(sub, t);
-    if (sub) { v.manage_url = manageUrl(sub.id); v.email = maskEmail(cust.email); }
+    if (sub) {
+      v.manage_url = manageUrl(sub.id);
+      v.email = maskEmail(cust.email);
+      // Chrome sync에는 이 제한된 토큰만 저장한다. 결제·환불·해지는 할 수 없고 새 설치 연결만 가능하다.
+      v.sync_token = crypto.sign({ sub: sub.id, scope: "link_install" }, 400 * 86400000);
+    }
     return v;
   }
 
@@ -231,9 +236,17 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
   }
 
   async function linkByToken(token, installId) {
-    const { cust } = await subscriptionByToken(token);
-    const r = await linkInstall(cust.id, installId);
+    const p = crypto.verify(token);
+    if (!p || !p.sub || !["manage", "link_install"].includes(p.scope)) {
+      throw Object.assign(new Error("연결 링크가 만료됐거나 잘못됐습니다."), { status: 401 });
+    }
+    const sub = await db.one("SELECT * FROM subscriptions WHERE id=$1", [p.sub]);
+    if (!sub || !["active", "canceled", "past_due"].includes(sub.status)) {
+      throw Object.assign(new Error("사용 가능한 Plus 이용권이 없습니다."), { status: 409 });
+    }
+    const r = await linkInstall(sub.customer_id, installId);
     if (!r) throw Object.assign(new Error("install_id가 올바르지 않습니다."), { status: 400 });
+    await audit(`sub:${sub.id}`, "installation_linked", { install: installId.slice(0, 6), via: p.scope });
     return { ok: true };
   }
 
