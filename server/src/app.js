@@ -48,6 +48,9 @@ export function makeApp({ service, env, toss, db, log = console }) {
     if (!limit("checkout:" + ip(req), 10, 3600000)) return res.status(429).json({ error: "잠시 후 다시 시도해 주세요." });
     const { email, install_id, return_url, cancel_url } = req.body || {};
     if (!email || !EMAIL.test(String(email))) return res.status(400).json({ error: "이메일 주소를 확인해 주세요." });
+    if (!install_id || !/^[a-z0-9]{20,40}$/.test(String(install_id))) {
+      return res.status(400).json({ error: "Donna 확장 프로그램에서 Plus 시작을 눌러 주세요. 설치 연결 정보가 없는 결제는 진행하지 않습니다." });
+    }
     const site = env.SITE_URL || "https://donna.co.kr";
     const safe = (u, fb) => (typeof u === "string" && u.startsWith(site)) ? u : fb;
     const out = await service.createCheckout({
@@ -87,6 +90,17 @@ export function makeApp({ service, env, toss, db, log = console }) {
   app.get("/v1/license", wrap(async (req, res) => {
     if (!limit("license:" + ip(req), 120, 3600000)) return res.status(429).json({ error: "too many" });
     res.json(await service.license(String(req.query.install_id || "")));
+  }));
+
+  /* ── 구매 복원 ──
+     존재하는 이메일인지 응답으로 드러내지 않는다. 메일을 받은 사람만 연결을 완료할 수 있다. */
+  app.post("/v1/restore/request", wrap(async (req, res) => {
+    const { email, install_id } = req.body || {};
+    if (!email || !EMAIL.test(String(email))) return res.status(400).json({ error: "이메일 주소를 확인해 주세요." });
+    if (!install_id || !/^[a-z0-9]{20,40}$/.test(String(install_id))) return res.status(400).json({ error: "확장 프로그램에서 구매 복원을 시작해 주세요." });
+    if (!limit("restore:" + ip(req), 5, 3600000)) return res.status(429).json({ error: "요청이 너무 많습니다. 한 시간 뒤 다시 시도해 주세요." });
+    await service.requestRestore(String(email).trim().toLowerCase(), String(install_id));
+    res.status(202).json({ ok: true });
   }));
 
   /* ── 관리 페이지 ── */
