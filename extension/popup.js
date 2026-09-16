@@ -750,8 +750,24 @@ function openPlus(g, next) {
   $w("plus-err").textContent = "";
   $w("plus-sheet").classList.add("on");
   $w("sheet-bg").classList.add("on");
+  startPlusPolling();
 }
-function closePlus() { $w("plus-sheet").classList.remove("on"); $w("sheet-bg").classList.remove("on"); }
+let PLUS_POLL = null, PLUS_POLL_COUNT = 0;
+function stopPlusPolling() { if (PLUS_POLL) clearInterval(PLUS_POLL); PLUS_POLL = null; PLUS_POLL_COUNT = 0; }
+function startPlusPolling() {
+  stopPlusPolling();
+  PLUS_POLL = setInterval(async () => {
+    if (!$w("plus-sheet").classList.contains("on") || ++PLUS_POLL_COUNT > 40) return stopPlusPolling();
+    const res = await new Promise(r => chrome.runtime.sendMessage({ type: "checkLicense" }, r));
+    if (res && res.plan) ST.plan = res.plan;
+    if (PL.isPlus(ST.plan)) {
+      stopPlusPolling(); closePlus(); renderMe();
+      grabNote("결제가 확인됐습니다. 이제 개수 제한 없이 등록할 수 있어요.");
+      if (PLUS_NEXT) { const a = PLUS_NEXT; PLUS_NEXT = null; openForm(a.key, a.presetId, a.manual); }
+    }
+  }, 3000);
+}
+function closePlus() { stopPlusPolling(); $w("plus-sheet").classList.remove("on"); $w("sheet-bg").classList.remove("on"); }
 async function recheckPlus() {
   $w("plus-err").textContent = "";
   $w("plus-recheck").textContent = "확인하는 중…";
@@ -1136,6 +1152,7 @@ function bindWatch() {
   $w("plus-cancel").addEventListener("click", closePlus);
   $w("plus-recheck").addEventListener("click", recheckPlus);
   $w("plus-go").addEventListener("click", () => chrome.tabs.create({ url: PL.plusUrl(ST.installId, "gate") }));
+  $w("plus-restore").addEventListener("click", () => chrome.tabs.create({ url: PL.plusUrl(ST.installId, "restore") + "&mode=restore" }));
   $w("me-plan-btn").addEventListener("click", () => {
     const plus = PL.isPlus(ST.plan);
     const url = plus && ST.plan.manageUrl ? ST.plan.manageUrl + "&install=" + encodeURIComponent(ST.installId || "") : PL.plusUrl(ST.installId, plus ? "manage" : "settings");
@@ -1145,6 +1162,7 @@ function bindWatch() {
     const b = $w("me-plan-recheck"); b.textContent = "확인 중…";
     chrome.runtime.sendMessage({ type: "checkLicense" }, res => { if (res && res.plan) { ST.plan = res.plan; renderPlan(); } b.textContent = "상태 다시 확인"; });
   });
+  $w("me-plan-restore").addEventListener("click", () => chrome.tabs.create({ url: PL.plusUrl(ST.installId, "restore") + "&mode=restore" }));
   $w("w-save").addEventListener("click", saveWatch);
   $w("w-enable").addEventListener("click", enableHere);
   $w("w-all").addEventListener("click", toggleAllSites);
@@ -1194,7 +1212,10 @@ async function init() {
   const st = await chrome.storage.local.get(["ledger", "subs", "stats", "tasks", "profile", "suppliers", "watch", "settings", "plan", "installId"]);
   ST.plan = st.plan || null;
   ST.installId = st.installId || null;
-  if (!ST.installId) chrome.runtime.sendMessage({ type: "checkLicense" }, res => { if (res && res.plan) { ST.plan = res.plan; } chrome.storage.local.get("installId").then(x => { ST.installId = x.installId || null; }); });
+  chrome.runtime.sendMessage({ type: "checkLicense" }, res => {
+    if (res && res.plan) { ST.plan = res.plan; renderPlan(); }
+    chrome.storage.local.get("installId").then(x => { ST.installId = x.installId || null; });
+  });
   ST.ledger = st.ledger || [];
   ST.subs = st.subs || {};
   ST.stats = st.stats || { saved: 0 };
