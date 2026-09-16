@@ -15,7 +15,7 @@ export function makeMailer({ MAIL_API_KEY, MAIL_FROM = "Donna <no-reply@donna.co
     return r.json();
   }
 
-  const foot = (manageUrl) => `\n\n—\n관리·해지: ${manageUrl}\n문의: stevejk911@gmail.com\n솔리드 미디어(SOLID MEDIA) · 사업자등록번호 659-13-02509 · 통신판매업신고 제2025-서울강남-02655호\n경기도 양평군 지평면 산허머리길 53-1`;
+  const foot = (manageUrl) => `\n\n—\n관리·해지: ${manageUrl}\n문의: stevejk911@gmail.com\n솔리드 미디어(SOLID MEDIA) · 사업자등록번호 659-13-02509 · 통신판매업신고 제2026-경기양평-9103호\n경기도 양평군 지평면 산허머리길 53-1`;
 
   return {
     send,
@@ -48,6 +48,10 @@ export function makeMailer({ MAIL_API_KEY, MAIL_FROM = "Donna <no-reply@donna.co
 
     cardChanged: (to, { cardSummary, manageUrl }) => send(to,
       "Donna Plus 결제 수단이 바뀌었습니다",
-      `앞으로 ${cardSummary || "새 카드"}로 결제됩니다.` + foot(manageUrl))
+      `앞으로 ${cardSummary || "새 카드"}로 결제됩니다.` + foot(manageUrl)),
+
+    restore: (to, { restoreUrl }) => send(to,
+      "Donna Plus 구매를 이 Chrome에 연결하세요",
+      `Donna Plus 구매 복원이 요청됐습니다. 아래 링크는 요청한 Chrome 설치에 이용권을 연결합니다.\n\n구매 복원: ${restoreUrl}\n\n본인이 요청하지 않았다면 링크를 열지 않아도 됩니다. 링크는 30일 동안 유효합니다.\n문의: stevejk911@gmail.com`)
   };
 }

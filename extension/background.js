@@ -454,29 +454,68 @@ async function tick() {
 // ---------- Donna Plus 라이선스 ----------
 /* 설치 식별자는 처음 한 번만 만든다. 이름·이메일·기기와 무관한 무작위 문자열이고,
    서버에 보내는 것은 이 값뿐이다(구독 내용·금액·사업자번호는 가지 않는다). */
+const SYNC_LINK_KEY = "donnaPlusLinkToken";
+const validInstallId = id => typeof id === "string" && /^[a-z0-9]{20,40}$/.test(id);
+
+/* 각 PC는 서로 다른 install_id를 쓴다. Chrome 동기화에는 결제·해지 권한이 없는
+   '새 설치 연결 전용 토큰'만 둔다. 같은 Chrome 계정의 새 PC는 이 토큰으로 자동 연결되고,
+   서버의 최대 3대 제한도 정확히 적용된다. 구독명·금액·결제일은 동기화하지 않는다. */
+try {
+  if (chrome.storage.sync && chrome.storage.sync.setAccessLevel) {
+    chrome.storage.sync.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" }).catch(() => {});
+  }
+} catch (e) {}
+
 async function ensureInstallId() {
   const { installId } = await chrome.storage.local.get("installId");
-  if (installId) return installId;
+  if (validInstallId(installId)) return installId;
   const id = PLAN.newInstallId(n => Array.from(crypto.getRandomValues(new Uint8Array(n))));
   await chrome.storage.local.set({ installId: id });
   return id;
 }
 
-/* 하루 한 번, 또는 사용자가 눌렀을 때. 서버가 없거나 안 잡히면 이전 상태를 유지하고
-   유예(7일)가 지나면 무료로 내린다. 그래도 등록해 둔 구독은 건드리지 않는다. */
-async function checkLicense(force) {
-  const { plan = null } = await chrome.storage.local.get("plan");
-  if (!force && !PLAN.needsRecheck(plan)) return plan;
-  const id = await ensureInstallId();
-  let res = null;
+async function fetchLicense(id) {
   try {
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
     const r = await fetch(PLAN.licenseUrl(id), { signal: ctrl.signal, cache: "no-store",
       headers: { "Accept": "application/json", "X-Donna-Version": chrome.runtime.getManifest().version } });
     clearTimeout(t);
-    if (r.ok) res = await r.json();
-    else if (r.status === 404) res = { tier: "free", status: "none" }; // 서버는 있는데 이 설치는 무료
-  } catch (e) { res = null; }
+    if (r.ok) return await r.json();
+    if (r.status === 404) return { tier: "free", status: "none" };
+  } catch (e) {}
+  return null;
+}
+
+async function syncedLinkToken() {
+  if (!chrome.storage.sync) return null;
+  const v = await chrome.storage.sync.get(SYNC_LINK_KEY).catch(() => ({}));
+  return v && typeof v[SYNC_LINK_KEY] === "string" ? v[SYNC_LINK_KEY] : null;
+}
+
+async function linkThisInstall(id, token) {
+  if (!token) return false;
+  try {
+    const r = await fetch(PLAN.linkUrl(), { method: "POST", cache: "no-store",
+      headers: { "Content-Type": "application/json", "X-Donna-Version": chrome.runtime.getManifest().version },
+      body: JSON.stringify({ token, install_id: id }) });
+    return r.ok;
+  } catch (e) { return false; }
+}
+
+/* 현재 설치가 무료로 보이면 Chrome 동기화의 연결 전용 토큰으로 한 번 복원한다.
+   결제된 설치에서 받은 새 토큰은 다시 sync에 저장되어 재설치·다른 PC에 이어진다. */
+async function checkLicense(force) {
+  const { plan = null } = await chrome.storage.local.get("plan");
+  if (!force && !PLAN.needsRecheck(plan)) return plan;
+  const id = await ensureInstallId();
+  let res = await fetchLicense(id);
+  if ((!res || res.tier !== "plus")) {
+    const token = await syncedLinkToken();
+    if (token && await linkThisInstall(id, token)) res = await fetchLicense(id);
+  }
+  if (res && res.sync_token && chrome.storage.sync) {
+    await chrome.storage.sync.set({ [SYNC_LINK_KEY]: res.sync_token }).catch(() => {});
+  }
   const next = PLAN.fromServer(res, plan);
   if (JSON.stringify(next) !== JSON.stringify(plan)) await chrome.storage.local.set({ plan: next });
   return next;

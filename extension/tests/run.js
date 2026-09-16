@@ -8,7 +8,7 @@ const R = require(path.join(root, "rules.js"));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, "1.5.2");
+assert.equal(manifest.version, "1.5.3");
 /* 사이드패널: 아이콘을 누르면 팝업이 아니라 패널이 열려야 한다. 팝업이 남아 있으면 그쪽이 먼저 잡힌다. */
 assert.ok(manifest.permissions.includes("sidePanel"), "sidePanel 권한 누락");
 assert.equal(manifest.side_panel && manifest.side_panel.default_path, "popup.html");
@@ -153,6 +153,7 @@ assert.match(PLAN.newInstallId(), /^[a-z0-9]{26}$/);
 assert.notEqual(PLAN.newInstallId(), PLAN.newInstallId());
 assert.match(PLAN.plusUrl("abc", "gate"), /^https:\/\/donna\.co\.kr\/plus\.html\?install=abc&utm_source=extension/);
 assert.match(PLAN.licenseUrl("abc"), /\/v1\/license\?install_id=abc$/);
+assert.match(PLAN.linkUrl(), /\/v1\/installations\/link$/);
 assert.equal(PLAN.statusText(null, mk(2)), "무료 · 구독 2 / 3");
 assert.match(PLAN.statusText(plus, mk(5), NOW), /^Plus · 12월 6일까지 · 다음 결제 ₩6,000$/);
 assert.match(PLAN.statusText({ ...plus, status: "canceled" }, mk(5), NOW), /이용 후 종료$/);

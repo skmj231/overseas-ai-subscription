@@ -74,12 +74,14 @@ test("결제 → 라이선스 → 갱신 안내 → 실패·재시도 → 해지
   assert.equal(lic.tier, "plus"); assert.equal(lic.status, "active");
   assert.equal(lic.current_period_end, "2026-12-06T00:00:00.000Z");
   assert.match(lic.manage_url, /plus-manage\.html\?token=/); assert.equal(lic.email, "a*@example.com");
+  assert.equal(crypto.verify(lic.sync_token).scope, "link_install", "Chrome 동기화 토큰은 설치 연결 권한만 가진다");
+  const syncToken = lic.sync_token;
   const sub = await db.one("SELECT * FROM subscriptions");
   assert.equal(sub.status, "active"); assert.equal(sub.period_no, 1); assert.equal(sub.card_summary, "신한 **** 1234");
   assert.notEqual(sub.billing_key_encrypted, "bk_auth1");
 
   // 3b. 이미 Plus인 사람이 또 결제 시도 → 관리 페이지로
-  r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "a@example.com" }) });
+  r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "a@example.com", install_id: INSTALL }) });
   assert.equal((await r.json()).already, true);
 
   // 3c. 기기 3대 제한
@@ -89,6 +91,29 @@ test("결제 → 라이선스 → 갱신 안내 → 실패·재시도 → 해지
   lic = await (await api(`/v1/license?install_id=${"d".repeat(26)}`)).json();
   assert.equal(lic.tier, "plus");
   await service.linkInstall(sub.customer_id, INSTALL); // 다시 연결
+
+  // 3d. 같은 Chrome 계정: 동기화된 연결 전용 토큰으로 새 PC 자동 연결
+  const SYNCED = "x".repeat(26);
+  r = await api("/v1/installations/link", { method: "POST", body: JSON.stringify({ token: syncToken, install_id: SYNCED }) });
+  assert.equal((await r.json()).ok, true);
+  lic = await (await api(`/v1/license?install_id=${SYNCED}`)).json();
+  assert.equal(lic.tier, "plus");
+
+  // 3e. Chrome 동기화가 없을 때: 결제 이메일 인증 링크로 복원
+  const RESTORED = "z".repeat(26);
+  const beforeRestoreMail = sent.length;
+  r = await api("/v1/restore/request", { method: "POST", body: JSON.stringify({ email: "a@example.com", install_id: RESTORED }) });
+  assert.equal(r.status, 202); assert.equal((await r.json()).ok, true);
+  assert.equal(sent.length, beforeRestoreMail + 1);
+  const restoreMail = sent.at(-1);
+  assert.match(restoreMail, /구매를 이 Chrome에 연결/);
+  const restoreToken = new URL(restoreMail.match(/구매 복원: (https:\/\/[^\s]+)/)[1]).searchParams.get("token");
+  r = await api("/v1/installations/link", { method: "POST", body: JSON.stringify({ token: restoreToken, install_id: RESTORED }) });
+  assert.equal((await r.json()).ok, true);
+  lic = await (await api(`/v1/license?install_id=${RESTORED}`)).json();
+  assert.equal(lic.tier, "plus");
+  r = await api("/v1/restore/request", { method: "POST", body: JSON.stringify({ email: "unknown@example.com", install_id: "y".repeat(26) }) });
+  assert.equal(r.status, 202, "가입 여부를 응답으로 드러내지 않는다");
 
   // 4. 스케줄러: 7일 전 안내, 3일 전 안내 (각 한 번)
   NOW = new Date("2026-11-29T12:00:00Z"); let tk = await service.tick(); assert.equal(tk.reminded, 1);
@@ -148,13 +173,15 @@ test("결제 → 라이선스 → 갱신 안내 → 실패·재시도 → 해지
 
   // 8. 첫 결제 실패 → incomplete, plus.html로 error와 함께
   toss.setFail({ code: "INVALID_CARD_NUMBER", message: "카드번호 오류" });
-  r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "c@example.com" }) });
+  r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "c@example.com", install_id: "f".repeat(26) }) });
   const s3 = await r.json(); const sid3 = new URL(s3.success_url).searchParams.get("sid");
   r = await api(`/v1/billing/issue?sid=${sid3}&customerKey=${s3.customer_key}&authKey=auth3`);
   assert.equal(r.status, 302); assert.match(r.headers.get("location"), /plus\.html\?error=payment/);
 
   // 9. 입력 검증·CORS·잘못된 토큰
   r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "nope" }) }); assert.equal(r.status, 400);
+  r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "valid@example.com" }) }); assert.equal(r.status, 400, "설치 ID 없는 고아 결제 차단");
+  r = await api("/v1/restore/request", { method: "POST", body: JSON.stringify({ email: "valid@example.com", install_id: "bad" }) }); assert.equal(r.status, 400);
   r = await api("/v1/subscription?token=bad"); assert.equal(r.status, 401);
   r = await api("/v1/license?install_id=x", { headers: { Origin: "https://evil.com" } }); assert.equal(r.headers.get("access-control-allow-origin"), null);
   r = await api("/v1/license?install_id=x", { headers: { Origin: "chrome-extension://abc" } }); assert.equal(r.headers.get("access-control-allow-origin"), "chrome-extension://abc");

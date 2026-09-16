@@ -100,6 +100,10 @@
     return API_BASE + "/license?install_id=" + encodeURIComponent(installId || "");
   }
 
+  function linkUrl() {
+    return API_BASE + "/installations/link";
+  }
+
   /* 설정 화면 한 줄 */
   function statusText(plan, watch, now) {
     if (isPlus(plan, now)) {
@@ -114,5 +118,5 @@
   }
 
   root.SVSTPlan = { FREE_LIMIT, PRICE_KRW, PERIOD_MONTHS, GRACE_DAYS, RECHECK_HOURS, API_BASE, SITE,
-                    activeCount, isPlus, canAdd, needsRecheck, fromServer, newInstallId, plusUrl, licenseUrl, statusText };
+                    activeCount, isPlus, canAdd, needsRecheck, fromServer, newInstallId, plusUrl, licenseUrl, linkUrl, statusText };
 })(typeof self !== "undefined" ? self : globalThis);
