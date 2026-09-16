@@ -216,6 +216,20 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
     const { sub, cust } = await subscriptionByToken(token);
     return createCheckout({ email: cust.email, purpose: "change_card", subscription_id: sub.id, return_url: return_url || manageUrl(sub.id), cancel_url: manageUrl(sub.id) });
   }
+  async function requestRestore(email, installId) {
+    if (!installId || !/^[a-z0-9]{20,40}$/.test(installId)) return { ok: true };
+    const cust = await findCustomerByEmail(email);
+    if (!cust) return { ok: true };
+    const sub = await liveSub(cust.id);
+    if (!sub) return { ok: true };
+    const u = new URL(manageUrl(sub.id));
+    u.searchParams.set("install", installId);
+    u.searchParams.set("restore", "1");
+    await mail.restore(cust.email, { restoreUrl: u.toString() }).catch(logMail);
+    await audit(`cust:${cust.id}`, "restore_requested", { install: installId.slice(0, 6) });
+    return { ok: true };
+  }
+
   async function linkByToken(token, installId) {
     const { cust } = await subscriptionByToken(token);
     const r = await linkInstall(cust.id, installId);
@@ -250,5 +264,5 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
   function logMail(e) { log.error("mail", e.message); }
   function maskEmail(e) { const [u, d] = String(e).split("@"); return (u.length <= 2 ? u[0] + "*" : u.slice(0, 2) + "***") + "@" + d; }
 
-  return { createCheckout, completeBilling, charge, license, manageView, cancel, resume, refund, changeCard, linkByToken, tick, manageUrl, linkInstall, findCustomerByEmail };
+  return { createCheckout, completeBilling, charge, license, manageView, cancel, resume, refund, changeCard, requestRestore, linkByToken, tick, manageUrl, linkInstall, findCustomerByEmail };
 }
