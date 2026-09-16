@@ -74,6 +74,8 @@ test("결제 → 라이선스 → 갱신 안내 → 실패·재시도 → 해지
   assert.equal(lic.tier, "plus"); assert.equal(lic.status, "active");
   assert.equal(lic.current_period_end, "2026-12-06T00:00:00.000Z");
   assert.match(lic.manage_url, /plus-manage\.html\?token=/); assert.equal(lic.email, "a*@example.com");
+  assert.equal(crypto.verify(lic.sync_token).scope, "link_install", "Chrome 동기화 토큰은 설치 연결 권한만 가진다");
+  const syncToken = lic.sync_token;
   const sub = await db.one("SELECT * FROM subscriptions");
   assert.equal(sub.status, "active"); assert.equal(sub.period_no, 1); assert.equal(sub.card_summary, "신한 **** 1234");
   assert.notEqual(sub.billing_key_encrypted, "bk_auth1");
@@ -90,7 +92,14 @@ test("결제 → 라이선스 → 갱신 안내 → 실패·재시도 → 해지
   assert.equal(lic.tier, "plus");
   await service.linkInstall(sub.customer_id, INSTALL); // 다시 연결
 
-  // 3d. 삭제·재설치·다른 PC: 결제 이메일 인증 링크로 새 설치 연결
+  // 3d. 같은 Chrome 계정: 동기화된 연결 전용 토큰으로 새 PC 자동 연결
+  const SYNCED = "x".repeat(26);
+  r = await api("/v1/installations/link", { method: "POST", body: JSON.stringify({ token: syncToken, install_id: SYNCED }) });
+  assert.equal((await r.json()).ok, true);
+  lic = await (await api(`/v1/license?install_id=${SYNCED}`)).json();
+  assert.equal(lic.tier, "plus");
+
+  // 3e. Chrome 동기화가 없을 때: 결제 이메일 인증 링크로 복원
   const RESTORED = "z".repeat(26);
   const beforeRestoreMail = sent.length;
   r = await api("/v1/restore/request", { method: "POST", body: JSON.stringify({ email: "a@example.com", install_id: RESTORED }) });
