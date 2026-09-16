@@ -36,7 +36,7 @@
       const r = await fetch(API + "/restore/request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: value, install_id: install.value }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || ("HTTP " + r.status));
-      restoreMsg.className = "msg ok"; restoreMsg.textContent = "해당 이메일의 구매 내역이 있으면 복원 링크를 보냈습니다. 메일의 링크을 열어 연결을 완료해 주세요.";
+      restoreMsg.className = "msg ok"; restoreMsg.textContent = "해당 이메일의 구매 내역이 있으면 복원 링크를 보냈습니다. 메일의 링크를 열어 연결을 완료해 주세요.";
     } catch (e3) {
       restoreMsg.className = "msg err"; restoreMsg.textContent = e3.message || "복원 메일을 보내지 못했습니다. 잠시 뒤 다시 시도해 주세요.";
     } finally { restoreSend.disabled = false; }
