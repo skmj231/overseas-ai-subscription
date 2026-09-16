@@ -454,30 +454,69 @@ async function tick() {
 // ---------- Donna Plus 라이선스 ----------
 /* 설치 식별자는 처음 한 번만 만든다. 이름·이메일·기기와 무관한 무작위 문자열이고,
    서버에 보내는 것은 이 값뿐이다(구독 내용·금액·사업자번호는 가지 않는다). */
-async function ensureInstallId() {
-  const { installId } = await chrome.storage.local.get("installId");
-  if (installId) return installId;
-  const id = PLAN.newInstallId(n => Array.from(crypto.getRandomValues(new Uint8Array(n))));
-  await chrome.storage.local.set({ installId: id });
-  return id;
+const SYNC_INSTALL_KEY = "donnaLicenseInstallId";
+const validInstallId = id => typeof id === "string" && /^[a-z0-9]{20,40}$/.test(id);
+
+/* Plus 식별자만 Chrome 동기화 저장소에 둔다. 구독명·금액·결제일은 계속 local에만 둔다.
+   같은 Chrome 계정에서 확장을 다시 설치하거나 다른 PC에 설치하면 이 값만 복원된다.
+   sync가 꺼져 있거나 지연돼도 local 값으로 계속 동작한다. */
+try {
+  if (chrome.storage.sync && chrome.storage.sync.setAccessLevel) {
+    chrome.storage.sync.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" }).catch(() => {});
+  }
+} catch (e) {}
+
+async function installCandidates() {
+  const [{ installId }, synced] = await Promise.all([
+    chrome.storage.local.get("installId"),
+    chrome.storage.sync ? chrome.storage.sync.get(SYNC_INSTALL_KEY).catch(() => ({})) : Promise.resolve({})
+  ]);
+  const syncId = synced && synced[SYNC_INSTALL_KEY];
+  const ids = [];
+  if (validInstallId(syncId)) ids.push(syncId);
+  if (validInstallId(installId) && !ids.includes(installId)) ids.push(installId);
+  if (!ids.length) ids.push(PLAN.newInstallId(n => Array.from(crypto.getRandomValues(new Uint8Array(n)))));
+  return ids;
 }
 
-/* 하루 한 번, 또는 사용자가 눌렀을 때. 서버가 없거나 안 잡히면 이전 상태를 유지하고
-   유예(7일)가 지나면 무료로 내린다. 그래도 등록해 둔 구독은 건드리지 않는다. */
-async function checkLicense(force) {
-  const { plan = null } = await chrome.storage.local.get("plan");
-  if (!force && !PLAN.needsRecheck(plan)) return plan;
-  const id = await ensureInstallId();
-  let res = null;
+async function saveCanonicalInstallId(id) {
+  if (!validInstallId(id)) return;
+  await chrome.storage.local.set({ installId: id });
+  if (chrome.storage.sync) await chrome.storage.sync.set({ [SYNC_INSTALL_KEY]: id }).catch(() => {});
+}
+
+async function ensureInstallId() {
+  const ids = await installCandidates();
+  await saveCanonicalInstallId(ids[0]);
+  return ids[0];
+}
+
+async function fetchLicense(id) {
   try {
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
     const r = await fetch(PLAN.licenseUrl(id), { signal: ctrl.signal, cache: "no-store",
       headers: { "Accept": "application/json", "X-Donna-Version": chrome.runtime.getManifest().version } });
     clearTimeout(t);
-    if (r.ok) res = await r.json();
-    else if (r.status === 404) res = { tier: "free", status: "none" }; // 서버는 있는데 이 설치는 무료
-  } catch (e) { res = null; }
-  const next = PLAN.fromServer(res, plan);
+    if (r.ok) return await r.json();
+    if (r.status === 404) return { tier: "free", status: "none" };
+  } catch (e) {}
+  return null;
+}
+
+/* 동기화 ID와 기존 local ID가 다르면 둘 다 확인한다. 결제된 ID를 우선해
+   다른 PC의 오래된 무료 ID가 유료 라이선스를 덮어쓰지 못하게 한다. */
+async function checkLicense(force) {
+  const { plan = null } = await chrome.storage.local.get("plan");
+  if (!force && !PLAN.needsRecheck(plan)) return plan;
+  const ids = await installCandidates();
+  let chosenId = ids[0], chosen = null;
+  for (const id of ids) {
+    const res = await fetchLicense(id);
+    if (!chosen && res) { chosen = res; chosenId = id; }
+    if (res && res.tier === "plus") { chosen = res; chosenId = id; break; }
+  }
+  await saveCanonicalInstallId(chosenId);
+  const next = PLAN.fromServer(chosen, plan);
   if (JSON.stringify(next) !== JSON.stringify(plan)) await chrome.storage.local.set({ plan: next });
   return next;
 }
