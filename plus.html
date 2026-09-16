@@ -1,8 +1,8 @@
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Donna Plus · 3개월 6,000원, 구독 개수 제한 없음</title>
-<meta name="description" content="Donna Plus는 3개월 6,000원으로 등록할 수 있는 구독 개수 제한을 없앱니다. 3개월에 한 번 직접 결제. 자동 결제 없음.">
-<meta property="og:type" content="website"><meta property="og:url" content="https://donna.co.kr/plus.html"><meta property="og:title" content="Donna Plus · 3개월 6,000원"><meta property="og:description" content="구독 개수 제한 없음. 3개월에 한 번 직접 결제. 자동 결제 없음."><meta property="og:image" content="https://donna.co.kr/assets/og-donna-1200x630.png">
+<meta name="description" content="Donna Plus는 3개월 6,000원으로 등록할 수 있는 구독 개수 제한을 없앱니다. 3개월마다 자동 결제되며 언제든 해지할 수 있습니다.">
+<meta property="og:type" content="website"><meta property="og:url" content="https://donna.co.kr/plus.html"><meta property="og:title" content="Donna Plus · 3개월 6,000원"><meta property="og:description" content="구독 개수 제한 없음. 3개월마다 자동 결제되며 언제든 해지할 수 있습니다."><meta property="og:image" content="https://donna.co.kr/assets/og-donna-1200x630.png">
 <link rel="icon" type="image/png" sizes="32x32" href="./assets/donna-mark-48.png"><link rel="stylesheet" href="./style.css?v=20260906">
 <style>
 .plus-hero{padding:72px 0 24px}
@@ -24,6 +24,13 @@
 .checkout .sum{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);display:grid;gap:8px;font-size:13.5px}
 .checkout .sum div{display:flex;justify-content:space-between;gap:12px}
 .checkout .sum span{color:var(--sub)}
+.checkout .restore-open{width:100%;margin-top:14px;border:0;background:transparent;color:var(--sub);font-weight:700;cursor:pointer}
+.checkout .restore-box{margin-top:14px;padding:16px;border-radius:16px;background:var(--soft)}
+.checkout .restore-box[hidden]{display:none}
+.checkout .restore-box p{font-size:13px;color:var(--sub);line-height:1.55;margin:0 0 10px}
+.checkout .restore-box .row{display:flex;gap:8px}
+.checkout .restore-box .row input{min-width:0;flex:1}
+.checkout .restore-box .row button{flex:0 0 auto;padding:0 14px}
 .disc{background:var(--card);border-radius:24px;padding:28px 32px;box-shadow:var(--shadow)}
 .disc dl{display:grid;grid-template-columns:160px 1fr;gap:12px 20px;font-size:15px}
 .disc dt{color:var(--sub);font-weight:700}
@@ -49,14 +56,20 @@
   <form class="checkout" id="checkout" novalidate>
     <div class="eyebrow dark" style="margin-bottom:12px">3개월 이용권</div>
     <div class="pr">₩6,000<small>/ 3개월</small></div>
-    <div class="per">부가세 포함 · 한 번만 결제 · 자동 결제 없음</div>
+    <div class="per">부가세 포함 · 3개월마다 자동 결제 · 언제든 해지</div>
     <label for="email">이메일</label>
     <input type="email" id="email" name="email" autocomplete="email" placeholder="영수증과 라이선스를 받을 주소" required>
     <input type="hidden" id="install" name="install_id">
-    <label class="agree"><input type="checkbox" id="agree" required><span>3개월3개월 이용권 6,000원을 지금 한 번 결제하는 것에 동의하며, <a href="./terms.html">이용약관</a>과 <a href="./privacy.html">개인정보처리방침</a>을 확인했습니다.</span></label>
-    <button class="btn yellow" type="submit" id="pay">6,000원 결제하고 시작하기</button>
+    <label class="agree"><input type="checkbox" id="agree" required><span>Donna Plus 3개월 이용권이 3개월마다 6,000원으로 자동 갱신되는 것에 동의하며, <a href="./terms.html">이용약관</a>과 <a href="./privacy.html">개인정보처리방침</a>을 확인했습니다.</span></label>
+    <button class="btn yellow" type="submit" id="pay">카드 등록하고 시작하기</button>
     <p class="msg" id="msg">다음 화면에서 토스페이먼츠 결제창이 열립니다. 카드 정보는 Donna 서버를 거치지 않습니다.</p>
     <div class="sum"><div><span>상품</span><b>Donna Plus 3개월 이용권</b></div><div><span>오늘 결제</span><b>₩6,000</b></div><div><span>다음 결제</span><b id="nextBill">3개월 뒤 같은 날</b></div><div><span>해지</span><b>언제든지 · 남은 기간까지 이용</b></div></div>
+    <button class="restore-open" type="button" id="restore-open">이미 결제했다면 구매 복원</button>
+    <div class="restore-box" id="restore-box" hidden>
+      <p>결제할 때 사용한 이메일로 복원 링크를 보내드립니다. 링크를 열면 현재 Chrome에 Plus가 연결됩니다.</p>
+      <div class="row"><input type="email" id="restore-email" autocomplete="email" placeholder="결제 이메일"><button class="btn" type="button" id="restore-send">복원 메일 받기</button></div>
+      <p class="msg" id="restore-msg"></p>
+    </div>
   </form>
 </div></header>
 
@@ -65,7 +78,7 @@
   <div class="flow">
     <div class="st"><div class="no">01</div><h3>이메일과 결제</h3><p>토스페이먼츠 결제창에서 6,000원을 한 번 결제합니다. 카드를 저장하지 않으므로 다음에 저절로 빠져나가는 일이 없습니다.</p></div>
     <div class="st"><div class="no">02</div><h3>확장 프로그램에 바로 반영</h3><p>결제가 끝나면 Donna가 라이선스를 확인하고 몇 초 안에 개수 제한이 풀립니다. 다시 로그인할 필요가 없습니다.</p></div>
-    <div class="st"><div class="no">03</div><h3>3개월 뒤, 결제하기 전에 물어봅니다</h3><p>끝나는 날 7일 전과 1일 전에 알려드립니다. 계속 쓰시겠다면 그때 다시 결제하시면 됩니다. 결제 전에 알려주겠다고 약속한 서비스가 스스로 몰래 빠져나가면 안 되니까요.</p></div>
+    <div class="st"><div class="no">03</div><h3>다음 결제 전에 알려드립니다</h3><p>3개월마다 자동 갱신되며, 다음 결제 7일 전과 3일 전에 이메일로 알려드립니다. 계속 사용하지 않으려면 관리 페이지에서 언제든 해지할 수 있고, 이미 결제한 기간까지는 그대로 이용합니다.</p></div>
   </div>
 </div></section>
 
@@ -73,14 +86,14 @@
   <div class="sec-head"><span class="eyebrow">무료와 Plus</span><h2>무료도 기능은 전부 같습니다</h2><p class="lead">차이는 등록할 수 있는 구독의 개수뿐입니다. 결제 알림, 원화 예상액, 해지 바로가기, 세무 자료는 무료에서도 똑같이 동작합니다.</p></div>
   <div class="cmp">
     <div class="plan"><div class="nm">무료</div><div class="pr">₩0</div><div class="per">회원가입 없이 바로</div><ul><li>활성 구독 3개</li><li>결제 전 알림 · 원화 예상액 · 무료 체험 알림</li><li>해지·환불 바로가기 · 캘린더 내보내기</li><li>결제창 자동 감지 · Tax ID 입력 · 분기 CSV</li><li class="no">네 번째 구독부터 등록 불가</li></ul><a class="btn ghost" href="./go.html?c=plus-free">Chrome에 추가</a></div>
-    <div class="plan plus"><div class="nm">Donna Plus</div><div class="pr">₩6,000<small>/ 3개월</small></div><div class="per">3개월 이용권 · 자동 결제 없음</div><ul><li>구독 개수 제한 없음</li><li>무료 기능 전부 포함</li><li>앞으로 추가되는 기능 우선 제공</li><li>이메일 우선 지원</li></ul><a class="btn" href="#checkout">Plus 시작하기</a></div>
+    <div class="plan plus"><div class="nm">Donna Plus</div><div class="pr">₩6,000<small>/ 3개월</small></div><div class="per">3개월마다 자동 갱신 · 언제든 해지</div><ul><li>구독 개수 제한 없음</li><li>무료 기능 전부 포함</li><li>앞으로 추가되는 기능 우선 제공</li><li>이메일 우선 지원</li></ul><a class="btn" href="#checkout">Plus 시작하기</a></div>
   </div>
 </div></section>
 
 <section><div class="wrap narrow">
   <div class="sec-head"><span class="eyebrow">자주 묻는 질문</span><h2>결제 전에 확인하세요</h2></div>
   <div class="faq">
-    <details><summary>해지는 어떻게 하나요?</summary><p>확장 프로그램 설정의 'Plus 관리' 또는 결제 확인 메일의 링크에서 클릭 두 번으로 해지됩니다. 해지해도 이미 결제한 3개월이 끝날 때까지 그대로 쓰고, 기간이 지나면 저절로 끝납니다. 카드를 저장하지 않아 다음 결제가 없습니다.</p></details>
+    <details><summary>해지는 어떻게 하나요?</summary><p>확장 프로그램 설정의 'Plus 관리' 또는 결제 확인 메일의 링크에서 해지할 수 있습니다. 해지하면 다음 자동 결제가 중단되고, 이미 결제한 3개월이 끝날 때까지는 그대로 이용합니다. 카드 정보는 Donna가 아니라 토스페이먼츠가 보관합니다.</p></details>
     <details><summary>기간이 끝나면 등록해 둔 구독은 어떻게 되나요?</summary><p>지워지지 않습니다. 넷 이상 등록돼 있어도 알림은 계속 오고, 새로 등록하는 것만 무료 한도(3개) 안에서 가능합니다.</p></details>
     <details><summary>결제가 실패하면요?</summary><p>실패 즉시 이메일로 알려드리고, 3일 뒤와 7일 뒤에 다시 시도합니다. 그래도 실패하면 Plus가 멈추고 추가 등록만 제한됩니다. 데이터는 그대로입니다.</p></details>
     <details><summary>환불되나요?</summary><p>결제 후 7일 안에는 청약철회로 전액 환불해 드립니다. 그 기간에 네 번째 이상의 구독을 등록해 이미 쓰신 경우에는 쓰신 만큼을 뺀 금액을 돌려드립니다. 7일이 지난 뒤에는 남은 기간을 이용하는 것으로 갈음합니다. 자세한 조건은 <a href="./terms.html">이용약관</a>에 있습니다.</p></details>
@@ -94,10 +107,10 @@
   <dl>
     <dt>상품명</dt><dd>Donna Plus 3개월 이용권</dd>
     <dt>결제 금액</dt><dd>6,000원 / 3개월 (부가세 포함)</dd>
-    <dt>결제 방식</dt><dd>토스페이먼츠 일반결제(1회). 카드를 저장하지 않으며 자동 갱신이 없습니다.</dd>
-    <dt>다음 결제일</dt><dd>결제일부터 3개월 뒤. 끝나는 날 7일 전과 1일 전에 알려드립니다. 계속 쓰시려면 그때 다시 결제하시면 됩니다.</dd>
-    <dt>해지</dt><dd>따로 해지할 것이 없습니다. 3개월이 지나면 저절로 끝납니다.</dd>
-    <dt>기간이 끝난 뒤</dt><dd>한 달 동안 그대로 보관합니다. 그 사이에 결제하시면 이어서 쓰시고, 한 달이 지나도 결제가 없으면 먼저 등록한 세 개만 남고 나머지는 목록에서 숨겨집니다. 지워지지 않습니다.</dd>
+    <dt>결제 방식</dt><dd>토스페이먼츠 자동결제. 카드 정보는 토스페이먼츠가 보관하며 Donna는 카드번호를 저장하지 않습니다.</dd>
+    <dt>다음 결제일</dt><dd>결제일부터 3개월 뒤 같은 날. 7일 전과 3일 전에 이메일로 알려드립니다.</dd>
+    <dt>해지</dt><dd>관리 페이지에서 언제든 해지할 수 있습니다. 해지 즉시 다음 결제가 중단되며, 이미 결제한 기간까지 이용합니다.</dd>
+    <dt>결제 실패</dt><dd>즉시 이메일로 알리고 3일 뒤와 7일 뒤에 다시 시도합니다. 계속 실패하면 Plus 추가 등록만 멈추고 기존 데이터는 지우지 않습니다.</dd>
     <dt>환불</dt><dd>결제 후 7일 이내 청약철회 시 전액 환불. 그 사이 이용한 부분이 있으면 그만큼 공제 후 환불.</dd>
     <dt>사업자</dt><dd>솔리드 미디어(SOLID MEDIA) · 대표 김종규 · 사업자등록번호 659-13-02509 · 통신판매업신고 제2026-경기양평-9103호 · 경기도 양평군 지평면 산허머리길 53-1 (12541) · 전화 010-9704-3501</dd>
     <dt>고객지원</dt><dd><a href="mailto:stevejk911@gmail.com">stevejk911@gmail.com</a> · 영업일 기준 1일 이내 답변</dd>
