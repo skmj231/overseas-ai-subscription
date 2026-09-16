@@ -454,41 +454,24 @@ async function tick() {
 // ---------- Donna Plus 라이선스 ----------
 /* 설치 식별자는 처음 한 번만 만든다. 이름·이메일·기기와 무관한 무작위 문자열이고,
    서버에 보내는 것은 이 값뿐이다(구독 내용·금액·사업자번호는 가지 않는다). */
-const SYNC_INSTALL_KEY = "donnaLicenseInstallId";
+const SYNC_LINK_KEY = "donnaPlusLinkToken";
 const validInstallId = id => typeof id === "string" && /^[a-z0-9]{20,40}$/.test(id);
 
-/* Plus 식별자만 Chrome 동기화 저장소에 둔다. 구독명·금액·결제일은 계속 local에만 둔다.
-   같은 Chrome 계정에서 확장을 다시 설치하거나 다른 PC에 설치하면 이 값만 복원된다.
-   sync가 꺼져 있거나 지연돼도 local 값으로 계속 동작한다. */
+/* 각 PC는 서로 다른 install_id를 쓴다. Chrome 동기화에는 결제·해지 권한이 없는
+   '새 설치 연결 전용 토큰'만 둔다. 같은 Chrome 계정의 새 PC는 이 토큰으로 자동 연결되고,
+   서버의 최대 3대 제한도 정확히 적용된다. 구독명·금액·결제일은 동기화하지 않는다. */
 try {
   if (chrome.storage.sync && chrome.storage.sync.setAccessLevel) {
     chrome.storage.sync.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" }).catch(() => {});
   }
 } catch (e) {}
 
-async function installCandidates() {
-  const [{ installId }, synced] = await Promise.all([
-    chrome.storage.local.get("installId"),
-    chrome.storage.sync ? chrome.storage.sync.get(SYNC_INSTALL_KEY).catch(() => ({})) : Promise.resolve({})
-  ]);
-  const syncId = synced && synced[SYNC_INSTALL_KEY];
-  const ids = [];
-  if (validInstallId(syncId)) ids.push(syncId);
-  if (validInstallId(installId) && !ids.includes(installId)) ids.push(installId);
-  if (!ids.length) ids.push(PLAN.newInstallId(n => Array.from(crypto.getRandomValues(new Uint8Array(n)))));
-  return ids;
-}
-
-async function saveCanonicalInstallId(id) {
-  if (!validInstallId(id)) return;
-  await chrome.storage.local.set({ installId: id });
-  if (chrome.storage.sync) await chrome.storage.sync.set({ [SYNC_INSTALL_KEY]: id }).catch(() => {});
-}
-
 async function ensureInstallId() {
-  const ids = await installCandidates();
-  await saveCanonicalInstallId(ids[0]);
-  return ids[0];
+  const { installId } = await chrome.storage.local.get("installId");
+  if (validInstallId(installId)) return installId;
+  const id = PLAN.newInstallId(n => Array.from(crypto.getRandomValues(new Uint8Array(n))));
+  await chrome.storage.local.set({ installId: id });
+  return id;
 }
 
 async function fetchLicense(id) {
@@ -503,20 +486,37 @@ async function fetchLicense(id) {
   return null;
 }
 
-/* 동기화 ID와 기존 local ID가 다르면 둘 다 확인한다. 결제된 ID를 우선해
-   다른 PC의 오래된 무료 ID가 유료 라이선스를 덮어쓰지 못하게 한다. */
+async function syncedLinkToken() {
+  if (!chrome.storage.sync) return null;
+  const v = await chrome.storage.sync.get(SYNC_LINK_KEY).catch(() => ({}));
+  return v && typeof v[SYNC_LINK_KEY] === "string" ? v[SYNC_LINK_KEY] : null;
+}
+
+async function linkThisInstall(id, token) {
+  if (!token) return false;
+  try {
+    const r = await fetch(PLAN.linkUrl(), { method: "POST", cache: "no-store",
+      headers: { "Content-Type": "application/json", "X-Donna-Version": chrome.runtime.getManifest().version },
+      body: JSON.stringify({ token, install_id: id }) });
+    return r.ok;
+  } catch (e) { return false; }
+}
+
+/* 현재 설치가 무료로 보이면 Chrome 동기화의 연결 전용 토큰으로 한 번 복원한다.
+   결제된 설치에서 받은 새 토큰은 다시 sync에 저장되어 재설치·다른 PC에 이어진다. */
 async function checkLicense(force) {
   const { plan = null } = await chrome.storage.local.get("plan");
   if (!force && !PLAN.needsRecheck(plan)) return plan;
-  const ids = await installCandidates();
-  let chosenId = ids[0], chosen = null;
-  for (const id of ids) {
-    const res = await fetchLicense(id);
-    if (!chosen && res) { chosen = res; chosenId = id; }
-    if (res && res.tier === "plus") { chosen = res; chosenId = id; break; }
+  const id = await ensureInstallId();
+  let res = await fetchLicense(id);
+  if ((!res || res.tier !== "plus")) {
+    const token = await syncedLinkToken();
+    if (token && await linkThisInstall(id, token)) res = await fetchLicense(id);
   }
-  await saveCanonicalInstallId(chosenId);
-  const next = PLAN.fromServer(chosen, plan);
+  if (res && res.sync_token && chrome.storage.sync) {
+    await chrome.storage.sync.set({ [SYNC_LINK_KEY]: res.sync_token }).catch(() => {});
+  }
+  const next = PLAN.fromServer(res, plan);
   if (JSON.stringify(next) !== JSON.stringify(plan)) await chrome.storage.local.set({ plan: next });
   return next;
 }
