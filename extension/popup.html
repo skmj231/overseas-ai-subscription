@@ -6,12 +6,11 @@
 <style>
   /* ── Donna · 사이드패널. 값은 시안(donna-design/*.dc.html)에서 그대로 옮겼다.
      바탕 #F2F2F4 · 카드 #fff 24px · 히어로 노랑 #FFD84D 28px · 검정 필 버튼 · 색 필 상태.
-     Apple 시스템 서체(SF Pro·Apple SD Gothic Neo), 비 Apple 환경은 Pretendard. */
-  @font-face { font-family: "Pretendard Variable"; font-weight: 45 920; font-style: normal; font-display: swap; src: url("fonts/PretendardVariable.woff2") format("woff2-variations"); }
+     Manrope(영문·숫자) + 시스템 고딕(한글). */
   :root { color-scheme: light;
     --bg: #F2F2F4; --card: #FFFFFF; --ink: #111114; --sub: #8A8A91; --faint: #C7C7CC; --line: #EDEDF0; --soft: #F5F5F7;
     --yellow: #FFD84D; --yellow-ink: #3A2E00; --green: #22C55E; --orange: #FF6B2C; --red: #FF4D3D; --blue: #2F6BFF;
-    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, "Segoe UI", Roboto, system-ui, sans-serif; }
+    --sans: -apple-system, "SF Pro Text", "Apple SD Gothic Neo", Pretendard, system-ui, sans-serif; }
   * { box-sizing: border-box; margin: 0; padding: 0; border: 0; outline: 0; background-image: none; }
   html, body { height: 100%; }
   html, body, #app { background: var(--bg); }
@@ -21,18 +20,18 @@
   #app { min-height: 100%; padding: 20px 16px 96px; display: flex; flex-direction: column; gap: 14px; }
   button, input, select { font: inherit; color: inherit; background: transparent; }
   button { cursor: pointer; }
-  b { font-weight: 700; }
+  b { font-weight: 800; }
 
   .card { background: var(--card); border-radius: 24px; box-shadow: 0 10px 30px rgba(20,20,30,.06), 0 1px 2px rgba(20,20,30,.04); }
   .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 700; font-size: 14px; letter-spacing: -.01em; white-space: nowrap; }
   .pill.black { background: var(--ink); color: #fff; }
   .pill.gray { background: var(--soft); color: var(--ink); }
-  .tag { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+  .tag { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: .02em; white-space: nowrap; }
   .tag.green { background: var(--green); color: #fff; }
   .tag.orange { background: var(--orange); color: #fff; }
   .tag.yellow { background: var(--yellow); color: var(--yellow-ink); }
   .tag.soft { background: var(--soft); color: var(--sub); }
-  .avatar { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; color: #fff; flex-shrink: 0; }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; color: #fff; flex-shrink: 0; }
   .avatar .logo { display: block; background: #fff; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain; }
   .avatar.ghost { background: var(--soft); color: var(--sub); }
 
@@ -40,36 +39,52 @@
   header { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 0; }
   header .brand { display: flex; align-items: center; gap: 8px; color: var(--ink); text-decoration: none; }
   header .brand img { width: 26px; height: 26px; border-radius: 8px; }
-  header .brand b { font-size: 15px; font-weight: 700; letter-spacing: -.02em; }
+  header .brand b { font-size: 15px; font-weight: 800; letter-spacing: -.02em; }
   header .brand small, header .saved { display: none; }
   header .gear { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
   /* 하위 화면 머리: 뒤로 + 제목 (시안 Detail) */
   .subhead { display: flex; align-items: center; gap: 10px; padding: 4px 4px 0; }
   .subhead .back { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
-  .subhead span { font-size: 15px; font-weight: 700; letter-spacing: -.02em; }
+  .subhead span { font-size: 15px; font-weight: 800; letter-spacing: -.02em; }
   .view { display: none; flex-direction: column; gap: 14px; } .view.on { display: flex; }
 
   /* 히어로: 노란 위젯 */
   .hero { position: relative; background: var(--yellow); border-radius: 28px; padding: 22px 22px 20px; color: var(--yellow-ink); box-shadow: 0 14px 34px rgba(255,216,77,.35); }
   .hero .row { display: flex; align-items: center; justify-content: space-between; }
-  .hero .k { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .7; }
-  .hero .cnt { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: rgba(58,46,0,.12); font-size: 12px; font-weight: 700; }
-  .hero .v { margin-top: 14px; font-size: 44px; font-weight: 700; letter-spacing: -.045em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .hero .k { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .7; }
+  .hero .cnt { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: rgba(58,46,0,.12); font-size: 12px; font-weight: 800; }
+  .hero .v { margin-top: 14px; font-size: 44px; font-weight: 800; letter-spacing: -.045em; line-height: 1; font-variant-numeric: tabular-nums; }
   .hero .v small { font-size: 13px; font-weight: 700; letter-spacing: 0; margin-left: 8px; opacity: .7; }
   .hero .v.text { font-size: 26px; letter-spacing: -.035em; line-height: 1.15; }
   .hero .sub { margin-top: 8px; font-size: 14px; font-weight: 600; opacity: .75; }
   .hero .bar { margin-top: 18px; display: flex; align-items: center; gap: 10px; }
   .hero .bar .track { flex: 1; height: 6px; border-radius: 999px; background: rgba(58,46,0,.14); overflow: hidden; }
   .hero .bar .track i { display: block; height: 100%; background: var(--yellow-ink); border-radius: 999px; }
-  .hero .bar span { font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .hero .bar span { font-size: 12px; font-weight: 800; white-space: nowrap; }
   .hero .bar:empty { display: none; }
+  .planline { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:-2px 4px 0; padding:0 4px; color:var(--sub); font-size:12px; font-weight:700; }
+  .planline button { color:var(--ink); font-weight:800; text-decoration:underline; text-underline-offset:3px; }
+  .upgrade { position:fixed; inset:0; z-index:30; display:none; align-items:flex-end; justify-content:center; background:rgba(17,17,20,.36); }
+  .upgrade.on { display:flex; }
+  .upgrade-card { width:min(100%,400px); padding:28px 22px 24px; border-radius:30px 30px 0 0; background:#fff; box-shadow:0 -18px 50px rgba(0,0,0,.14); }
+  .upgrade-card .mark { width:42px; height:42px; display:grid; place-items:center; border-radius:14px; background:var(--yellow); font-size:20px; margin-bottom:18px; }
+  .upgrade-card h3 { font-size:25px; line-height:1.2; letter-spacing:-.04em; }
+  .upgrade-card p { margin-top:10px; color:var(--sub); font-size:14px; font-weight:600; line-height:1.65; }
+  .upgrade-card .price { margin:22px 0 18px; padding:18px; border-radius:20px; background:var(--soft); display:flex; justify-content:space-between; align-items:baseline; }
+  .upgrade-card .price b { font-size:18px; } .upgrade-card .price strong { font-size:25px; letter-spacing:-.04em; }
+  .edit-details{align-self:flex-start;font-size:12px;font-weight:800;color:var(--sub);padding:4px 0;text-decoration:underline;text-underline-offset:3px}
+  .logo-line{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:12px;color:var(--sub)}
+  .logo-upload,.logo-remove{font-weight:800;color:var(--ink);cursor:pointer;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .logo-remove[hidden]{display:none}
+  .upgrade-card .primary-up { width:100%; height:54px; border-radius:18px; background:var(--ink); color:#fff; font-weight:800; font-size:16px; }
+  .upgrade-card .later { width:100%; padding:15px 0 2px; color:var(--sub); font-weight:700; }
 
   .hd { display: flex; align-items: baseline; justify-content: space-between; padding: 6px 8px 0; }
-  .hd h4 { font-size: 13px; font-weight: 700; color: var(--sub); }
+  .hd h4 { font-size: 13px; font-weight: 800; color: var(--sub); }
   .hd span { font-size: 13px; font-weight: 700; color: var(--sub); }
   .wnote { font-size: 13px; font-weight: 600; color: var(--sub); padding: 0 8px; }
   .wnote:empty { display: none; }
-  .wnote .lnk2 { display: block; margin-top: 6px; font-weight: 700; color: var(--ink); text-align: left; }
+  .wnote .lnk2 { display: block; margin-top: 6px; font-weight: 800; color: var(--ink); text-align: left; }
 
   /* 구독 카드 (시안 Main) */
   #w-list { display: flex; flex-direction: column; gap: 12px; }
@@ -77,10 +92,10 @@
   .wc .t { display: flex; align-items: center; gap: 12px; }
   .wc .t .m { flex: 1; min-width: 0; }
   .wc .t .st { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--sub); white-space: nowrap; overflow: hidden; }
-  .wc .t .nm { font-size: 18px; font-weight: 700; letter-spacing: -.03em; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wc .t .nm { font-size: 18px; font-weight: 800; letter-spacing: -.03em; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .wc.hot .t .nm { font-size: 19px; margin-top: 1px; }
   .wc .t .amt { text-align: right; flex-shrink: 0; }
-  .wc .t .amt .krw { font-size: 16px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .wc .t .amt .krw { font-size: 16px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
   .wc.hot .t .amt .krw { font-size: 17px; }
   .wc .t .amt .orig { font-size: 12px; font-weight: 600; color: var(--sub); }
   .wc.needs { padding: 14px 18px; background: #fff; border: 2px dashed #E0E0E5; box-shadow: none; }
@@ -99,14 +114,14 @@
 
   /* 빈 상태 */
   .empty { padding: 8px 4px 0; display: flex; flex-direction: column; gap: 14px; }
-  .empty b { font-size: 20px; font-weight: 700; letter-spacing: -.03em; }
+  .empty b { font-size: 20px; font-weight: 800; letter-spacing: -.03em; }
   .empty .or { font-size: 13px; font-weight: 600; color: var(--sub); }
-  .empty .or .lnk { color: var(--ink); font-weight: 700; cursor: pointer; }
+  .empty .or .lnk { color: var(--ink); font-weight: 800; cursor: pointer; }
   .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
   .tiles button { display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--ink); }
   .tiles button .avatar { width: 56px; height: 56px; font-size: 20px; }
   .tiles button.on .avatar { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--ink); }
-  .tiles button.on span { font-weight: 700; }
+  .tiles button.on span { font-weight: 800; }
   .tiles button.plus .avatar { background: var(--soft); color: var(--ink); font-size: 22px; }
   .tiles button.plus span { color: var(--sub); }
 
@@ -120,9 +135,9 @@
   .dt-main .head { display: flex; align-items: center; gap: 14px; }
   .dt-main .head .avatar { width: 56px; height: 56px; font-size: 22px; }
   .dt-main .head .s { font-size: 12.5px; font-weight: 700; color: var(--sub); }
-  .dt-main .head .nm { font-size: 24px; font-weight: 700; letter-spacing: -.035em; margin-top: 2px; }
+  .dt-main .head .nm { font-size: 24px; font-weight: 800; letter-spacing: -.035em; margin-top: 2px; }
   .dt-main .big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-  .dt-main .big .krw { font-size: 40px; font-weight: 700; letter-spacing: -.045em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .dt-main .big .krw { font-size: 40px; font-weight: 800; letter-spacing: -.045em; line-height: 1; font-variant-numeric: tabular-nums; }
   .dt-main .big .orig { font-size: 14px; font-weight: 700; color: var(--sub); }
   .dt-main .when { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; }
   .dt-main .steps .bars i { height: 6px; }
@@ -131,7 +146,7 @@
   .dt-main .btns .pill { flex: 1; height: 46px; }
   .dt-info { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
   .dt-info .r { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .dt-info .r span { font-size: 14px; font-weight: 700; }
+  .dt-info .r span { font-size: 14px; font-weight: 800; }
   .dt-info .r b { font-size: 13px; font-weight: 700; color: var(--sub); text-align: right; }
   .dt-info .r b.lnk { color: var(--blue); cursor: pointer; }
   .dt-info hr { height: 1px; background: var(--line); }
@@ -141,23 +156,7 @@
   .dt-acts .pill.p { background: var(--ink); color: #fff; }
 
   .fine { padding: 6px 12px 0; font-size: 12px; font-weight: 600; color: var(--faint); line-height: 1.7; text-align: center; }
-  .fine .lnk { color: var(--sub); font-weight: 700; cursor: pointer; }
-
-  /* Plus 안내 시트 — 등록 시트와 같은 틀, 내용만 다르다 */
-  .plus-box { background: var(--ink); color: #fff; border-radius: 22px; padding: 20px 22px; }
-  .plus-box .k { font-size: 12px; font-weight: 700; color: rgba(255,255,255,.6); }
-  .plus-box .pr { font-size: 34px; font-weight: 700; letter-spacing: -.04em; line-height: 1.1; margin: 6px 0 2px; }
-  .plus-box .pr small { font-size: 14px; font-weight: 600; color: rgba(255,255,255,.6); letter-spacing: 0; margin-left: 4px; }
-  .plus-box .s { font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,.6); }
-  .plus-box ul { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 6px; }
-  .plus-box li { font-size: 13.5px; font-weight: 600; display: flex; gap: 8px; align-items: center; padding: 0; background: transparent; box-shadow: none; border-radius: 0; }
-  .plus-box li::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--yellow); flex-shrink: 0; }
-  .form .submit.yellow { background: var(--yellow); color: var(--yellow-ink); }
-  .me .pill.sm { height: 34px; padding: 0 14px; font-size: 13px; }
-  .me .pill.p { background: var(--ink); color: #fff; }
-  .me .plan-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .me .plan-row b { font-size: 14px; }
-  .me .plan-row .st { display: block; font-size: 12px; font-weight: 600; color: var(--sub); margin-top: 2px; }
+  .fine .lnk { color: var(--sub); font-weight: 800; cursor: pointer; }
 
   /* 바텀시트: 등록·수정 (시안 Register) */
   .sheet-bg { position: fixed; inset: 0; background: rgba(17,17,20,.35); display: none; z-index: 10; }
@@ -166,7 +165,7 @@
     padding: 14px 20px 24px; display: none; flex-direction: column; gap: 18px; z-index: 11; overflow-y: auto; box-shadow: 0 -12px 40px rgba(0,0,0,.10); }
   .form.on { display: flex; }
   .form .grip { width: 40px; height: 5px; border-radius: 999px; background: #E0E0E5; margin: 0 auto; flex-shrink: 0; }
-  .form h3 { font-size: 24px; font-weight: 700; letter-spacing: -.035em; }
+  .form h3 { font-size: 24px; font-weight: 800; letter-spacing: -.035em; }
   .form .lead { font-size: 14px; font-weight: 600; color: var(--sub); margin-top: 4px; }
   .form .sugg:empty { display: none; }
   .form .name-wrap { display: none; }
@@ -178,7 +177,7 @@
   .picked-box:empty { display: none; }
   .picked-box .p { display: flex; align-items: center; gap: 12px; cursor: pointer; }
   .picked-box .p .m { flex: 1; min-width: 0; }
-  .picked-box .p .nm { font-size: 17px; font-weight: 700; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .picked-box .p .nm { font-size: 17px; font-weight: 800; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .picked-box .p .s { font-size: 12.5px; font-weight: 700; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .picked-box .p .krw { text-align: right; flex-shrink: 0; }
   .picked-box .p .krw b { font-size: 16px; font-variant-numeric: tabular-nums; }
@@ -190,7 +189,7 @@
   /* 세부 칸: 요약을 눌렀을 때만 */
   .form .adv { display: none; flex-direction: column; gap: 12px; }
   .form .adv.on { display: flex; }
-  .form label { display: block; font-size: 13px; font-weight: 700; color: var(--sub); margin-bottom: 8px; padding-left: 4px; }
+  .form label { display: block; font-size: 13px; font-weight: 800; color: var(--sub); margin-bottom: 8px; padding-left: 4px; }
   .form .row { display: flex; gap: 8px; }
   .form .row > * { flex: 1; min-width: 0; }
   .form .chk { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--sub); cursor: pointer; }
@@ -213,13 +212,13 @@
   .form .datenav input { position: absolute; opacity: 0; width: 1px; height: 1px; }
   .form .err { font-size: 13px; font-weight: 700; color: var(--red); }
   .form .err:empty { display: none; }
-  .form .submit { height: 54px; border-radius: 18px; background: var(--ink); color: #fff; font-weight: 700; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+  .form .submit { height: 54px; border-radius: 18px; background: var(--ink); color: #fff; font-weight: 800; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
   .form .close { align-self: center; font-size: 13px; font-weight: 700; color: var(--sub); }
 
   /* 설정·기록: 시안의 Detail 계열 (뒤로 머리 + 흰 카드) */
   .me { padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
-  .me h4 { font-size: 12px; font-weight: 700; color: var(--sub); letter-spacing: .04em; }
-  .me label { display: block; font-size: 13px; font-weight: 700; color: var(--sub); margin: 4px 0 -4px 4px; }
+  .me h4 { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; }
+  .me label { display: block; font-size: 13px; font-weight: 800; color: var(--sub); margin: 4px 0 -4px 4px; }
   .me input[type=text], .me select { width: 100%; height: 46px; padding: 0 14px; border-radius: 14px; background: var(--soft); font-weight: 700; font-size: 15px; }
   .me .row { display: flex; gap: 8px; }
   .me .row > * { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -229,29 +228,29 @@
   .me .err { font-size: 13px; font-weight: 700; color: var(--red); }
   .me .err:empty { display: none; }
   .me .acts { display: flex; gap: 8px; margin-top: 4px; }
-  .me .acts button { height: 44px; padding: 0 18px; border-radius: 999px; font-weight: 700; font-size: 14px; }
+  .me .acts button { height: 44px; padding: 0 18px; border-radius: 999px; font-weight: 800; font-size: 14px; }
   .me .acts .p { background: var(--ink); color: #fff; }
   .me .acts .g { background: var(--soft); color: var(--ink); }
   .me .r { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
-  .me .r span { font-size: 14px; font-weight: 700; }
+  .me .r span { font-size: 14px; font-weight: 800; }
   .me .r b { font-size: 13px; font-weight: 700; color: var(--sub); }
   .me hr { height: 1px; background: var(--line); }
 
   .due { padding: 18px 20px; }
   .due:empty { display: none; }
-  .due h4 { font-size: 12px; font-weight: 700; color: var(--sub); letter-spacing: .04em; margin-bottom: 8px; }
+  .due h4 { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; margin-bottom: 8px; }
   .due .r { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; font-size: 14px; }
-  .due .r .n { font-weight: 700; }
+  .due .r .n { font-weight: 800; }
   .due .r .w { font-size: 12.5px; font-weight: 600; color: var(--sub); }
-  .due .r .a { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .due .r .a { margin-left: auto; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .due .note { margin-top: 10px; font-size: 12.5px; font-weight: 600; color: var(--sub); }
   .due .note b { color: var(--ink); }
   .todo { padding: 16px 20px; }
   .todo:empty { display: none; }
-  .todo h4 { font-size: 12px; font-weight: 700; color: var(--sub); letter-spacing: .04em; margin-bottom: 8px; }
+  .todo h4 { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; margin-bottom: 8px; }
   .todo .t { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13.5px; font-weight: 600; }
   .todo .t .a { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; }
-  .todo .t .x, .todo .t .go { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; cursor: pointer; }
+  .todo .t .x, .todo .t .go { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; cursor: pointer; }
   .todo .t .go { background: var(--soft); color: var(--ink); }
   .todo .how { font-size: 12.5px; font-weight: 600; color: var(--sub); line-height: 1.6; margin-top: 10px; }
   .tabs { display: flex; gap: 4px; padding: 4px; background: rgba(0,0,0,.05); border-radius: 999px; }
@@ -264,30 +263,69 @@
   li { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: #fff; border-radius: 20px; box-shadow: 0 6px 20px rgba(20,20,30,.04); }
   .d { width: 40px; font-size: 11.5px; font-weight: 700; color: var(--faint); flex-shrink: 0; line-height: 1.3; }
   .m { flex: 1; min-width: 0; }
-  .m .n { display: block; font-weight: 700; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m .n { display: block; font-weight: 800; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m .s { display: block; font-size: 12px; font-weight: 600; color: var(--sub); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .a { text-align: right; flex-shrink: 0; }
-  .a .w { font-weight: 700; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+  .a .w { font-weight: 800; font-size: 14.5px; font-variant-numeric: tabular-nums; }
   .a .v { font-size: 11.5px; font-weight: 600; color: var(--sub); }
-  .a .fx { font-size: 11.5px; color: var(--blue); cursor: pointer; font-weight: 700; white-space: nowrap; margin-top: 2px; display: inline-block; }
-  .chip { font-size: 11.5px; font-weight: 700; flex-shrink: 0; color: var(--sub); }
+  .a .fx { font-size: 11.5px; color: var(--blue); cursor: pointer; font-weight: 800; white-space: nowrap; margin-top: 2px; display: inline-block; }
+  .chip { font-size: 11.5px; font-weight: 800; flex-shrink: 0; color: var(--sub); }
   .chip.ask { height: 26px; padding: 0 10px; border-radius: 999px; background: var(--ink); color: #fff; display: inline-flex; align-items: center; cursor: pointer; }
-  .confirm { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--soft); font-size: 12.5px; font-weight: 700; flex-shrink: 0; }
+  .confirm { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--soft); font-size: 12.5px; font-weight: 800; flex-shrink: 0; }
   .empty-book { padding: 26px 20px; text-align: center; font-size: 13.5px; font-weight: 600; color: var(--sub); line-height: 1.7; }
   .empty-book b { display: block; font-size: 17px; color: var(--ink); margin-bottom: 4px; }
   .empty-book .then { display: block; margin-top: 12px; font-size: 12.5px; color: var(--faint); }
   footer { display: flex; gap: 8px; align-items: center; padding: 4px 0 0; }
-  footer button { flex: 1; height: 46px; border-radius: 999px; font-size: 14px; font-weight: 700; }
+  footer button { flex: 1; height: 46px; border-radius: 999px; font-size: 14px; font-weight: 800; }
   #export { background: var(--ink); color: #fff; }
   #copy { background: #fff; color: var(--ink); }
 
   .gate { position: fixed; inset: 0; max-width: 400px; margin: 0 auto; background: var(--bg); padding: 26px 20px; display: none; z-index: 12; overflow-y: auto; }
   .gate.on { display: block; }
-  .gate .eyebrow { font-size: 12px; font-weight: 700; color: var(--sub); letter-spacing: .04em; margin-bottom: 8px; }
-  .gate h3 { font-size: 22px; font-weight: 700; letter-spacing: -.035em; margin-bottom: 6px; }
+  .gate .eyebrow { font-size: 12px; font-weight: 800; color: var(--sub); letter-spacing: .04em; margin-bottom: 8px; }
+  .gate h3 { font-size: 22px; font-weight: 800; letter-spacing: -.035em; margin-bottom: 6px; }
   .gate p { font-size: 13.5px; font-weight: 600; color: var(--sub); margin-bottom: 16px; }
-  .gate button { display: block; width: 100%; margin-top: 8px; padding: 16px 18px; border-radius: 20px; background: #fff; font-size: 15px; font-weight: 700; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,.05); }
+  .gate button { display: block; width: 100%; margin-top: 8px; padding: 16px 18px; border-radius: 20px; background: #fff; font-size: 15px; font-weight: 800; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,.05); }
   .gate button .sub { display: block; font-size: 12.5px; font-weight: 600; color: var(--sub); margin-top: 2px; }
+</style>
+<style>
+  /* Donna 1.6 — 조용한 종이 카드와 제한된 노랑 */
+  :root{--bg:#F4F4F1;--ink:#171713;--sub:#77776F;--faint:#B8B8B0;--line:#E7E7E1;--soft:#F1F1ED;--yellow:#FFD84A;--yellow-ink:#2B260F}
+  #app{padding:18px 16px 96px;gap:12px}
+  .card{border:1px solid rgba(23,23,19,.055);border-radius:22px;box-shadow:0 8px 24px rgba(23,23,19,.045),0 1px 1px rgba(23,23,19,.03)}
+  header{padding:2px 2px 4px}
+  header .brand{gap:9px} header .brand img{width:28px;height:28px;border-radius:9px} header .brand b{font-size:16px}
+  header .gear,.subhead .back{background:transparent;box-shadow:none;border:1px solid var(--line)}
+  .hero{isolation:isolate;margin:6px 0 4px;background:#fff;color:var(--ink);border:1px solid rgba(23,23,19,.055);border-radius:22px;padding:22px 20px;box-shadow:0 10px 28px rgba(23,23,19,.055)}
+  .hero:before,.hero:after{content:"";position:absolute;z-index:-1;border-radius:22px;pointer-events:none}
+  .hero:before{inset:6px 0 -9px;background:#fff;border:1px solid rgba(23,23,19,.04);transform:rotate(-1deg)}
+  .hero:after{inset:12px 4px -15px;background:var(--yellow);transform:rotate(1.4deg)}
+  .hero .k{color:var(--sub);opacity:1;text-transform:none;letter-spacing:0;font-weight:700}
+  .hero .cnt{background:#F0F0EA;color:var(--sub)}
+  .hero .v{margin-top:12px;font-size:38px;color:var(--ink)}
+  .hero .v small,.hero .sub{color:var(--sub);opacity:1}
+  .hero .bar{margin-top:16px}.hero .bar .track{background:#ECECE6}.hero .bar .track i{background:var(--ink)}
+  /* 노랑 종이가 글자 밑까지 덮는다. 색은 흰 바탕 기준 회색이 남아 있어
+     노랑 위 회색이 되고 대비가 3.2:1까지 떨어졌다. 진행 막대는 아예 안 보였다.
+     이 카드 안에서만 먹빛 계열로 되돌린다. */
+  .hero .k,.hero .sub{color:rgba(43,38,15,.72)}
+  .hero .cnt{background:rgba(43,38,15,.13);color:rgba(43,38,15,.82)}
+  .hero .bar .track{background:rgba(43,38,15,.16)}
+  .hero .bar .track i{background:#2B260F}
+  .hero .bar span{color:rgba(43,38,15,.82)}
+  .planline{margin:8px 4px 0}.hd{padding-top:12px}.hd h4{font-size:14px;color:var(--ink)}
+  #w-list{gap:10px}.wc{padding:15px 16px;gap:12px}.wc .t .nm{font-size:17px}.avatar{border-radius:14px}
+  .fab{bottom:18px}.fab .pill{height:48px;box-shadow:0 9px 22px rgba(23,23,19,.15)}
+  .upgrade{background:rgba(23,23,19,.28);backdrop-filter:blur(4px)}
+  .upgrade-card{padding:18px 18px 22px;border-radius:26px 26px 0 0;box-shadow:0 -20px 50px rgba(23,23,19,.13)}
+  .upgrade-card:before{content:"";display:block;width:38px;height:4px;border-radius:99px;background:#DADAD4;margin:0 auto 22px}
+  .upgrade-card .mark{width:38px;height:38px;margin-bottom:14px;border-radius:13px;font-size:0}
+  .upgrade-card .mark:after{content:"알림";font-size:11px;font-weight:800}
+  .upgrade-card h3{font-size:24px}.upgrade-card p{line-height:1.55}
+  .upgrade-card .upgrade-note{margin-top:10px;font-size:12.5px;font-weight:600;color:var(--sub)}
+  .upgrade-card .price{margin:18px 0 14px;background:#F5F5F0;border:1px solid var(--line);border-radius:18px;padding:16px}
+  .upgrade-card .price b{font-size:14px;color:var(--sub)}.upgrade-card .price strong{font-size:23px}
+  .form{border-radius:26px 26px 0 0}.picked-box{background:#F5F5F1}
 </style>
 </head>
 <body>
@@ -302,8 +340,9 @@
       </button>
     </header>
     <div class="hero" id="hero"></div>
+    <div class="planline" id="planline"></div>
     <div class="hd"><h4>다음 결제</h4><span>가까운 순</span></div>
-    <div class="wnote" id="w-note"></div>
+    <div class="wnote" id="w-note" role="status" aria-live="polite"></div>
     <div id="w-list"></div>
   </div>
 
@@ -319,6 +358,15 @@
   <div class="view" id="view-me">
     <div class="subhead"><button class="back" id="me-back" aria-label="뒤로"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111114" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button><span>설정</span></div>
     <div class="card me">
+      <h4>Donna Plus</h4>
+      <div class="hint" id="me-plan-state">이용권을 확인하고 있습니다.</div>
+      <div class="acts">
+        <button class="p" id="me-plan-btn">Plus 시작</button>
+        <button class="g" id="me-plan-recheck">상태 다시 확인</button>
+      </div>
+      <button class="g" id="me-plan-restore" style="width:100%;margin-top:8px">구매 복원</button>
+    </div>
+    <div class="card me">
       <div class="r" id="go-book"><span>결제 기록 · 세무 자료</span><b>→</b></div>
       <hr>
       <div class="r" id="w-enable"><span>이 결제창에서 자동 감지 켜기</span><b>→</b></div>
@@ -326,13 +374,9 @@
       <div class="r" id="w-all"><span>모든 결제창에서 자동으로 켜기</span><b id="w-all-state">끔</b></div>
     </div>
     <div class="card me">
-      <div class="plan-row"><div><b>Donna Plus</b><span class="st" id="me-plan-state">무료 · 구독 0 / 3</span></div><button class="pill sm p" id="me-plan-btn" type="button">Plus 시작</button></div>
-      <div class="hint" id="me-plan-hint">구독 3개까지 무료. 네 번째부터 3개월 6,000원. 결제는 donna.co.kr에서.</div>
-      <div class="acts"><button class="g" id="me-plan-recheck" type="button">상태 다시 확인</button><button class="g" id="me-plan-restore" type="button">구매 복원</button></div>
-    </div>
-    <div class="card me">
       <h4>알림</h4>
       <label class="chk"><input type="checkbox" id="me-noti" checked> 결제 전 알림 받기</label>
+      <div class="hint" id="me-noti-state" role="status" aria-live="polite">Chrome 알림 상태를 확인하고 있습니다.</div>
       <div class="row">
         <div><label>연 구독</label>
           <select id="me-lead-y">
@@ -350,9 +394,10 @@
             <option value="1">1일 전 한 번</option>
           </select></div>
       </div>
-      <div class="hint">알림은 Chrome이 켜져 있을 때 옵니다. 캘린더에 넣어 두면 휴대폰에서도 받습니다.</div>
+      <div class="hint">모바일 Chrome에서는 Donna 확장 프로그램이 실행되지 않습니다. 캘린더에 넣으면 휴대폰 알림으로 이어서 받을 수 있습니다.</div>
       <div class="acts">
         <button class="p" id="me-noti-save">저장</button>
+        <button class="g" id="me-noti-test">테스트 알림</button>
         <button class="g" id="me-ics">캘린더에 넣기</button>
       </div>
     </div>
@@ -379,7 +424,7 @@
       <div class="err" id="me-err"></div>
       <div class="acts"><button class="p" id="me-save">저장</button></div>
     </div>
-    <div class="fine">이 브라우저에만 저장 · 서버 전송 없음</div>
+    <div class="fine">구독·세무 기록은 이 브라우저에만 저장 · Plus 확인에는 익명 설치 ID만 사용</div>
   </div>
 
   <!-- 결제 기록 · 세무 -->
@@ -399,7 +444,7 @@
       <button id="copy">전달 문구 복사</button>
     </footer>
     <div class="fine">
-      이 브라우저에만 저장 · 서버 전송 없음<br>
+      구독·세무 기록은 이 브라우저에만 저장 · Plus 확인에는 익명 설치 ID만 사용<br>
       <span class="lnk" id="backup">기록 백업</span> ·
       <span class="lnk" id="restore">불러오기</span>
       <input type="file" id="restore-file" accept="application/json" hidden>
@@ -419,10 +464,14 @@
     </div>
 
     <div class="tiles sugg" id="w-sugg"></div>
-    <div class="name-wrap" id="w-name-wrap"><input type="text" id="w-name" placeholder="서비스 이름" autocomplete="off"></div>
+    <div class="name-wrap" id="w-name-wrap">
+      <input type="text" id="w-name" placeholder="서비스 이름" autocomplete="off">
+      <div class="logo-line"><label class="logo-upload" for="w-logo">로고 추가</label><input type="file" id="w-logo" accept="image/png,image/jpeg,image/webp" hidden><button type="button" class="logo-remove" id="w-logo-remove" hidden>로고 지우기</button><span id="w-logo-note">선택 사항</span></div>
+    </div>
 
     <div class="picked-box" id="w-picked">
       <div class="p" id="w-picked-row"></div>
+      <button type="button" class="edit-details" id="w-edit-details">금액·주기 수정</button>
       <div class="seg" id="w-kind">
         <button type="button" data-v="sub">결제 중</button>
         <button type="button" data-v="trial">무료 체험 중</button>
@@ -455,7 +504,7 @@
       <div class="week" id="w-week"></div>
     </div>
 
-    <div class="err" id="w-err"></div>
+    <div class="err" id="w-err" role="alert"></div>
     <button class="submit" id="w-save">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD84D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
       <span id="w-save-text">등록하기</span>
@@ -463,24 +512,17 @@
     <button class="close" id="w-cancel">닫기</button>
   </div>
 
-  <div class="form" id="plus-sheet" role="dialog" aria-labelledby="plus-title">
-    <div class="grip"></div>
-    <div>
-      <h3 id="plus-title">구독 3개까지는 무료예요</h3>
-      <div class="lead" id="plus-lead">네 번째부터는 Donna Plus가 필요해요. 등록해 둔 구독은 그대로입니다.</div>
+  <div class="upgrade" id="upgrade" role="dialog" aria-modal="true" aria-labelledby="upgrade-title">
+    <div class="upgrade-card">
+      <div class="mark">🔔</div>
+      <h3 id="upgrade-title">네 번째 구독부터<br>3개월에 6,000원이에요.</h3>
+      <p>3개까지 결제 전 알림은 계속 무료입니다. 더 등록하면 모든 구독의 원화 예상액·무료체험 종료·결제 채널별 해지 경로를 한곳에서 관리합니다.</p>
+      <div class="price"><b>Donna Plus · 3개월</b><strong>6,000원</strong></div><p class="upgrade-note">3개월마다 자동 결제됩니다. 다음 결제 전에 이메일로 알리고, 언제든 해지할 수 있습니다.</p>
+      <button class="primary-up" id="upgrade-go">3개월 Plus 시작하기</button>
+      <button class="later" id="upgrade-recheck">이미 결제했어요 · 상태 확인</button>
+      <button class="later" id="upgrade-restore">구매 복원</button>
+      <button class="later" id="upgrade-close">지금은 3개만 쓸게요</button>
     </div>
-    <div class="plus-box">
-      <div class="k">Donna Plus</div>
-      <div class="pr">₩6,000<small>/ 3개월</small></div>
-      <div class="s">3개월마다 자동 결제 · 언제든 해지 · 남은 기간까지 이용</div>
-      <ul><li>구독 개수 제한 없음</li><li>무료 기능 전부 포함</li><li>앞으로 추가되는 기능 우선 제공</li></ul>
-    </div>
-    <div class="fine" style="text-align:left;padding:0 4px;color:var(--sub)">결제는 donna.co.kr에서 합니다. 이 확장 프로그램은 카드 정보를 다루지 않습니다.</div>
-    <p class="err" id="plus-err" role="alert"></p>
-    <button class="submit yellow" type="button" id="plus-go">Plus 시작하기</button>
-    <button class="close" type="button" id="plus-recheck">이미 결제했어요 · 상태 다시 확인</button>
-    <button class="close" type="button" id="plus-restore">결제 이메일로 구매 복원</button>
-    <button class="close" type="button" id="plus-cancel">닫기</button>
   </div>
 
   <div class="gate" id="gate">

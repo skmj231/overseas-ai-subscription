@@ -13,7 +13,7 @@
       <div class="col">
         <div class="brand"><img src="icon48.png" alt="Donna"><span>Donna</span><span class="tag soft">1 / 3</span></div>
         <h1 id="demo-title">카드 문자보다<br>먼저 알려드려요.</h1>
-        <p class="lead">해외 구독은 결제되고 나면 환불이 거의 안 돼요. 빠져나가기 며칠 전에, 원화로 얼마인지와 함께 알려드립니다.</p>
+        <p class="lead">다음 결제일 하나만 등록하세요. 돈이 빠져나가기 전에 원화 예상액과 해지할 곳을 함께 알려드립니다.</p>
         <div class="actions">
           <button class="primary" id="start">내 구독 등록하기</button>
           <button class="text" id="skip">나중에 할게요</button>
@@ -37,7 +37,7 @@
       <div class="col">
         <span class="tag soft">2 / 3</span>
         <h1 id="register-title">쓰고 있는<br>서비스를 눌러요.</h1>
-        <p class="lead">금액과 주기는 채워 드려요.<br>다음 결제일만 알려주면 끝.</p>
+        <p class="lead">서비스를 누르면 금액과 주기는 채워 드려요.<br>다음 결제일만 확인하면 끝.</p>
         <button class="back" id="back">← 돌아가기</button>
       </div>
       <div class="col">
@@ -74,7 +74,7 @@
             <div class="datenav"><label id="due-label">다음 결제일</label><span id="due-text">달력에서 고르기</span><input type="date" id="due" aria-label="날짜"></div>
             <div class="week" id="week"></div>
           </div>
-          <p class="error" id="error" role="alert"></p>
+          <p class="error" id="error" role="alert" aria-live="assertive"></p>
           <button class="submit" type="submit" id="submit">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD84D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
             <span id="submit-text">등록하기</span>
@@ -89,9 +89,9 @@
       <div class="col">
         <span class="tag soft">3 / 3</span>
         <h1 id="done-title">이제 결제 전에<br>알려드릴게요.</h1>
-        <p class="lead">알림은 Chrome이 켜져 있을 때 와요.<br>휴대폰으로도 받으려면 캘린더에 넣어 두세요.</p>
+        <p class="lead">3개까지 무료로 알려드려요. 네 번째부터는 3개월에 6,000원입니다.<br>휴대폰에서도 받으려면 캘린더에 넣어 두세요.</p>
         <div class="actions">
-          <button class="primary" id="open-panel">패널에서 내 구독 보기 →</button>
+          <button class="primary" id="open-panel">완료하고 패널 열기 →</button>
           <button class="text" id="add-another">하나 더 등록</button>
         </div>
       </div>
@@ -102,7 +102,6 @@
   </main>
   <script src="watch.js"></script>
   <script src="presets.js"></script>
-  <script src="plan.js"></script>
   <script src="onboarding.js"></script>
 </body>
 </html>

@@ -15,9 +15,10 @@
   "use strict";
 
   const P = [
-    { id: "chatgpt", name: "ChatGPT Plus", aliases: ["chatgpt", "openai", "gpt", "챗지피티", "챗gpt"],
+    { id: "chatgpt", name: "ChatGPT", aliases: ["chatgpt", "openai", "gpt", "챗지피티", "챗gpt", "chatgpt plus", "chatgpt pro", "chatgpt go"],
       color: "#10A37F", logo: null,
       amount: 20, currency: "USD", interval: "month", yearly: null,
+      plans: [{ name: "Go", amount: null }, { name: "Plus", amount: 20 }, { name: "Pro", amount: 200 }],
       manageUrl: "https://chatgpt.com/#settings/Billing",
       refundUrl: "https://help.openai.com/en/articles/7232895",
       refundNote: "한국: 결제 후 7일 이내·미사용이면 전액 환불", appStore: true, verified: true },

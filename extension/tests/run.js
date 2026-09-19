@@ -8,7 +8,7 @@ const R = require(path.join(root, "rules.js"));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
 
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, "1.5.3");
+assert.equal(manifest.version, "1.7.0");
 /* 사이드패널: 아이콘을 누르면 팝업이 아니라 패널이 열려야 한다. 팝업이 남아 있으면 그쪽이 먼저 잡힌다. */
 assert.ok(manifest.permissions.includes("sidePanel"), "sidePanel 권한 누락");
 assert.equal(manifest.side_panel && manifest.side_panel.default_path, "popup.html");
@@ -113,7 +113,7 @@ assert.deepEqual(tot, { monthly: 40000, count: 3, unknown: 1 });
 const up = W.upcoming({ a: W.makeWatch({ name: "A", interval: "month", nextDue: "2026-09-05", amountKrw: 1 }, "2026-09-01") }, "2026-09-01", 30);
 assert.equal(up.length, 1); assert.equal(up[0].left, 4);
 
-assert.equal(P.find("chatgpt").name, "ChatGPT Plus");
+assert.equal(P.find("chatgpt").name, "ChatGPT");
 assert.equal(P.find("클로드").id, "claude");
 assert.equal(P.find("Cursor Pro").id, "cursor");
 assert.equal(P.find("없는서비스"), null);

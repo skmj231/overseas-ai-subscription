@@ -7,7 +7,9 @@
   const form = document.getElementById("checkout");
   if (!form) return;
   const email = document.getElementById("email"), install = document.getElementById("install"),
-        agree = document.getElementById("agree"), pay = document.getElementById("pay"), msg = document.getElementById("msg");
+        agreeRecurring = document.getElementById("agree-recurring"), agreeTerms = document.getElementById("agree-terms"),
+        pay = document.getElementById("pay"), msg = document.getElementById("msg");
+  const CONSENT_VERSION = "2026-09-19";
   install.value = q.get("install") || "";
   if (q.get("email")) email.value = q.get("email");
   const validInstall = /^[a-z0-9]{20,40}$/.test(install.value);
@@ -58,18 +60,20 @@
     e.preventDefault();
     if (!validInstall) { say("Donna 확장 프로그램에서 Plus 시작하기를 눌러 주세요.", "err"); return; }
     if (!email.value || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value)) { say("이메일 주소를 확인해 주세요.", "err"); email.focus(); return; }
-    if (!agree.checked) { say("3개월 자동 갱신 동의를 확인해 주세요.", "err"); agree.focus(); return; }
+    if (!agreeRecurring.checked) { say("3개월마다 6,000원이 자동 결제되는 것에 동의해 주세요.", "err"); agreeRecurring.focus(); return; }
+    if (!agreeTerms.checked) { say("이용약관과 개인정보처리방침을 확인하고 동의해 주세요.", "err"); agreeTerms.focus(); return; }
     if (typeof TossPayments !== "function") { say("결제 모듈을 불러오지 못했어요. 새로고침 뒤 다시 시도해 주세요.", "err"); return; }
     pay.disabled = true; say("결제창을 준비하고 있습니다…");
     try {
       const r = await fetch(API + "/checkout/session", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.value.trim(), install_id: install.value || null, plan: "plus_3m",
+                               consent_version: CONSENT_VERSION, recurring_accepted: true, terms_accepted: true,
                                return_url: location.origin + "/plus-done.html", cancel_url: location.origin + "/plus.html" })
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || ("HTTP " + r.status));
-      if (j.already) { say("이미 Plus를 쓰고 계세요. 관리 페이지로 이동합니다.", "ok"); location.href = j.manage_url; return; }
+      if (j.already && j.restore_sent) { say("이미 Plus를 이용 중인 이메일입니다. 받은 메일의 복원 링크를 열어 현재 Chrome에 안전하게 연결해 주세요.", "ok"); restoreBox.hidden = false; return; }
       say("토스페이먼츠 결제창을 엽니다.", "ok");
       const tp = TossPayments(j.client_key);
       const payment = tp.payment({ customerKey: j.customer_key });

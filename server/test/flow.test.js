@@ -51,7 +51,7 @@ test("결제 → 라이선스 → 갱신 안내 → 실패·재시도 → 해지
   assert.equal(lic.tier, "free"); assert.equal(lic.status, "none");
 
   // 1. 결제 세션
-  let r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "A@Example.com", install_id: INSTALL, return_url: "https://donna.co.kr/plus-done.html", cancel_url: "https://evil.com/x" }) });
+  let r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "A@Example.com", install_id: INSTALL, return_url: "https://donna.co.kr/plus-done.html", cancel_url: "https://evil.com/x", consent_version: "2026-09-19", recurring_accepted: true, terms_accepted: true }) });
   assert.equal(r.status, 200);
   const ses = await r.json();
   assert.equal(ses.customer_email, "a@example.com");
@@ -81,16 +81,19 @@ test("결제 → 라이선스 → 갱신 안내 → 실패·재시도 → 해지
   assert.notEqual(sub.billing_key_encrypted, "bk_auth1");
 
   // 3b. 이미 Plus인 사람이 또 결제 시도 → 관리 페이지로
-  r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "a@example.com", install_id: INSTALL }) });
+  r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "a@example.com", install_id: INSTALL, consent_version: "2026-09-19", recurring_accepted: true, terms_accepted: true }) });
   assert.equal((await r.json()).already, true);
 
-  // 3c. 기기 3대 제한
-  for (const id of ["b".repeat(26), "c".repeat(26), "d".repeat(26)]) await service.linkInstall(sub.customer_id, id);
+  // 3c. 기기 3대 제한: 기존 유료 기기를 몰래 해제하지 않는다.
+  for (const id of ["b".repeat(26), "c".repeat(26)]) await service.linkInstall(sub.customer_id, id);
+  await assert.rejects(() => service.linkInstall(sub.customer_id, "d".repeat(26)), e => e.code === "DEVICE_LIMIT");
   lic = await (await api(`/v1/license?install_id=${INSTALL}`)).json();
-  assert.equal(lic.tier, "free", "가장 오래 안 본 설치(첫 설치)는 떨어져 나간다");
-  lic = await (await api(`/v1/license?install_id=${"d".repeat(26)}`)).json();
-  assert.equal(lic.tier, "plus");
-  await service.linkInstall(sub.customer_id, INSTALL); // 다시 연결
+  assert.equal(lic.tier, "plus", "한도 초과 시 기존 설치 권한을 유지한다");
+  const manageToken = new URL(lic.manage_url).searchParams.get("token");
+  let view = await (await api(`/v1/subscription?token=${encodeURIComponent(manageToken)}`)).json();
+  const oldDevice = view.installs.find(i => i.label.startsWith("bbbbbb"));
+  r = await api("/v1/installations/unlink", { method: "POST", body: JSON.stringify({ token: manageToken, installation_id: oldDevice.installation_id }) });
+  assert.equal((await r.json()).ok, true);
 
   // 3d. 같은 Chrome 계정: 동기화된 연결 전용 토큰으로 새 PC 자동 연결
   const SYNCED = "x".repeat(26);
@@ -100,6 +103,9 @@ test("결제 → 라이선스 → 갱신 안내 → 실패·재시도 → 해지
   assert.equal(lic.tier, "plus");
 
   // 3e. Chrome 동기화가 없을 때: 결제 이메일 인증 링크로 복원
+  view = await (await api(`/v1/subscription?token=${encodeURIComponent(manageToken)}`)).json();
+  const anotherDevice = view.installs.find(i => i.label.startsWith("cccccc"));
+  await api("/v1/installations/unlink", { method: "POST", body: JSON.stringify({ token: manageToken, installation_id: anotherDevice.installation_id }) });
   const RESTORED = "z".repeat(26);
   const beforeRestoreMail = sent.length;
   r = await api("/v1/restore/request", { method: "POST", body: JSON.stringify({ email: "a@example.com", install_id: RESTORED }) });
@@ -107,9 +113,9 @@ test("결제 → 라이선스 → 갱신 안내 → 실패·재시도 → 해지
   assert.equal(sent.length, beforeRestoreMail + 1);
   const restoreMail = sent.at(-1);
   assert.match(restoreMail, /구매를 이 Chrome에 연결/);
-  const restoreToken = new URL(restoreMail.match(/구매 복원: (https:\/\/[^\s]+)/)[1]).searchParams.get("token");
-  r = await api("/v1/installations/link", { method: "POST", body: JSON.stringify({ token: restoreToken, install_id: RESTORED }) });
-  assert.equal((await r.json()).ok, true);
+  const restoreUrl = new URL(restoreMail.match(/구매 복원: (https:\/\/[^\s]+)/)[1]);
+  r = await api(restoreUrl.pathname + restoreUrl.search);
+  assert.equal(r.status, 302); assert.match(r.headers.get("location"), /plus-done\.html\?restored=1/);
   lic = await (await api(`/v1/license?install_id=${RESTORED}`)).json();
   assert.equal(lic.tier, "plus");
   r = await api("/v1/restore/request", { method: "POST", body: JSON.stringify({ email: "unknown@example.com", install_id: "y".repeat(26) }) });
@@ -158,7 +164,7 @@ test("결제 → 라이선스 → 갱신 안내 → 실패·재시도 → 해지
 
   // 7. 새 고객: 첫 결제 뒤 7일 이내 환불
   NOW = new Date("2027-04-01T00:00:00Z");
-  r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "b@example.com", install_id: "e".repeat(26) }) });
+  r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "b@example.com", install_id: "e".repeat(26), consent_version: "2026-09-19", recurring_accepted: true, terms_accepted: true }) });
   const s2 = await r.json(); const sid2 = new URL(s2.success_url).searchParams.get("sid");
   await api(`/v1/billing/issue?sid=${sid2}&customerKey=${s2.customer_key}&authKey=auth2`);
   lic = await (await api(`/v1/license?install_id=${"e".repeat(26)}`)).json(); assert.equal(lic.tier, "plus");
@@ -173,7 +179,7 @@ test("결제 → 라이선스 → 갱신 안내 → 실패·재시도 → 해지
 
   // 8. 첫 결제 실패 → incomplete, plus.html로 error와 함께
   toss.setFail({ code: "INVALID_CARD_NUMBER", message: "카드번호 오류" });
-  r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "c@example.com", install_id: "f".repeat(26) }) });
+  r = await api("/v1/checkout/session", { method: "POST", body: JSON.stringify({ email: "c@example.com", install_id: "f".repeat(26), consent_version: "2026-09-19", recurring_accepted: true, terms_accepted: true }) });
   const s3 = await r.json(); const sid3 = new URL(s3.success_url).searchParams.get("sid");
   r = await api(`/v1/billing/issue?sid=${sid3}&customerKey=${s3.customer_key}&authKey=auth3`);
   assert.equal(r.status, 302); assert.match(r.headers.get("location"), /plus\.html\?error=payment/);

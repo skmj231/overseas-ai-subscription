@@ -22,6 +22,117 @@ if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
 }
 
+// ---------- Donna Plus license continuity ----------
+// Device identity stays local. Only a scoped, server-signed link token is synced
+// through the user's Chrome profile; it cannot cancel, refund, or charge.
+const LINK_TOKEN_KEY = "donnaLinkToken";
+let enforcingLimit = false;
+
+async function restoreBlockedWatches(plan) {
+  if (!PLAN.isPlus(plan)) return;
+  const st = await chrome.storage.local.get(["watch", "blockedWatch"]);
+  const blocked = st.blockedWatch || {};
+  if (!Object.keys(blocked).length) return;
+  enforcingLimit = true;
+  try { await chrome.storage.local.set({ watch: { ...(st.watch || {}), ...blocked }, blockedWatch: {} }); }
+  finally { enforcingLimit = false; }
+}
+
+/* 모든 저장 경로의 최종 안전망. 무료 상태에서는 활성 구독을 절대로 3개보다
+   많이 남기지 않는다. 초과 항목은 삭제하지 않고 별도 보관했다가 Plus 연결 후 복원한다. */
+async function enforceFreeLimit(nextWatch, previousWatch) {
+  if (enforcingLimit) return;
+  const st = await chrome.storage.local.get(["plan", "blockedWatch"]);
+  if (PLAN.isPlus(st.plan)) return restoreBlockedWatches(st.plan);
+  const watch = nextWatch || {};
+  const live = Object.keys(watch).filter(k => watch[k] && watch[k].status !== "canceled");
+  if (live.length <= PLAN.FREE_LIMIT) return;
+
+  const prior = previousWatch || {};
+  const keep = Object.keys(prior).filter(k => prior[k] && prior[k].status !== "canceled" && watch[k]);
+  for (const k of live) if (!keep.includes(k) && keep.length < PLAN.FREE_LIMIT) keep.push(k);
+  const keepSet = new Set(keep.slice(0, PLAN.FREE_LIMIT));
+  const trimmed = { ...watch };
+  const blocked = { ...(st.blockedWatch || {}) };
+  for (const k of live) {
+    if (!keepSet.has(k)) { blocked[k] = watch[k]; delete trimmed[k]; }
+  }
+  enforcingLimit = true;
+  try { await chrome.storage.local.set({ watch: trimmed, blockedWatch: blocked }); }
+  finally { enforcingLimit = false; }
+}
+
+async function ensureInstallId() {
+  const cur = await chrome.storage.local.get("installId");
+  if (cur.installId && /^[a-z0-9]{20,40}$/.test(cur.installId)) return cur.installId;
+  const installId = PLAN.newInstallId();
+  await chrome.storage.local.set({ installId });
+  return installId;
+}
+
+async function saveLinkToken(value) {
+  if (!value || typeof value !== "string") return;
+  try {
+    if (chrome.storage.sync.setAccessLevel) {
+      await chrome.storage.sync.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
+    }
+    await chrome.storage.sync.set({ [LINK_TOKEN_KEY]: value });
+  } catch (e) { /* Chrome 동기화가 꺼져 있으면 이메일 복원을 사용한다. */ }
+}
+
+async function linkFromChromeSync(installId) {
+  try {
+    const synced = await chrome.storage.sync.get(LINK_TOKEN_KEY);
+    const token = synced[LINK_TOKEN_KEY];
+    if (!token) return false;
+    const r = await fetch(PLAN.linkUrl(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, install_id: installId })
+    });
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({}));
+      await chrome.storage.local.set({ connectionProblem: {
+        code: r.status === 409 ? "device_limit" : "link_failed",
+        message: body.error || "Plus 이용권을 이 Chrome에 연결하지 못했습니다.", at: Date.now()
+      } });
+      return false;
+    }
+    await chrome.storage.local.remove("connectionProblem");
+    return true;
+  } catch (e) { return false; }
+}
+
+async function checkLicense(force) {
+  const installId = await ensureInstallId();
+  const cur = await chrome.storage.local.get("plan");
+  let plan = cur.plan || null;
+  if (!force && !PLAN.needsRecheck(plan)) return { ok: true, plan, installId, cached: true };
+
+  if (!PLAN.isPlus(plan)) await linkFromChromeSync(installId);
+  try {
+    const r = await fetch(PLAN.licenseUrl(installId), { cache: "no-store" });
+    if (!r.ok) throw new Error("license " + r.status);
+    const data = await r.json();
+    plan = PLAN.fromServer(data, plan);
+    await chrome.storage.local.set({ plan });
+    if (data.sync_token) await saveLinkToken(data.sync_token);
+    if (PLAN.isPlus(plan)) {
+      await chrome.storage.local.remove("connectionProblem");
+      await restoreBlockedWatches(plan);
+    }
+    else {
+      const current = await chrome.storage.local.get("watch");
+      await enforceFreeLimit(current.watch || {}, {});
+    }
+    return { ok: true, plan, installId };
+  } catch (e) {
+    plan = PLAN.fromServer(null, plan);
+    await chrome.storage.local.set({ plan });
+    return { ok: false, plan, installId };
+  }
+}
+
 // ---------- 환율 ----------
 /* USD 기준 전체 rates를 통째로 캐시한다. EUR·GBP·JPY 결제도 환산해야 하기 때문. */
 async function getRates() {
@@ -40,6 +151,22 @@ async function getRates() {
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg && msg.type === "ensureInstall") {
+    ensureInstallId().then(installId => sendResponse({ ok: true, installId }))
+      .catch(() => sendResponse({ ok: false }));
+    return true;
+  }
+  if (msg && msg.type === "checkLicense") {
+    checkLicense(!!msg.force).then(sendResponse).catch(() => sendResponse({ ok: false }));
+    return true;
+  }
+  if (msg && msg.type === "canAddSubscription") {
+    chrome.storage.local.get(["watch", "plan"]).then(st => {
+      const result = PLAN.canAdd(st.watch || {}, st.plan || null, msg.key || null);
+      sendResponse(result);
+    }).catch(() => sendResponse({ ok: false, reason: "unavailable" }));
+    return true;
+  }
   if (msg && (msg.type === "getRates" || msg.type === "getUsdKrw")) {
     getRates().then(rates => sendResponse({ rates, rate: rates ? rates.KRW : null }));
     return true;
@@ -55,11 +182,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   /* 결제창 패널이나 온보딩 화면의 버튼에서 온다. 클릭 직후에만 열 수 있고(브라우저 규칙),
      await를 한 번이라도 거치면 그 권한이 사라지므로 여기서 바로 연다. */
-  /* 패널의 'Plus 상태 다시 확인'과 결제 완료 페이지에서 온다. */
-  if (msg && msg.type === "checkLicense") {
-    checkLicense(true).then(plan => sendResponse({ ok: true, plan })).catch(() => sendResponse({ ok: false }));
-    return true;
-  }
   if (msg && msg.type === "openPanel") {
     const windowId = sender && sender.tab ? sender.tab.windowId : chrome.windows.WINDOW_ID_CURRENT;
     if (chrome.sidePanel && chrome.sidePanel.open) {
@@ -92,7 +214,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       if (r.changed && r.before && r.before.amountOrig != null) {
         const fmt = (v, c) => (c && c !== "KRW" ? `${c} ${v}` : `₩${Math.round(v).toLocaleString("ko-KR")}`);
-        notify(`svst-price-${d.key}-${today}`, `${w.name} 금액이 달라졌습니다`,
+        await notify(`svst-price-${d.key}-${today}`, `${w.name} 금액이 달라졌습니다`,
           `${fmt(r.before.amountOrig, r.before.currency)} → ${fmt(r.w.amountOrig, r.w.currency)}`, null);
       }
       sendResponse({ ok: true, changed: r.changed });
@@ -106,9 +228,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     (async () => {
       const d = msg.data;
       const key = String(d.key || "").slice(0, 40) || "sub" + Date.now();
-      const { watch = {}, plan = null } = await chrome.storage.local.get(["watch", "plan"]);
-      const gate = PLAN.canAdd(watch, plan, key);
-      if (!gate.ok) return sendResponse({ ok: false, reason: gate.reason, limit: gate.limit });
+      const state = await chrome.storage.local.get(["watch", "plan"]);
+      const watch = state.watch || {};
+      const gate = PLAN.canAdd(watch, state.plan || null, key);
+      if (!gate.ok) return sendResponse(gate);
       const made = WATCH.makeWatch(d, todayISO());
       watch[key] = watch[key]
         ? { ...watch[key], name: made.name, amountOrig: made.amountOrig, currency: made.currency,
@@ -155,12 +278,13 @@ async function loadSettings() {
   return SET;
 }
 
-function notify(id, title, message, buttons) {
+async function notify(id, title, message, buttons) {
   if (SET.notify === false) return false;   // 한 곳에서만 막는다 — 기록과 상태는 그대로 돈다
   try {
+    if (await chrome.notifications.getPermissionLevel() !== "granted") return false;
     const opt = { type: "basic", iconUrl: "icon128.png", title, message, priority: 1 };
     if (buttons && buttons.length) opt.buttons = buttons.map(t => ({ title: t }));
-    chrome.notifications.create(id, opt);
+    await chrome.notifications.create(id, opt);
     return true;
   } catch (e) { /* 알림이 막혀 있어도 기록함의 '추정' 행은 그대로 남는다 */ }
   return false;
@@ -244,17 +368,17 @@ async function checkRenewals() {
       ? `${u.currency} ${u.amountOrig} (약 ${won(u.amountKrw)})`
       : won(u.amountKrw);
     const fired = u.auto
-      ? notify(`svst-pre-${u.mkey}-${u.left}`,
+      ? await notify(`svst-pre-${u.mkey}-${u.left}`,
           u.left === 0 ? `${u.merchant} 오늘 자동 결제됩니다` : `${u.merchant} ${u.left}일 뒤 자동 결제`,
           `${amt}이 자동으로 빠져나갑니다. 해외 서비스는 결제되고 나면 환불이 어렵습니다.`)
-      : notify(`svst-pre-${u.mkey}-${u.left}`, `${u.merchant} 결제하실 때가 됐어요`,
+      : await notify(`svst-pre-${u.mkey}-${u.left}`, `${u.merchant} 결제하실 때가 됐어요`,
           `지난번 이맘때 ${amt}을 결제하셨습니다. 이번에도 필요하신가요?`);
     if (fired) { notified[u.key] = true; touched = true; }
   }
 
   if (trials.length) {
     const names = trials.map(d => d.merchant).join(", ");
-    const t = notify(`svst-trial-${Date.now()}`, "무료 체험이 곧 유료로 바뀝니다",
+    const t = await notify(`svst-trial-${Date.now()}`, "무료 체험이 곧 유료로 바뀝니다",
       `${names}. 계속 쓰실 거면 지금 사업자번호를 등록하세요. 첫 결제부터 부가세가 빠집니다. ` +
       `안 쓰실 거면 오늘 안에 해지하시면 됩니다.`);
     if (t) { trials.forEach(d => { notified["trial-" + d.mkey] = d.date; }); touched = true; }
@@ -262,7 +386,7 @@ async function checkRenewals() {
 
   if (overdue.length) {
     const names = overdue.map(d => d.merchant).join(", ");
-    const o = notify(`svst-renew-${Date.now()}`, "결제 기록을 확정해 주세요",
+    const o = await notify(`svst-renew-${Date.now()}`, "결제 기록을 확정해 주세요",
       overdue.length === 1
         ? `${names} 결제일이 지났어요. 영수증 메일의 링크를 한 번 열면 실제 금액으로 기록됩니다.`
         : `${names} 등 ${overdue.length}건의 결제일이 지났어요. 영수증 메일 링크를 열면 기록됩니다.`);
@@ -286,7 +410,7 @@ async function checkWatch() {
   for (const n of notifications) {
     const m = WATCH.messageFor(n.kind, n.w, n.left, { fresh: n.fresh, ago: n.ago });
     const id = `svstw-${n.key}-${Date.now()}`;
-    if (!notify(id, m.title, m.message, m.buttons)) continue;
+    if (!await notify(id, m.title, m.message, m.buttons)) continue;
     /* 해지하러 갈 주소는 채널을 본다. 앱스토어 결제를 사이트에서 해지하면 돈이 계속 나간다. */
     notiMap[id] = { key: n.key, actions: m.actions, url: WATCH.cancelUrl(n.w) };
     notified[n.nkey] = true;
@@ -349,7 +473,7 @@ chrome.notifications.onButtonClicked.addListener(async (id, idx) => {
     const add = WATCH.savedByCancel(before);
     if (add > 0) {
       nextStats = { ...stats, canceledYear: Math.round((stats.canceledYear || 0) + add) };
-      notify(`svst-cancel-${Date.now()}`,
+      await notify(`svst-cancel-${Date.now()}`,
         `${before.name} 해지하셨습니다`,
         `1년에 ₩${add.toLocaleString("ko-KR")}을 안 내도 됩니다.`, null);
     }
@@ -386,7 +510,7 @@ async function checkDeadlines() {
       const left = daysBetween(today, date);
       const key = `dl-${date}`;
       if (left >= 10 && left <= 14 && notified[key] !== date) {
-        if (!notify(`svst-dl-${date}`, `${d.label} ${left}일 전`,
+        if (!await notify(`svst-dl-${date}`, `${d.label} ${left}일 전`,
           "기록함에서 분기 자료를 내려받아 세무대리인께 보내세요. 미확인 항목이 있으면 함께 표시됩니다.")) return;
         notified[key] = date;
         await chrome.storage.local.set({ notified });
@@ -437,102 +561,42 @@ async function checkMonthly() {
   if (vatYear > 0) parts.push(`부가세를 안 내도 되어 1년에 ₩${vatYear.toLocaleString("ko-KR")}`);
   if (savedYear > 0) parts.push(`해지해서 1년에 ₩${savedYear.toLocaleString("ko-KR")}`);
 
-  if (!notify(`svst-mo-${key}`, `${today.slice(5, 7)}월 해외 구독 정리`, parts.join("\n"))) return;
+  if (!await notify(`svst-mo-${key}`, `${today.slice(5, 7)}월 해외 구독 정리`, parts.join("\n"))) return;
   notified[key] = true;
   await chrome.storage.local.set({ notified });
 }
 
 async function tick() {
+  await checkLicense(false);
   await loadSettings();
   await checkRenewals();
   await checkWatch();
   await checkDeadlines();
   await checkMonthly();
-  await checkLicense(false).catch(() => {});
-}
-
-// ---------- Donna Plus 라이선스 ----------
-/* 설치 식별자는 처음 한 번만 만든다. 이름·이메일·기기와 무관한 무작위 문자열이고,
-   서버에 보내는 것은 이 값뿐이다(구독 내용·금액·사업자번호는 가지 않는다). */
-const SYNC_LINK_KEY = "donnaPlusLinkToken";
-const validInstallId = id => typeof id === "string" && /^[a-z0-9]{20,40}$/.test(id);
-
-/* 각 PC는 서로 다른 install_id를 쓴다. Chrome 동기화에는 결제·해지 권한이 없는
-   '새 설치 연결 전용 토큰'만 둔다. 같은 Chrome 계정의 새 PC는 이 토큰으로 자동 연결되고,
-   서버의 최대 3대 제한도 정확히 적용된다. 구독명·금액·결제일은 동기화하지 않는다. */
-try {
-  if (chrome.storage.sync && chrome.storage.sync.setAccessLevel) {
-    chrome.storage.sync.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" }).catch(() => {});
-  }
-} catch (e) {}
-
-async function ensureInstallId() {
-  const { installId } = await chrome.storage.local.get("installId");
-  if (validInstallId(installId)) return installId;
-  const id = PLAN.newInstallId(n => Array.from(crypto.getRandomValues(new Uint8Array(n))));
-  await chrome.storage.local.set({ installId: id });
-  return id;
-}
-
-async function fetchLicense(id) {
-  try {
-    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
-    const r = await fetch(PLAN.licenseUrl(id), { signal: ctrl.signal, cache: "no-store",
-      headers: { "Accept": "application/json", "X-Donna-Version": chrome.runtime.getManifest().version } });
-    clearTimeout(t);
-    if (r.ok) return await r.json();
-    if (r.status === 404) return { tier: "free", status: "none" };
-  } catch (e) {}
-  return null;
-}
-
-async function syncedLinkToken() {
-  if (!chrome.storage.sync) return null;
-  const v = await chrome.storage.sync.get(SYNC_LINK_KEY).catch(() => ({}));
-  return v && typeof v[SYNC_LINK_KEY] === "string" ? v[SYNC_LINK_KEY] : null;
-}
-
-async function linkThisInstall(id, token) {
-  if (!token) return false;
-  try {
-    const r = await fetch(PLAN.linkUrl(), { method: "POST", cache: "no-store",
-      headers: { "Content-Type": "application/json", "X-Donna-Version": chrome.runtime.getManifest().version },
-      body: JSON.stringify({ token, install_id: id }) });
-    return r.ok;
-  } catch (e) { return false; }
-}
-
-/* 현재 설치가 무료로 보이면 Chrome 동기화의 연결 전용 토큰으로 한 번 복원한다.
-   결제된 설치에서 받은 새 토큰은 다시 sync에 저장되어 재설치·다른 PC에 이어진다. */
-async function checkLicense(force) {
-  const { plan = null } = await chrome.storage.local.get("plan");
-  if (!force && !PLAN.needsRecheck(plan)) return plan;
-  const id = await ensureInstallId();
-  let res = await fetchLicense(id);
-  if ((!res || res.tier !== "plus")) {
-    const token = await syncedLinkToken();
-    if (token && await linkThisInstall(id, token)) res = await fetchLicense(id);
-  }
-  if (res && res.sync_token && chrome.storage.sync) {
-    await chrome.storage.sync.set({ [SYNC_LINK_KEY]: res.sync_token }).catch(() => {});
-  }
-  const next = PLAN.fromServer(res, plan);
-  if (JSON.stringify(next) !== JSON.stringify(plan)) await chrome.storage.local.set({ plan: next });
-  return next;
 }
 
 chrome.runtime.onInstalled.addListener((details) => {
   chrome.alarms.create("svst-daily", { periodInMinutes: 60 * 12 });
-  ensureInstallId().then(() => checkLicense(true)).catch(() => {});
-  tick();
+  ensureInstallId().then(() => checkLicense(true)).finally(tick);
   /* 업데이트 때마다 띄우면 기존 사용자를 방해한다. 처음 설치한 사람에게만
      예시 체험과 첫 구독 등록 화면을 연다. */
   if (details && details.reason === "install") {
     chrome.tabs.create({ url: chrome.runtime.getURL("onboarding.html") });
   }
 });
-chrome.runtime.onStartup.addListener(tick);
+chrome.runtime.onStartup.addListener(() => ensureInstallId().then(() => checkLicense(true)).finally(tick));
 chrome.alarms.onAlarm.addListener(a => { if (a.name === "svst-daily") tick(); });
+
+/* 새 PC에서 확장이 먼저 설치되고 Chrome 동기화 토큰이 나중에 도착하는 경우도 있다.
+   토큰이 들어오는 순간 현재 기기를 연결해 12시간 알람을 기다리지 않게 한다. */
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync" && changes[LINK_TOKEN_KEY] && changes[LINK_TOKEN_KEY].newValue) {
+    ensureInstallId().then(() => checkLicense(true)).catch(() => {});
+  }
+  if (area === "local" && changes.watch && !enforcingLimit) {
+    enforceFreeLimit(changes.watch.newValue || {}, changes.watch.oldValue || {}).catch(() => {});
+  }
+});
 
 /* 업데이트나 브라우저 복구 뒤 알람이 사라져도 서비스 워커가 깨어날 때 복구한다. */
 chrome.alarms.get("svst-daily").then(alarm => {

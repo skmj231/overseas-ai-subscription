@@ -5,6 +5,7 @@ const R = self.SVST;
 const { SUPPLIER: SUP, CHARGE: CH, TAX_TYPE: T } = R;
 
 let ST = { ledger: [], subs: {}, stats: { saved: 0 }, tasks: [], profile: null, suppliers: {},
+           plan: null, installId: null, connectionProblem: null,
            settings: { notify: true, lead: self.SVSTWatch.LEAD_DEFAULT } };
 let QUARTER = "this";
 let pendingExport = null;
@@ -310,16 +311,15 @@ function toCsv() {
   return "﻿" + lines.join("\r\n");
 }
 
-/* 파일 저장. 앵커를 문서에 붙이고 URL 해제를 미룬다 —
-   붙이지 않거나 click 직후 곧바로 revokeObjectURL을 부르면 다운로드가 시작되기 전에
-   블롭이 사라져 사이드패널에서 조용히 아무 일도 일어나지 않는다. */
 function saveFile(name, text, mime) {
   const url = URL.createObjectURL(new Blob([text], { type: mime }));
   const a = document.createElement("a");
-  a.href = url; a.download = name; a.rel = "noopener"; a.style.display = "none";
+  a.href = url;
+  a.download = name;
   document.body.appendChild(a);
   a.click();
-  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 4000);
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function doDownload() {
@@ -423,10 +423,56 @@ function flash(id, tmp, back) {
    여기서 만지는 건 watch 하나뿐이고, ledger·subs는 건드리지 않는다.
    ============================================================ */
 const WT = self.SVSTWatch;
+const PL = self.SVSTPlan;
 let WATCH = {};
 
+function liveCount() { return PL.activeCount(WATCH); }
+function isPlus() { return PL.isPlus(ST.plan); }
+function showUpgrade() { $w("upgrade").classList.add("on"); }
+function hideUpgrade() { stopPlusPolling(); $w("upgrade").classList.remove("on"); }
+function mayAddSubscription() {
+  if (PL.canAdd(WATCH, ST.plan, null).ok) return true;
+  showUpgrade();
+  startPlusPolling();
+  return false;
+}
+
+let PLUS_POLL = null;
+function stopPlusPolling() { if (PLUS_POLL) clearInterval(PLUS_POLL); PLUS_POLL = null; }
+function startPlusPolling() {
+  stopPlusPolling();
+  let tries = 0;
+  PLUS_POLL = setInterval(() => {
+    if (!$w("upgrade").classList.contains("on") || ++tries > 40) return stopPlusPolling();
+    chrome.runtime.sendMessage({ type: "checkLicense", force: true }, res => {
+      if (res && res.plan) ST.plan = res.plan;
+      if (isPlus()) {
+        stopPlusPolling(); hideUpgrade(); renderWatch(); renderPlan();
+        grabNote("결제가 확인됐습니다. 이제 개수 제한 없이 등록할 수 있어요.");
+      }
+    });
+  }, 3000);
+}
+function openPlusPage(campaign, restore) {
+  chrome.runtime.sendMessage({ type: "ensureInstall" }, res => {
+    ST.installId = (res && res.installId) || ST.installId;
+    const base = PL.plusUrl(ST.installId, campaign);
+    chrome.tabs.create({ url: restore ? base + "&mode=restore" : base });
+  });
+}
+function recheckPlus(button) {
+  const old = button.textContent;
+  button.textContent = "확인 중…";
+  chrome.runtime.sendMessage({ type: "checkLicense", force: true }, res => {
+    button.textContent = old;
+    if (res && res.plan) ST.plan = res.plan;
+    renderWatch(); renderPlan();
+    if (isPlus()) { hideUpgrade(); stopPlusPolling(); grabNote("Plus 이용권이 연결됐습니다."); }
+    else grabNote(res && res.ok ? "아직 결제가 확인되지 않았습니다." : "이용권을 확인하지 못했습니다. 인터넷 연결을 확인해 주세요.");
+  });
+}
+
 const PS = self.SVSTPresets;
-const PL = self.SVSTPlan;
 const $w = (id) => document.getElementById(id);
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
 const koDate = (iso) => { if (!iso) return ""; const [y, m, d] = iso.split("-").map(Number); return `${m}월 ${d}일 ${DOW[new Date(y, m - 1, d).getDay()]}요일`; };
@@ -435,6 +481,10 @@ const mdText = (iso) => { if (!iso) return ""; const [, m, d] = iso.split("-").m
 /* 서비스 로고. 프리셋에서 왔으면 그 색과 로고, 아니면 이름 첫 글자. */
 function presetOf(w) { return (w && w.presetId && PS.LIST.find(x => x.id === w.presetId)) || (w && PS.find(w.name)) || null; }
 function avatarOf(w, size) {
+  if (w && w.customLogo) {
+    const sz = size || 44;
+    return `<span class="avatar" style="width:${sz}px;height:${sz}px;background:#fff;overflow:hidden"><img src="${esc(w.customLogo)}" alt="" style="width:72%;height:72%;object-fit:contain"></span>`;
+  }
   return PS.avatarHtml(presetOf(w) || { name: w && w.name, color: "#8A8A91" }, size);
 }
 
@@ -510,6 +560,11 @@ function renderWatch() {
   const box = document.getElementById("w-list");
   const keys = Object.keys(WATCH);
   renderHero();
+  const n = liveCount();
+  $w("planline").innerHTML = isPlus()
+    ? `<span>Plus · 구독 ${n}개 알림 중</span>`
+    : `<span>무료 ${Math.min(n, PL.FREE_LIMIT)} / ${PL.FREE_LIMIT}개</span><button id="plan-upgrade">4개부터 3개월 6,000원</button>`;
+  const pu = $w("plan-upgrade"); if (pu) pu.addEventListener("click", showUpgrade);
   if (!keys.length) {
     box.innerHTML = `<div class="empty"><b>쓰고 있는 서비스를 눌러 주세요</b>
       <div class="tiles" id="w-empty-chips">${PS.search("", 7).map(p =>
@@ -619,12 +674,13 @@ function renderDetail(k) {
 /* 로고 하나로 금액·주기·해지 화면이 채워지고, 사용자는 날짜 하나만 고른다.
    금액·주기를 고치고 싶으면 요약 줄을 누른다. 모르는 값을 추측해서 알림으로 만들지는 않는다. */
 let EDIT_KEY = null;
-const F = { kind: "sub", interval: "", channel: "web", preset: null, due: "" };
+const F = { kind: "sub", interval: "", channel: "web", preset: null, due: "", customLogo: null };
 
 function segSet(id, v) {
   F[{ "w-kind": "kind", "w-int": "interval", "w-channel": "channel" }[id]] = v;
   $w(id).querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
   if (id === "w-kind") $w("w-due-label").textContent = v === "trial" ? "무료 체험이 끝나는 날" : "다음 결제일";
+  if (id === "w-int" && F.due) setDue(F.due);
   renderPicked(); saveLabel();
 }
 
@@ -657,7 +713,7 @@ function renderPicked() {
   const cur = $w("w-cur").value;
   const krw = currentKrw();
   const cyc = F.interval === "year" ? "매년" : F.interval === "month" ? "매달" : "주기 미정";
-  $w("w-picked-row").innerHTML = `${PS.avatarHtml(p || { name, color: "#8A8A91" }, 44)}
+  $w("w-picked-row").innerHTML = `${avatarOf({ name, presetId: p && p.id, customLogo: F.customLogo }, 44)}
     <div class="m"><div class="nm">${esc(name)}</div><div class="s">${isNaN(amt) ? "금액 미정" : `${esc(cur)} ${amt}`} · ${cyc}${p ? " · 기본 요금" : ""}</div></div>
     <div class="krw">${krw != null ? `<b>≈ ${won(krw)}</b><small>환율·수수료${vatApplies() ? "·부가세" : ""} 포함</small>` : `<small>눌러서 금액 입력</small>`}</div>`;
 }
@@ -701,13 +757,16 @@ function renderWeeks() {
 function setDue(v) {
   F.due = v || "";
   $w("w-due").value = F.due;
-  $w("w-due-text").textContent = F.due ? koDate(F.due) : "달력에서 고르기";
+  $w("w-due-text").textContent = F.due
+    ? (F.interval === "month" ? `매달 ${Number(F.due.slice(8))}일 · 다음 ${koDate(F.due)}` : koDate(F.due))
+    : "달력에서 고르기";
   $w("w-week").querySelectorAll("[data-d]").forEach(b => b.classList.toggle("on", b.dataset.d === F.due));
   saveLabel();
 }
 
 function applyPreset(p) {
   F.preset = p ? p.id : null;
+  F.customLogo = null;
   $w("w-sugg").querySelectorAll("button").forEach(b => b.classList.toggle("on", !!p && b.dataset.preset === p.id));
   if (!p) { renderPicked(); return; }
   $w("w-name").value = p.name;
@@ -733,60 +792,8 @@ function renderSugg(q) {
   });
 }
 
-/* 무료 한도. 수정은 언제나 되고, 새로 만들 때만 센다. */
-function gateOk(key) {
-  const g = PL.canAdd(WATCH, ST.plan, key);
-  if (g.ok) return true;
-  openPlus(g);
-  return false;
-}
-let PLUS_NEXT = null; // Plus 확인 뒤 이어서 열 등록 폼 인자
-function openPlus(g, next) {
-  PLUS_NEXT = next || null;
-  const n = g && g.count != null ? g.count : PL.activeCount(WATCH);
-  $w("plus-lead").textContent = ST.plan && ST.plan.status === "past_due"
-    ? "Plus 결제가 실패해 추가 등록이 멈췄어요. 등록해 둔 구독과 알림은 그대로입니다."
-    : `지금 ${n}개를 등록해 두셨어요. 네 번째부터는 Donna Plus가 필요해요. 등록해 둔 구독은 그대로입니다.`;
-  $w("plus-err").textContent = "";
-  $w("plus-sheet").classList.add("on");
-  $w("sheet-bg").classList.add("on");
-  startPlusPolling();
-}
-let PLUS_POLL = null, PLUS_POLL_COUNT = 0;
-function stopPlusPolling() { if (PLUS_POLL) clearInterval(PLUS_POLL); PLUS_POLL = null; PLUS_POLL_COUNT = 0; }
-function startPlusPolling() {
-  stopPlusPolling();
-  PLUS_POLL = setInterval(async () => {
-    if (!$w("plus-sheet").classList.contains("on") || ++PLUS_POLL_COUNT > 40) return stopPlusPolling();
-    const res = await new Promise(r => chrome.runtime.sendMessage({ type: "checkLicense" }, r));
-    if (res && res.plan) ST.plan = res.plan;
-    if (PL.isPlus(ST.plan)) {
-      stopPlusPolling(); closePlus(); renderMe();
-      grabNote("결제가 확인됐습니다. 이제 개수 제한 없이 등록할 수 있어요.");
-      if (PLUS_NEXT) { const a = PLUS_NEXT; PLUS_NEXT = null; openForm(a.key, a.presetId, a.manual); }
-    }
-  }, 3000);
-}
-function closePlus() { stopPlusPolling(); $w("plus-sheet").classList.remove("on"); $w("sheet-bg").classList.remove("on"); }
-async function recheckPlus() {
-  $w("plus-err").textContent = "";
-  $w("plus-recheck").textContent = "확인하는 중…";
-  const res = await new Promise(r => chrome.runtime.sendMessage({ type: "checkLicense" }, r));
-  $w("plus-recheck").textContent = "이미 결제했어요 · 상태 다시 확인";
-  if (res && res.plan) ST.plan = res.plan;
-  if (PL.isPlus(ST.plan)) {
-    closePlus(); renderMe();
-    grabNote("Plus가 켜졌습니다. 이제 개수 제한 없이 등록할 수 있어요.");
-    if (PLUS_NEXT) { const a = PLUS_NEXT; PLUS_NEXT = null; openForm(a.key, a.presetId, a.manual); }
-  } else {
-    $w("plus-err").textContent = res && res.ok
-      ? "아직 Plus 결제가 확인되지 않았어요. 결제 후 1분쯤 지나 다시 눌러 주세요."
-      : "지금은 확인할 수 없어요. 인터넷 연결을 확인하고 다시 시도해 주세요.";
-  }
-}
-
 function openForm(key, presetId, manual) {
-  if (!key && !PL.canAdd(WATCH, ST.plan, null).ok) { openPlus(PL.canAdd(WATCH, ST.plan, null), { key, presetId, manual }); return; }
+  if (!key && !PL.canAdd(WATCH, ST.plan, null).ok) { showUpgrade(); startPlusPolling(); return; }
   EDIT_KEY = key || null;
   const w = key ? WATCH[key] : null;
   $w("w-form-title").textContent = w ? "구독 수정" : "무엇을 쓰고 있나요?";
@@ -800,6 +807,9 @@ function openForm(key, presetId, manual) {
   $w("w-name-wrap").classList.toggle("on", !!manual || (!!w && !presetOf(w)));
   $w("w-adv").classList.toggle("on", !!manual);
   F.preset = (w && w.presetId) || (w && presetOf(w) ? presetOf(w).id : null);
+  F.customLogo = (w && w.customLogo) || null;
+  $w("w-logo-remove").hidden = !F.customLogo;
+  $w("w-logo-note").textContent = F.customLogo ? "사용자 로고 적용됨" : "선택 사항";
   segSet("w-kind", (w && w.kind) || "sub");
   segSet("w-int", (w && w.interval) || "");
   segSet("w-channel", (w && w.channel) || "web");
@@ -824,13 +834,35 @@ function bindForm() {
     renderPicked();
   });
   $w("w-picked-row").addEventListener("click", () => $w("w-adv").classList.toggle("on"));
+  $w("w-edit-details").addEventListener("click", () => $w("w-adv").classList.toggle("on"));
+  $w("w-logo").addEventListener("change", async e => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 1024 * 1024) return grabNote("로고 파일은 1MB 이하로 골라 주세요.");
+    try {
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement("canvas"); canvas.width = 128; canvas.height = 128;
+      const ctx = canvas.getContext("2d");
+      const scale = Math.min(112 / bitmap.width, 112 / bitmap.height);
+      const width = bitmap.width * scale, height = bitmap.height * scale;
+      ctx.clearRect(0, 0, 128, 128); ctx.drawImage(bitmap, (128 - width) / 2, (128 - height) / 2, width, height);
+      bitmap.close();
+      F.customLogo = canvas.toDataURL("image/webp", .86);
+      $w("w-logo-remove").hidden = false; $w("w-logo-note").textContent = "사용자 로고 적용됨";
+      renderPicked();
+    } catch (err) { grabNote("이 이미지 파일은 사용할 수 없습니다."); }
+  });
+  $w("w-logo-remove").addEventListener("click", () => {
+    F.customLogo = null; $w("w-logo-remove").hidden = true; $w("w-logo-note").textContent = "선택 사항"; renderPicked();
+  });
   $w("w-amt").addEventListener("input", krwPreview);
   $w("w-cur").addEventListener("change", krwPreview);
   $w("w-auto").addEventListener("change", saveLabel);
   $w("w-due").addEventListener("input", () => setDue($w("w-due").value));
   $w("w-due-text").addEventListener("click", () => { try { $w("w-due").showPicker(); } catch (e) { $w("w-due").focus(); } });
   $w("sheet-bg").addEventListener("click", closeForm);
-  $w("w-fab").addEventListener("click", () => openForm(null));
+  $w("w-fab").addEventListener("click", () => { if (mayAddSubscription()) openForm(null); });
 }
 
 /* Envato·Movavi·Artlist처럼 결제 화면을 직접 만들어 쓰는 곳은 도메인 목록으로 잡을 수가 없다.
@@ -923,6 +955,10 @@ function askAlways(origin) {
    누르지 않으면 아무것도 읽지 않고, 다른 탭은 볼 수 없다. */
 async function grabFromPage() {
   try {
+    if (!PL.canAdd(WATCH, ST.plan, null).ok) {
+      showUpgrade(); startPlusPolling();
+      return grabNote("네 번째 구독부터는 Plus가 필요합니다.");
+    }
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab || !tab.id) throw new Error("탭 없음");
     const [res] = await chrome.scripting.executeScript({
@@ -934,7 +970,6 @@ async function grabFromPage() {
     if (!d) throw new Error("읽지 못함");
     const p = WT.parsePage(d.text, d.title, d.url, self.SVST);
     if (!p.name && p.amountOrig == null) return grabNote("이 페이지에서는 구독을 찾지 못했습니다.");
-    if (!gateOk(null)) return;
 
     const key = "w" + Date.now().toString(36);
     WATCH[key] = WT.makeWatch({
@@ -969,6 +1004,7 @@ function krwOf(amt, cur) {
 
 async function saveWatch() {
   const name = $w("w-name").value.trim();
+  if (!EDIT_KEY && !mayAddSubscription()) return;
   const due = F.due;
   if (!name) { $w("w-err").textContent = "서비스를 누르거나 이름을 적어 주세요."; return; }
   if (F.kind === "trial" && !due) { $w("w-err").textContent = "무료 체험이 끝나는 날을 골라 주세요. 그날부터 돈이 나갑니다."; return; }
@@ -977,7 +1013,6 @@ async function saveWatch() {
   const krw = isNaN(amt) ? null : WT.estimateKrw(amt, cur, ST.rates, { vat: vatApplies() });
   const preset = F.preset ? PS.LIST.find(x => x.id === F.preset) : null;
   const key = EDIT_KEY || ("w" + Date.now().toString(36));
-  if (!EDIT_KEY && !gateOk(null)) return;
   const w = WT.makeWatch({
     name, amountOrig: isNaN(amt) ? null : amt, currency: cur, amountKrw: krw,
     interval: F.interval, kind: F.kind, channel: F.channel, auto: $w("w-auto").checked,
@@ -987,9 +1022,15 @@ async function saveWatch() {
     refundNote: preset ? preset.refundNote : ((WATCH[key] && WATCH[key].refundNote) || null),
     source: (WATCH[key] && WATCH[key].source) || "manual"
   }, todayISO());
+  w.customLogo = F.customLogo || null;
   // 고치는 것이지 새로 만드는 게 아니다 — 이미 보낸 알림 기록(ackedFor·misses)은 그대로 둔다
   WATCH[key] = WATCH[key] ? { ...WATCH[key], ...w } : w;
-  await chrome.storage.local.set({ watch: WATCH });
+  const saveButton = $w("w-save");
+  const oldLabel = $w("w-save-text").textContent;
+  saveButton.disabled = true; $w("w-save-text").textContent = "저장 중…";
+  try { await chrome.storage.local.set({ watch: WATCH }); }
+  catch (e) { saveButton.disabled = false; $w("w-save-text").textContent = oldLabel; $w("w-err").textContent = "저장하지 못했습니다. 다시 시도해 주세요."; return; }
+  saveButton.disabled = false; $w("w-save-text").textContent = "저장 완료 ✓";
   ["w-name", "w-amt", "w-due", "w-url"].forEach(id => { $w(id).value = ""; });
   closeForm();
   switchView("watch");
@@ -1011,15 +1052,34 @@ function alertsText(w) {
    전에는 사업자등록번호를 넣는 자리가 결제창 위 패널뿐이었다.
    그래서 결제하러 가지 않으면 번호를 등록할 방법이 아예 없었다. 여기서도 되게 한다. */
 function renderPlan() {
-  const plus = PL.isPlus(ST.plan);
-  $w("me-plan-state").textContent = PL.statusText(ST.plan, WATCH);
-  const btn = $w("me-plan-btn");
-  btn.textContent = plus ? "관리" : (ST.plan && ST.plan.status === "past_due" ? "결제 수단 바꾸기" : "Plus 시작");
-  $w("me-plan-hint").textContent = plus
-    ? "해지해도 결제한 기간이 끝날 때까지 쓰고, 등록한 구독은 지워지지 않습니다."
-    : "구독 3개까지 무료. 네 번째부터 3개월 6,000원. 결제는 donna.co.kr에서 합니다.";
+  const state = $w("me-plan-state");
+  if (!state) return;
+  state.textContent = (!isPlus() && ST.connectionProblem && ST.connectionProblem.message)
+    ? ST.connectionProblem.message : PL.statusText(ST.plan, WATCH);
+  $w("me-plan-btn").textContent = isPlus() ? "Plus 관리" : "Plus 시작";
 }
-function renderMe() {
+async function renderNotificationHealth(lastTest) {
+  const state = $w("me-noti-state");
+  if (!state) return;
+  if (!$w("me-noti").checked) {
+    state.textContent = "Donna 알림이 꺼져 있습니다. 구독 일정은 저장되지만 알림은 보내지 않습니다.";
+    return;
+  }
+  try {
+    const level = await chrome.notifications.getPermissionLevel();
+    if (level === "denied") {
+      state.textContent = "Chrome에서 알림이 차단되어 있습니다. Chrome 및 컴퓨터의 알림 설정을 허용해 주세요.";
+      return;
+    }
+    state.textContent = lastTest
+      ? "테스트 알림을 보냈습니다. 보이지 않으면 컴퓨터의 Chrome 알림 설정을 확인해 주세요."
+      : "Chrome 알림이 허용되어 있습니다. 실제 표시 여부는 ‘테스트 알림’으로 확인해 주세요.";
+  } catch (e) {
+    state.textContent = "알림 상태를 확인하지 못했습니다. 저장 후 테스트 알림을 보내 확인해 주세요.";
+  }
+}
+
+async function renderMe() {
   renderPlan();
   const p = ST.profile || {};
   $w("me-brn").value = p.brn || "";
@@ -1029,6 +1089,7 @@ function renderMe() {
 
   const set = ST.settings || {};
   $w("me-noti").checked = set.notify !== false;
+  await renderNotificationHealth(false);
   const lead = set.lead || {};
   const pick = (sel, arr, fallback) => {
     const v = (Array.isArray(arr) && arr.length ? arr : fallback).join(",");
@@ -1071,6 +1132,35 @@ async function saveNoti() {
   };
   await chrome.storage.local.set({ settings: ST.settings });
   flash("me-noti-save", "저장됨 ✓", "저장");
+  await renderNotificationHealth(false);
+}
+
+async function testNotification() {
+  const btn = $w("me-noti-test");
+  if (!$w("me-noti").checked) {
+    $w("me-noti").checked = true;
+    await saveNoti();
+  }
+  try {
+    const level = await chrome.notifications.getPermissionLevel();
+    if (level === "denied") {
+      await renderNotificationHealth(false);
+      flash("me-noti-test", "차단됨", "테스트 알림");
+      return;
+    }
+    btn.disabled = true;
+    await chrome.notifications.create(`donna-test-${Date.now()}`, {
+      type: "basic", iconUrl: "icon128.png", title: "Donna 알림 테스트",
+      message: "이 알림이 보이면 결제 전 알림을 받을 준비가 됐습니다.", priority: 1
+    });
+    await renderNotificationHealth(true);
+    flash("me-noti-test", "보냈어요 ✓", "테스트 알림");
+  } catch (e) {
+    $w("me-noti-state").textContent = "테스트 알림을 보내지 못했습니다. Chrome 및 컴퓨터의 알림 설정을 확인해 주세요.";
+    flash("me-noti-test", "실패", "테스트 알림");
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 /* ── 캘린더 파일 ──
@@ -1107,7 +1197,7 @@ function buildIcs() {
   let n = 0;
   for (const key of Object.keys(WATCH)) {
     const w = WATCH[key];
-    if (!w || !w.due) continue;   // 주기를 몰라도 날짜만 있으면 1회성 일정으로 넣는다
+    if (!w || !w.due || !w.interval) continue;
     if (w.status !== WT.STATUS.ACTIVE && w.status !== WT.STATUS.PENDING) continue;
     const d = w.due.replace(/-/g, "");
     const amt = WT.amountText(w);
@@ -1117,7 +1207,7 @@ function buildIcs() {
     L.push(`UID:svst-${encodeURIComponent(key)}-${d}@overseas-ai-subscription`);
     L.push(`DTSTAMP:${stamp}`);
     L.push(`DTSTART;VALUE=DATE:${d}`);
-    if (w.interval) L.push(`RRULE:FREQ=${w.interval === "year" ? "YEARLY" : "MONTHLY"};INTERVAL=1`);
+    L.push(`RRULE:FREQ=${w.interval === "year" ? "YEARLY" : "MONTHLY"};INTERVAL=1`);
     L.push(fold(`SUMMARY:${icsEscape(w.name + (amt ? " " + amt : "") +
       (w.kind === "trial" ? " 무료 체험 종료" : w.auto === false ? " 결제일" : " 자동 결제"))}`));
     L.push(fold(`DESCRIPTION:${icsEscape(
@@ -1141,28 +1231,13 @@ function buildIcs() {
 
 function downloadIcs() {
   const { text, count } = buildIcs();
-  if (!count) { $w("me-err").textContent = "캘린더에 넣을 구독이 없습니다. 다음 결제일이 있는 구독만 들어갑니다."; return; }
-  $w("me-err").textContent = "";
+  if (!count) { $w("me-err").textContent = "캘린더에 넣을 구독이 아직 없습니다."; return; }
   saveFile(`Donna_결제일_${todayISO()}.ics`, text, "text/calendar;charset=utf-8");
   flash("me-ics", `${count}건 저장됨 ✓`, "캘린더에 넣기");
 }
 
 function bindWatch() {
   $w("w-cancel").addEventListener("click", closeForm);
-  $w("plus-cancel").addEventListener("click", closePlus);
-  $w("plus-recheck").addEventListener("click", recheckPlus);
-  $w("plus-go").addEventListener("click", () => chrome.tabs.create({ url: PL.plusUrl(ST.installId, "gate") }));
-  $w("plus-restore").addEventListener("click", () => chrome.tabs.create({ url: PL.plusUrl(ST.installId, "restore") + "&mode=restore" }));
-  $w("me-plan-btn").addEventListener("click", () => {
-    const plus = PL.isPlus(ST.plan);
-    const url = plus && ST.plan.manageUrl ? ST.plan.manageUrl + "&install=" + encodeURIComponent(ST.installId || "") : PL.plusUrl(ST.installId, plus ? "manage" : "settings");
-    chrome.tabs.create({ url });
-  });
-  $w("me-plan-recheck").addEventListener("click", () => {
-    const b = $w("me-plan-recheck"); b.textContent = "확인 중…";
-    chrome.runtime.sendMessage({ type: "checkLicense" }, res => { if (res && res.plan) { ST.plan = res.plan; renderPlan(); } b.textContent = "상태 다시 확인"; });
-  });
-  $w("me-plan-restore").addEventListener("click", () => chrome.tabs.create({ url: PL.plusUrl(ST.installId, "restore") + "&mode=restore" }));
   $w("w-save").addEventListener("click", saveWatch);
   $w("w-enable").addEventListener("click", enableHere);
   $w("w-all").addEventListener("click", toggleAllSites);
@@ -1174,6 +1249,8 @@ function bindWatch() {
   $w("go-book").addEventListener("click", () => switchView("book"));
   $w("me-save").addEventListener("click", saveMe);
   $w("me-noti-save").addEventListener("click", saveNoti);
+  $w("me-noti-test").addEventListener("click", testNotification);
+  $w("me-noti").addEventListener("change", () => renderNotificationHealth(false));
   $w("me-ics").addEventListener("click", downloadIcs);
 }
 
@@ -1209,13 +1286,7 @@ async function init() {
      넓다고 가로를 다 쓰면 글줄이 길어져 오히려 못 읽는다. */
   if (window.innerWidth > 620) document.body.classList.add("wide");
 
-  const st = await chrome.storage.local.get(["ledger", "subs", "stats", "tasks", "profile", "suppliers", "watch", "settings", "plan", "installId"]);
-  ST.plan = st.plan || null;
-  ST.installId = st.installId || null;
-  chrome.runtime.sendMessage({ type: "checkLicense" }, res => {
-    if (res && res.plan) { ST.plan = res.plan; renderPlan(); }
-    chrome.storage.local.get("installId").then(x => { ST.installId = x.installId || null; });
-  });
+  const st = await chrome.storage.local.get(["ledger", "subs", "stats", "tasks", "profile", "suppliers", "watch", "settings", "plan", "installId", "connectionProblem"]);
   ST.ledger = st.ledger || [];
   ST.subs = st.subs || {};
   ST.stats = st.stats || { saved: 0 };
@@ -1223,6 +1294,9 @@ async function init() {
   ST.profile = st.profile || null;
   ST.suppliers = st.suppliers || {};
   WATCH = st.watch || {};
+  ST.plan = st.plan || null;
+  ST.installId = st.installId || null;
+  ST.connectionProblem = st.connectionProblem || null;
   ST.settings = {
     notify: !st.settings || st.settings.notify !== false,
     lead: { ...WT.LEAD_DEFAULT, ...((st.settings && st.settings.lead) || {}) }
@@ -1233,14 +1307,34 @@ async function init() {
   });
   bindWatch();
   bindForm();
+  $w("upgrade-close").addEventListener("click", hideUpgrade);
+  $w("upgrade").addEventListener("click", e => { if (e.target === $w("upgrade")) hideUpgrade(); });
+  $w("upgrade-go").addEventListener("click", () => { openPlusPage("gate", false); startPlusPolling(); });
+  $w("upgrade-recheck").addEventListener("click", e => recheckPlus(e.currentTarget));
+  $w("upgrade-restore").addEventListener("click", () => openPlusPage("restore", true));
+  $w("me-plan-btn").addEventListener("click", () => {
+    if (isPlus() && ST.plan && ST.plan.manageUrl) {
+      const join = ST.plan.manageUrl.includes("?") ? "&" : "?";
+      chrome.tabs.create({ url: ST.plan.manageUrl + join + "install=" + encodeURIComponent(ST.installId || "") });
+    } else { openPlusPage("settings", false); startPlusPolling(); }
+  });
+  $w("me-plan-recheck").addEventListener("click", e => recheckPlus(e.currentTarget));
+  $w("me-plan-restore").addEventListener("click", () => openPlusPage("restore", true));
+
+  chrome.runtime.sendMessage({ type: "checkLicense", force: true }, res => {
+    if (res && res.plan) ST.plan = res.plan;
+    if (res && res.installId) ST.installId = res.installId;
+    renderWatch(); renderPlan();
+  });
 
   /* 사이드패널은 닫힐 때까지 살아 있다. 결제창에서 알림을 켜거나 다른 탭에서 등록해도
      여기서 새로고침 없이 바로 보이도록, 저장소가 바뀌면 그 부분만 다시 그린다. */
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
-    if (changes.plan) { ST.plan = changes.plan.newValue || null; if (VIEW === "me") renderPlan(); }
+    if (changes.plan) { ST.plan = changes.plan.newValue || null; renderWatch(); renderPlan(); }
     if (changes.installId) ST.installId = changes.installId.newValue || null;
     if (changes.watch) { WATCH = changes.watch.newValue || {}; if (!$w("w-form").classList.contains("on")) { if (VIEW === "detail") renderDetail(DETAIL_KEY); else if (VIEW === "watch") renderWatch(); } }
+    if (changes.plan) { PLAN = changes.plan.newValue || { tier: "free" }; if (VIEW === "watch") renderWatch(); }
     if (changes.ledger) ST.ledger = changes.ledger.newValue || [];
     if (changes.subs) ST.subs = changes.subs.newValue || {};
     if (changes.tasks) ST.tasks = changes.tasks.newValue || [];

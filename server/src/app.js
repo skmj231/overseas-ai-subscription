@@ -2,6 +2,7 @@
 import express from "express";
 
 const EMAIL = /^[^@\s]{1,64}@[^@\s]{1,255}\.[^@\s]{2,}$/;
+const CONSENT_VERSION = "2026-09-19";
 
 export function makeApp({ service, env, toss, db, log = console }) {
   const app = express();
@@ -10,11 +11,14 @@ export function makeApp({ service, env, toss, db, log = console }) {
   app.use(express.json({ limit: "16kb" }));
 
   /* CORS: 사이트와 확장만. 확장 ID를 모르는 개발 중에는 chrome-extension:// 전체를 허용한다. */
-  const allowed = new Set([env.SITE_URL || "https://donna.co.kr", "https://donna.co.kr", "https://www.donna.co.kr"]);
+  const allowed = new Set([
+    env.SITE_URL || "https://donna.co.kr", "https://donna.co.kr", "https://www.donna.co.kr",
+    "chrome-extension://jkecjjpgplgpcfdbllaldllcliliojfn"
+  ]);
   if (env.EXTENSION_ID) allowed.add(`chrome-extension://${env.EXTENSION_ID}`);
   app.use((req, res, next) => {
     const o = req.headers.origin;
-    if (o && (allowed.has(o) || (!env.EXTENSION_ID && o.startsWith("chrome-extension://")) || (env.NODE_ENV !== "production" && /^http:\/\/(localhost|127\.0\.0\.1)/.test(o)))) {
+    if (o && (allowed.has(o) || (env.NODE_ENV !== "production" && !env.EXTENSION_ID && o.startsWith("chrome-extension://")) || (env.NODE_ENV !== "production" && /^http:\/\/(localhost|127\.0\.0\.1)/.test(o)))) {
       res.setHeader("Access-Control-Allow-Origin", o);
       res.setHeader("Vary", "Origin");
       res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
@@ -46,16 +50,23 @@ export function makeApp({ service, env, toss, db, log = console }) {
   /* ── 결제 시작 ── */
   app.post("/v1/checkout/session", wrap(async (req, res) => {
     if (!limit("checkout:" + ip(req), 10, 3600000)) return res.status(429).json({ error: "잠시 후 다시 시도해 주세요." });
-    const { email, install_id, return_url, cancel_url } = req.body || {};
+    const { email, install_id, return_url, cancel_url, consent_version, recurring_accepted, terms_accepted } = req.body || {};
     if (!email || !EMAIL.test(String(email))) return res.status(400).json({ error: "이메일 주소를 확인해 주세요." });
     if (!install_id || !/^[a-z0-9]{20,40}$/.test(String(install_id))) {
       return res.status(400).json({ error: "Donna 확장 프로그램에서 Plus 시작을 눌러 주세요. 설치 연결 정보가 없는 결제는 진행하지 않습니다." });
     }
+    if (consent_version !== CONSENT_VERSION || recurring_accepted !== true || terms_accepted !== true) {
+      return res.status(400).json({ error: "3개월 자동 결제와 이용약관·개인정보처리방침에 각각 동의해 주세요." });
+    }
     const site = env.SITE_URL || "https://donna.co.kr";
-    const safe = (u, fb) => (typeof u === "string" && u.startsWith(site)) ? u : fb;
+    const safe = (u, fb) => {
+      try { return typeof u === "string" && new URL(u).origin === new URL(site).origin ? u : fb; }
+      catch { return fb; }
+    };
     const out = await service.createCheckout({
       email: String(email).trim().toLowerCase(), install_id: typeof install_id === "string" ? install_id : null,
-      return_url: safe(return_url, `${site}/plus-done.html`), cancel_url: safe(cancel_url, `${site}/plus.html`)
+      return_url: safe(return_url, `${site}/plus-done.html`), cancel_url: safe(cancel_url, `${site}/plus.html`),
+      consent_version, recurring_accepted, terms_accepted
     });
     res.json(out);
   }));
@@ -102,6 +113,10 @@ export function makeApp({ service, env, toss, db, log = console }) {
     await service.requestRestore(String(email).trim().toLowerCase(), String(install_id));
     res.status(202).json({ ok: true });
   }));
+  app.get("/v1/restore/confirm", wrap(async (req, res) => {
+    const out = await service.confirmRestore(String(req.query.token || ""), String(req.query.install || ""));
+    res.redirect(302, out.redirect);
+  }));
 
   /* ── 관리 페이지 ── */
   const token = (req) => String((req.body && req.body.token) || req.query.token || "");
@@ -111,6 +126,7 @@ export function makeApp({ service, env, toss, db, log = console }) {
   app.post("/v1/subscription/refund", wrap(async (req, res) => res.json(await service.refund(token(req)))));
   app.post("/v1/subscription/change-card", wrap(async (req, res) => res.json(await service.changeCard(token(req), req.body && req.body.return_url))));
   app.post("/v1/installations/link", wrap(async (req, res) => res.json(await service.linkByToken(token(req), String((req.body && req.body.install_id) || "")))));
+  app.post("/v1/installations/unlink", wrap(async (req, res) => res.json(await service.unlinkInstall(token(req), String((req.body && req.body.installation_id) || "")))));
 
   /* ── 토스 웹훅: 서명이 없으므로 결제를 다시 조회해 확인한 뒤 payments 상태만 맞춘다. 상태 변경의 근원은 우리 호출 결과다. ── */
   app.post("/v1/webhooks/toss", wrap(async (req, res) => {
@@ -119,7 +135,17 @@ export function makeApp({ service, env, toss, db, log = console }) {
     if (ev.eventType === "PAYMENT_STATUS_CHANGED" && key) {
       try {
         const p = await toss.getPayment(key);
-        if (p.status === "CANCELED" || p.status === "PARTIAL_CANCELED") await db.q("UPDATE payments SET status='canceled', raw=$2 WHERE payment_key=$1", [key, p]);
+        if (p.status === "CANCELED") {
+          await db.tx(async c => {
+            const row = (await c.query("SELECT * FROM payments WHERE payment_key=$1 FOR UPDATE", [key])).rows[0];
+            if (!row) return;
+            await c.query("UPDATE payments SET status='canceled', raw=$2 WHERE id=$1", [row.id, p]);
+            const newer = (await c.query("SELECT id FROM payments WHERE subscription_id=$1 AND status='done' AND approved_at>$2 LIMIT 1", [row.subscription_id, row.approved_at])).rows[0];
+            if (!newer) await c.query("UPDATE subscriptions SET status='expired', cancel_at_period_end=true, current_period_end=now(), billing_key_encrypted=NULL, updated_at=now() WHERE id=$1", [row.subscription_id]);
+          });
+        } else if (p.status === "PARTIAL_CANCELED") {
+          await db.q("UPDATE payments SET status='partial_canceled', raw=$2 WHERE payment_key=$1", [key, p]);
+        }
         await db.q("INSERT INTO audit(subject, action, meta) VALUES($1,$2,$3)", [`payment:${key}`, "webhook", { status: p.status }]);
       } catch (e) { log.error("webhook", e.message); }
     }

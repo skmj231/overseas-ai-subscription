@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS payments (
   order_id         text NOT NULL UNIQUE,
   payment_key      text,
   amount           int NOT NULL,
-  status           text NOT NULL,     -- done | failed | canceled(환불)
+  status           text NOT NULL,     -- done | failed | canceled(전액 환불) | partial_canceled
   approved_at      timestamptz,
   receipt_url      text,
   fail_reason      text,
@@ -73,6 +73,15 @@ CREATE TABLE IF NOT EXISTS checkout_sessions (
   purpose      text NOT NULL DEFAULT 'new',   -- new | change_card
   return_url   text,
   cancel_url   text,
+  consent_version text,
+  recurring_accepted boolean NOT NULL DEFAULT false,
+  terms_accepted boolean NOT NULL DEFAULT false,
+  consented_at timestamptz,
   used_at      timestamptz,
   created_at   timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE checkout_sessions ADD COLUMN IF NOT EXISTS consent_version text;
+ALTER TABLE checkout_sessions ADD COLUMN IF NOT EXISTS recurring_accepted boolean NOT NULL DEFAULT false;
+ALTER TABLE checkout_sessions ADD COLUMN IF NOT EXISTS terms_accepted boolean NOT NULL DEFAULT false;
+ALTER TABLE checkout_sessions ADD COLUMN IF NOT EXISTS consented_at timestamptz;

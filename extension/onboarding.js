@@ -6,7 +6,6 @@
  */
 const WT = self.SVSTWatch;
 const PS = self.SVSTPresets;
-const PL = self.SVSTPlan;
 const $ = id => document.getElementById(id);
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -60,6 +59,7 @@ function seg(id, attr, v) {
   F[attr] = v;
   $(id).querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset[attr] === v));
   if (attr === "kind") $("due-label").textContent = v === "trial" ? "무료 체험이 끝나는 날" : "다음 결제일";
+  if (attr === "interval" && F.due) setDue(F.due);
   renderPicked(); submitLabel();
 }
 ["kinds:kind", "intervals:interval", "channels:channel"].forEach(pair => {
@@ -127,7 +127,9 @@ function renderWeeks() {
 function setDue(v) {
   F.due = v || "";
   $("due").value = F.due;
-  $("due-text").textContent = F.due ? koDate(F.due) : "달력에서 고르기";
+  $("due-text").textContent = F.due
+    ? (F.interval === "month" ? `매달 ${Number(F.due.slice(8))}일 · 다음 ${koDate(F.due)}` : koDate(F.due))
+    : "달력에서 고르기";
   $("week").querySelectorAll("[data-d]").forEach(b => b.classList.toggle("on", b.dataset.d === F.due));
   const sel = $("week").querySelector(".d.on");
   if (sel) $("week").scrollLeft = sel.closest(".w7").offsetLeft - $("week").offsetLeft;
@@ -148,6 +150,14 @@ $("add-another").addEventListener("click", () => {
   show("register");
 });
 $("open-panel").addEventListener("click", openPanel);
+
+function updateDoneActions(watch) {
+  const count = Object.values(watch || {}).filter(w => w && w.status !== WT.STATUS.CANCELED).length;
+  const left = Math.max(0, 3 - count);
+  $("open-panel").textContent = count >= 3 ? "등록 완료 · 패널 열기 →" : "완료하고 패널 열기 →";
+  $("add-another").hidden = left === 0;
+  if (left > 0) $("add-another").textContent = `하나 더 등록 · 무료 ${left}개 남음`;
+}
 
 /* 사이드패널은 사용자가 누른 직후에만 열 수 있다. 백그라운드로 보내면 그 클릭 권한이 따라간다. */
 function openPanel() {
@@ -177,17 +187,31 @@ $("form").addEventListener("submit", async e => {
     auto: true, source: "manual"
   }, todayISO());
 
-  const st = await chrome.storage.local.get(["watch", "plan"]);
+  const st = await chrome.storage.local.get(["watch"]);
   const watch = st.watch || {};
   const normalized = name.toLocaleLowerCase().replace(/\s+/g, "");
   const existing = Object.keys(watch).find(k => String(watch[k].name || "").toLocaleLowerCase().replace(/\s+/g, "") === normalized);
   const key = existing || ("w" + Date.now().toString(36));
-  if (!existing && !PL.canAdd(watch, st.plan || null, null).ok) {
-    $("error").textContent = "무료로는 구독 3개까지 등록할 수 있어요. 패널에서 Donna Plus(3개월 6,000원)를 시작하면 이어서 등록됩니다.";
+  const gate = await chrome.runtime.sendMessage({ type: "canAddSubscription", key: existing || null });
+  if (!gate || !gate.ok) {
+    $("error").textContent = "무료로는 구독 3개까지 등록할 수 있습니다. 사이드패널에서 Donna Plus를 시작해 주세요.";
     return;
   }
   watch[key] = existing ? { ...watch[key], ...made } : made;
-  await chrome.storage.local.set({ watch, onboardingCompleted: { at: Date.now(), result: "registered" } });
+  const saveButton = $("submit");
+  const oldLabel = $("submit-text").textContent;
+  saveButton.disabled = true;
+  $("submit-text").textContent = "저장 중…";
+  try {
+    await chrome.storage.local.set({ watch, onboardingCompleted: { at: Date.now(), result: "registered" } });
+  } catch (e) {
+    saveButton.disabled = false;
+    $("submit-text").textContent = oldLabel;
+    $("error").textContent = "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+    return;
+  }
+  saveButton.disabled = false;
+  $("submit-text").textContent = "저장 완료 ✓";
 
   const complete = !!made.interval && !!made.due;
   const days = WT.alertDaysBefore(made, LEAD);
@@ -204,39 +228,33 @@ $("form").addEventListener("submit", async e => {
     </div>
     <button type="button" class="pill gray" id="ics"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111114" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="4"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>캘린더에 넣기</button>`;
   $("ics").addEventListener("click", () => downloadIcs(made, key));
+  updateDoneActions(watch);
   show("done");
 });
 
-/* 파일 저장. 앵커를 문서에 붙이고 URL 해제를 미룬다 —
-   붙이지 않거나 click 직후 곧바로 revokeObjectURL을 부르면 다운로드가 시작되기 전에
-   블롭이 사라져 조용히 아무 일도 일어나지 않는다. */
 function saveFile(name, text, mime) {
   const url = URL.createObjectURL(new Blob([text], { type: mime }));
   const a = document.createElement("a");
-  a.href = url; a.download = name; a.rel = "noopener"; a.style.display = "none";
+  a.href = url;
+  a.download = name;
   document.body.appendChild(a);
   a.click();
-  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 4000);
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 /* 캘린더 파일 한 장. 패널의 것과 같은 규격이지만 방금 등록한 구독 하나만 담는다. */
 function downloadIcs(w, key) {
-  const btn = $("ics");
-  if (!w.due) {                       // 날짜를 모르면 넣을 일정이 없다. 조용히 끝내지 않는다.
-    if (btn) { btn.textContent = "날짜를 채우면 캘린더에 넣을 수 있습니다"; btn.disabled = true; }
-    return;
-  }
+  if (!w.due || !w.interval) return;
   const stamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
   const d = w.due.replace(/-/g, "");
   const escI = v => String(v).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
   const days = WT.alertDaysBefore(w, LEAD);
   const L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Donna//KR", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:해외 구독 결제일",
     "BEGIN:VEVENT", `UID:svst-${encodeURIComponent(key)}-${d}@overseas-ai-subscription`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${d}`,
+    `RRULE:FREQ=${w.interval === "year" ? "YEARLY" : "MONTHLY"};INTERVAL=1`,
     `SUMMARY:${escI(w.name + (w.kind === "trial" ? " 무료 체험 종료" : " 자동 결제"))}`];
-  // 주기를 모르면 반복 없이 1회성 일정으로 넣는다.
-  if (w.interval) L.push(`RRULE:FREQ=${w.interval === "year" ? "YEARLY" : "MONTHLY"};INTERVAL=1`);
   for (const day of days) L.push("BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${escI(w.name)}`, `TRIGGER:-P${day}D`, "END:VALARM");
   L.push("END:VEVENT", "END:VCALENDAR");
   saveFile(`Donna_${w.name}.ics`, L.join("\r\n") + "\r\n", "text/calendar;charset=utf-8");
-  if (btn) btn.textContent = "캘린더 파일을 내려받았습니다";
 }

@@ -21,33 +21,60 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
                    ORDER BY created_at DESC LIMIT 1`, [customerId]);
   }
 
-  /* 설치를 고객에 연결. 3대 초과면 가장 오래 안 본 것을 뗀다(사용자가 컴퓨터를 바꾼 경우가 대부분). */
+  /* 설치를 고객에 연결. 한도 초과 시 기존 기기를 몰래 해제하지 않는다.
+     유료 권한이 갑자기 사라지는 것보다 사용자가 관리 화면에서 직접 정리하는 편이 안전하다. */
   async function linkInstall(customerId, installId) {
     if (!installId || !/^[a-z0-9]{20,40}$/.test(installId)) return null;
-    const row = await db.one(`INSERT INTO installations(customer_id, public_install_id, last_seen_at) VALUES($1,$2,now())
-      ON CONFLICT(public_install_id) DO UPDATE SET customer_id=EXCLUDED.customer_id, last_seen_at=now() RETURNING *`, [customerId, installId]);
-    const extra = await db.q(`SELECT id FROM installations WHERE customer_id=$1 ORDER BY last_seen_at DESC NULLS LAST OFFSET $2`, [customerId, PLAN.maxInstalls]);
-    for (const e of extra.rows) await db.q("UPDATE installations SET customer_id=NULL WHERE id=$1", [e.id]);
-    return row;
+    return db.tx(async c => {
+      await c.query("SELECT id FROM customers WHERE id=$1 FOR UPDATE", [customerId]);
+      const existingQ = await c.query("SELECT * FROM installations WHERE public_install_id=$1 FOR UPDATE", [installId]);
+      const existing = existingQ.rows[0];
+      if (existing && existing.customer_id === customerId) {
+        await c.query("UPDATE installations SET last_seen_at=now() WHERE id=$1", [existing.id]);
+        return existing;
+      }
+      if (existing && existing.customer_id && existing.customer_id !== customerId) {
+        throw Object.assign(new Error("이 Chrome은 다른 구매에 연결되어 있습니다. 구매 이메일로 복원을 다시 요청해 주세요."), { status: 409, code: "INSTALL_OWNED" });
+      }
+      const countQ = await c.query("SELECT count(*)::int AS n FROM installations WHERE customer_id=$1", [customerId]);
+      if (countQ.rows[0].n >= PLAN.maxInstalls) {
+        throw Object.assign(new Error(`연결 가능한 Chrome ${PLAN.maxInstalls}대를 모두 사용 중입니다. 기존 기기를 해제한 뒤 다시 시도해 주세요.`), { status: 409, code: "DEVICE_LIMIT" });
+      }
+      const made = existing
+        ? await c.query("UPDATE installations SET customer_id=$2, last_seen_at=now() WHERE id=$1 RETURNING *", [existing.id, customerId])
+        : await c.query("INSERT INTO installations(customer_id, public_install_id, last_seen_at) VALUES($1,$2,now()) RETURNING *", [customerId, installId]);
+      return made.rows[0];
+    });
   }
 
   /* 1. 결제 세션: plus.html이 부른다. 토스 결제창을 열 데 필요한 값을 돌려준다. */
-  async function createCheckout({ email, install_id, return_url, cancel_url, purpose = "new", subscription_id = null }) {
+  async function createCheckout({ email, install_id, return_url, cancel_url, purpose = "new", subscription_id = null,
+                                  consent_version = null, recurring_accepted = false, terms_accepted = false }) {
     const cust = await upsertCustomer(email);
+    if (install_id) {
+      const owned = await db.one("SELECT customer_id FROM installations WHERE public_install_id=$1", [install_id]);
+      if (owned && owned.customer_id && owned.customer_id !== cust.id) {
+        throw Object.assign(new Error("이 Chrome은 다른 구매 이메일의 Plus에 연결되어 있습니다. 기존 이용권 관리에서 기기를 해제하거나 구매 복원을 이용해 주세요."), { status: 409, code: "INSTALL_OWNED" });
+      }
+    }
     let sub = subscription_id ? await db.one("SELECT * FROM subscriptions WHERE id=$1 AND customer_id=$2", [subscription_id, cust.id]) : await currentSub(cust.id);
     if (purpose === "new") {
       if (sub && ["active", "canceled", "past_due"].includes(sub.status)) {
-        // 이미 Plus인 사람이 또 결제하려 한다. 새로 만들지 않고 관리 페이지로 보낸다.
-        if (install_id) await linkInstall(cust.id, install_id);
-        return { already: true, manage_url: manageUrl(sub.id) };
+        // 이메일만 아는 사람이 남의 Plus를 가져가지 못하게 결제/연결을 진행하지 않는다.
+        // 기존 구매자에게만 인증 링크를 보내 현재 설치를 연결한다.
+        if (install_id) await requestRestore(email, install_id);
+        return { already: true, restore_required: true, restore_sent: !!install_id };
       }
       if (!sub || sub.status !== "pending") {
         sub = await db.one("INSERT INTO subscriptions(customer_id, plan, status, toss_customer_key) VALUES($1,$2,'pending',$3) RETURNING *",
                            [cust.id, PLAN.id, "cust_" + cust.id.replace(/-/g, "")]);
       }
     } else if (!sub) throw Object.assign(new Error("구독이 없습니다."), { status: 404 });
-    const ses = await db.one(`INSERT INTO checkout_sessions(customer_id, subscription_id, install_id, purpose, return_url, cancel_url)
-                              VALUES($1,$2,$3,$4,$5,$6) RETURNING *`, [cust.id, sub.id, install_id || null, purpose, return_url || null, cancel_url || null]);
+    const ses = await db.one(`INSERT INTO checkout_sessions(customer_id, subscription_id, install_id, purpose, return_url, cancel_url,
+                                                               consent_version, recurring_accepted, terms_accepted, consented_at)
+                              VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,CASE WHEN $8 AND $9 THEN now() ELSE NULL END) RETURNING *`,
+                             [cust.id, sub.id, install_id || null, purpose, return_url || null, cancel_url || null,
+                              consent_version, recurring_accepted, terms_accepted]);
     return {
       session_id: ses.id,
       client_key: env.TOSS_CLIENT_KEY,
@@ -66,15 +93,21 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
     const sub = await db.one("SELECT * FROM subscriptions WHERE id=$1", [ses.subscription_id]);
     const cust = await db.one("SELECT * FROM customers WHERE id=$1", [ses.customer_id]);
     if (!sub || sub.toss_customer_key !== customerKey) throw Object.assign(new Error("customerKey 불일치"), { status: 400 });
-    if (ses.used_at) return { ok: true, redirect: ses.return_url || `${SITE}/plus-done.html`, reused: true };
+    if (now().getTime() - new Date(ses.created_at).getTime() > 30 * 60 * 1000) {
+      throw Object.assign(new Error("결제 세션이 만료됐습니다. Plus 시작을 다시 눌러 주세요."), { status: 410 });
+    }
+    const claimed = !ses.used_at && await db.one("UPDATE checkout_sessions SET used_at=now() WHERE id=$1 AND used_at IS NULL RETURNING id", [ses.id]);
+    if (!claimed) {
+      const paid = await db.one("SELECT id FROM payments WHERE subscription_id=$1 AND status='done' ORDER BY approved_at DESC LIMIT 1", [sub.id]);
+      if (paid) return { ok: true, redirect: ses.return_url || `${SITE}/plus-done.html`, reused: true };
+      const u = new URL(ses.cancel_url || `${SITE}/plus.html`); u.searchParams.set("error", "payment");
+      return { ok: false, redirect: u.toString(), reused: true };
+    }
 
     const issued = await toss.issueBillingKey({ authKey, customerKey });
     const enc = crypto.encrypt(issued.billingKey);
     const card = cardSummary(issued);
     await db.q("UPDATE subscriptions SET billing_key_encrypted=$2, card_summary=$3, updated_at=now() WHERE id=$1", [sub.id, enc, card]);
-    await db.q("UPDATE checkout_sessions SET used_at=now() WHERE id=$1", [ses.id]);
-    if (ses.install_id) await linkInstall(cust.id, ses.install_id);
-
     if (ses.purpose === "change_card") {
       await audit(`sub:${sub.id}`, "card_changed", { card });
       await mail.cardChanged(cust.email, { cardSummary: card, manageUrl: manageUrl(sub.id) }).catch(logMail);
@@ -86,9 +119,23 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
     const fresh = await db.one("SELECT * FROM subscriptions WHERE id=$1", [sub.id]);
     const r = await charge(fresh, { reason: "first" });
     if (!r.ok) {
-      await db.q("UPDATE subscriptions SET status='incomplete', updated_at=now() WHERE id=$1", [sub.id]);
+      if (toss.deleteBillingKey) {
+        try { await toss.deleteBillingKey({ billingKey: issued.billingKey }); }
+        catch (e) { log.error("billing-key delete after first failure", e.message); }
+      }
+      await db.q("UPDATE subscriptions SET status='incomplete', billing_key_encrypted=NULL, updated_at=now() WHERE id=$1", [sub.id]);
       const u = new URL(ses.cancel_url || `${SITE}/plus.html`); u.searchParams.set("error", "payment"); u.searchParams.set("reason", r.reason || "");
       return { ok: false, redirect: u.toString() };
+    }
+    if (ses.install_id) {
+      try { await linkInstall(cust.id, ses.install_id); }
+      catch (e) {
+        log.error("paid but install link pending", sub.id, e.message);
+        await audit(`sub:${sub.id}`, "installation_link_pending", { install: ses.install_id.slice(0, 6), error: e.code || e.message });
+        const pending = new URL(ses.return_url || `${SITE}/plus-done.html`);
+        pending.searchParams.set("link", "pending");
+        return { ok: true, redirect: pending.toString(), link_pending: true };
+      }
     }
     return { ok: true, redirect: ses.return_url || `${SITE}/plus-done.html` };
   }
@@ -180,12 +227,12 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
     const { sub, cust } = await subscriptionByToken(token);
     const pays = await db.q("SELECT order_id, amount, status, approved_at, receipt_url, fail_reason, created_at FROM payments WHERE subscription_id=$1 ORDER BY created_at DESC LIMIT 12", [sub.id]);
     const last = pays.rows.find(p => p.status === "done");
-    const installs = await db.q("SELECT public_install_id, last_seen_at FROM installations WHERE customer_id=$1 ORDER BY last_seen_at DESC NULLS LAST", [cust.id]);
+    const installs = await db.q("SELECT id, public_install_id, last_seen_at FROM installations WHERE customer_id=$1 ORDER BY last_seen_at DESC NULLS LAST", [cust.id]);
     return {
       email: cust.email, status: sub.status, plan: PLAN, card: sub.card_summary,
       current_period_end: sub.current_period_end, cancel_at_period_end: sub.cancel_at_period_end,
-      next_retry_at: sub.next_retry_at, refundable: refundable(last, now()) && !sub.cancel_at_period_end && sub.period_no === 1,
-      payments: pays.rows, installs: installs.rows.map(i => ({ id: i.public_install_id.slice(0, 6) + "…", last_seen_at: i.last_seen_at }))
+      next_retry_at: sub.next_retry_at, refundable: refundable(last, now()),
+      payments: pays.rows, installs: installs.rows.map(i => ({ installation_id: i.id, label: i.public_install_id.slice(0, 6) + "…", last_seen_at: i.last_seen_at }))
     };
   }
   async function cancel(token) {
@@ -207,12 +254,16 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
   async function refund(token) {
     const { sub, cust } = await subscriptionByToken(token);
     const last = await db.one("SELECT * FROM payments WHERE subscription_id=$1 AND status='done' ORDER BY approved_at DESC LIMIT 1", [sub.id]);
-    if (!refundable(last, now()) || sub.period_no !== 1) throw Object.assign(new Error("환불 가능 기간(결제 후 7일)이 지났습니다."), { status: 409 });
+    if (!refundable(last, now())) throw Object.assign(new Error("최근 결제의 환불 가능 기간(결제 후 7일)이 지났습니다."), { status: 409 });
     await toss.cancel({ paymentKey: last.payment_key, cancelReason: "고객 요청 (7일 이내 청약철회)" });
     await db.tx(async c => {
       await c.query("UPDATE payments SET status='canceled' WHERE id=$1", [last.id]);
-      await c.query("UPDATE subscriptions SET status='expired', cancel_at_period_end=true, current_period_end=now(), updated_at=now() WHERE id=$1", [sub.id]);
+      await c.query("UPDATE subscriptions SET status='expired', cancel_at_period_end=true, current_period_end=now(), billing_key_encrypted=NULL, updated_at=now() WHERE id=$1", [sub.id]);
     });
+    if (sub.billing_key_encrypted && toss.deleteBillingKey) {
+      try { await toss.deleteBillingKey({ billingKey: crypto.decrypt(sub.billing_key_encrypted) }); }
+      catch (e) { log.error("billing-key delete after refund", e.message); }
+    }
     await audit(`sub:${sub.id}`, "refunded", { paymentKey: last.payment_key, amount: last.amount });
     await mail.refunded(cust.email, { amount: last.amount, manageUrl: manageUrl(sub.id) }).catch(logMail);
     return { ok: true };
@@ -227,12 +278,27 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
     if (!cust) return { ok: true };
     const sub = await liveSub(cust.id);
     if (!sub) return { ok: true };
-    const u = new URL(manageUrl(sub.id));
+    const restoreToken = crypto.sign({ sub: sub.id, scope: "restore_install", install: installId }, 24 * 3600000);
+    const u = new URL(`${API}/v1/restore/confirm`);
+    u.searchParams.set("token", restoreToken);
     u.searchParams.set("install", installId);
-    u.searchParams.set("restore", "1");
     await mail.restore(cust.email, { restoreUrl: u.toString() }).catch(logMail);
     await audit(`cust:${cust.id}`, "restore_requested", { install: installId.slice(0, 6) });
     return { ok: true };
+  }
+
+  async function confirmRestore(token, installId) {
+    const p = crypto.verify(token);
+    if (!p || p.scope !== "restore_install" || !p.sub || p.install !== installId) {
+      throw Object.assign(new Error("복원 링크가 만료됐거나 이 Chrome에서 요청한 링크가 아닙니다."), { status: 401 });
+    }
+    const sub = await db.one("SELECT * FROM subscriptions WHERE id=$1", [p.sub]);
+    if (!sub || !["active", "canceled", "past_due"].includes(sub.status)) {
+      throw Object.assign(new Error("사용 가능한 Plus 이용권이 없습니다."), { status: 409 });
+    }
+    await linkInstall(sub.customer_id, installId);
+    await audit(`sub:${sub.id}`, "installation_restored", { install: installId.slice(0, 6) });
+    return { ok: true, redirect: `${SITE}/plus-done.html?restored=1` };
   }
 
   async function linkByToken(token, installId) {
@@ -250,6 +316,18 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
     return { ok: true };
   }
 
+  async function unlinkInstall(token, installationId) {
+    const { sub, cust } = await subscriptionByToken(token);
+    if (!/^[0-9a-f-]{36}$/i.test(String(installationId || ""))) {
+      throw Object.assign(new Error("연결 기기 정보가 올바르지 않습니다."), { status: 400 });
+    }
+    const row = await db.one("SELECT * FROM installations WHERE id=$1 AND customer_id=$2", [installationId, cust.id]);
+    if (!row) throw Object.assign(new Error("이미 해제됐거나 이 이용권에 연결된 기기가 아닙니다."), { status: 404 });
+    await db.q("UPDATE installations SET customer_id=NULL WHERE id=$1 AND customer_id=$2", [installationId, cust.id]);
+    await audit(`sub:${sub.id}`, "installation_unlinked", { install: row.public_install_id.slice(0, 6) });
+    return { ok: true };
+  }
+
   /* 6. 스케줄러 한 바퀴. 매시 부른다. */
   async function tick() {
     const t = now();
@@ -258,7 +336,11 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
     for (const sub of subs.rows) {
       try {
         if (sub.status === "canceled" && sub.current_period_end && new Date(sub.current_period_end) <= t) {
-          await db.q("UPDATE subscriptions SET status='expired', updated_at=now() WHERE id=$1", [sub.id]); expired++; continue;
+          if (sub.billing_key_encrypted && toss.deleteBillingKey) {
+            try { await toss.deleteBillingKey({ billingKey: crypto.decrypt(sub.billing_key_encrypted) }); }
+            catch (e) { log.error("billing-key delete after expiry", sub.id, e.message); }
+          }
+          await db.q("UPDATE subscriptions SET status='expired', billing_key_encrypted=NULL, updated_at=now() WHERE id=$1", [sub.id]); expired++; continue;
         }
         const sent = (await db.q("SELECT action FROM audit WHERE subject=$1 AND action LIKE 'once:remind%'", [`sub:${sub.id}`])).rows.map(r => r.action);
         const rem = reminderDue(sub, t, sent);
@@ -277,5 +359,5 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
   function logMail(e) { log.error("mail", e.message); }
   function maskEmail(e) { const [u, d] = String(e).split("@"); return (u.length <= 2 ? u[0] + "*" : u.slice(0, 2) + "***") + "@" + d; }
 
-  return { createCheckout, completeBilling, charge, license, manageView, cancel, resume, refund, changeCard, requestRestore, linkByToken, tick, manageUrl, linkInstall, findCustomerByEmail };
+  return { createCheckout, completeBilling, charge, license, manageView, cancel, resume, refund, changeCard, requestRestore, confirmRestore, linkByToken, unlinkInstall, tick, manageUrl, linkInstall, findCustomerByEmail };
 }

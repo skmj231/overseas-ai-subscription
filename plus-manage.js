@@ -7,6 +7,8 @@
   const $ = (id) => document.getElementById(id);
   const won = (n) => "₩" + Number(n).toLocaleString("ko-KR");
   const date = (d) => { if (!d) return "—"; const x = new Date(d); return `${x.getFullYear()}년 ${x.getMonth() + 1}월 ${x.getDate()}일`; };
+  const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const receipt = (u) => { try { const x = new URL(u); return x.protocol === "https:" ? x.href : ""; } catch { return ""; } };
   const say = (t, k) => { const m = $("msg"); m.textContent = t; m.className = "msg" + (k ? " " + k : ""); };
 
   async function post(path, body) {
@@ -36,6 +38,13 @@
     $("kv-next").textContent = (v.status === "active" && !v.cancel_at_period_end) ? ends : (v.cancel_at_period_end ? `없음 · ${ends}까지 이용` : "—");
     $("kv-card").textContent = v.card || "등록 안 됨";
     $("kv-installs").textContent = v.installs.length ? `${v.installs.length}대 / 3대` : "없음";
+    $("devices").innerHTML = v.installs.map(i => `<div class="device"><div><b>Chrome ${i.label}</b><span>마지막 확인 ${date(i.last_seen_at)}</span></div><button type="button" data-unlink="${i.installation_id}">해제</button></div>`).join("") || `<span class="fine">연결된 Chrome이 없습니다.</span>`;
+    $("devices").querySelectorAll("[data-unlink]").forEach(b => b.addEventListener("click", async () => {
+      if (!confirm("이 Chrome의 Plus 연결을 해제할까요? 해당 기기에서는 구매 복원 전까지 무료 상태로 돌아갑니다.")) return;
+      b.disabled = true;
+      try { await post("/installations/unlink", { installation_id: b.dataset.unlink }); say("기기 연결을 해제했습니다.", "ok"); await load(); }
+      catch (e) { b.disabled = false; say(e.message, "err"); }
+    }));
 
     const live = ["active", "past_due", "canceled"].includes(v.status);
     $("b-card").hidden = !live;
@@ -45,7 +54,7 @@
     $("b-restart").hidden = live;
     $("c-cancel-until").textContent = ends;
 
-    $("pays").innerHTML = v.payments.map(p => `<tr><td>${date(p.approved_at || p.created_at)}</td><td>${p.status === "done" ? "Donna Plus 3개월" : p.status === "canceled" ? "환불" : "실패 · " + (p.fail_reason || "")}</td><td class="n">${won(p.amount)}</td><td>${p.receipt_url ? `<a href="${p.receipt_url}" target="_blank" rel="noopener">보기</a>` : ""}</td></tr>`).join("")
+    $("pays").innerHTML = v.payments.map(p => { const u = receipt(p.receipt_url); return `<tr><td>${date(p.approved_at || p.created_at)}</td><td>${p.status === "done" ? "Donna Plus 3개월" : p.status === "canceled" ? "전액 환불" : p.status === "partial_canceled" ? "부분 환불" : "실패 · " + esc(p.fail_reason || "")}</td><td class="n">${won(p.amount)}</td><td>${u ? `<a href="${esc(u)}" target="_blank" rel="noopener">보기</a>` : ""}</td></tr>`; }).join("")
       || `<tr><td colspan="4" style="color:var(--sub)">아직 없음</td></tr>`;
 
     if (install && live) {

@@ -24,7 +24,8 @@ export function makeMailer({ MAIL_API_KEY, MAIL_FROM = "Donna <no-reply@donna.co
       `${first ? "Donna Plus를 시작해 주셔서 감사합니다." : "Donna Plus가 3개월 더 이어집니다."}\n\n` +
       `상품: ${PLAN.name}\n결제 금액: ${won(amount)} (부가세 포함)\n결제일: ${fmtDate(approvedAt)}\n다음 결제일: ${fmtDate(periodEnd)}\n` +
       (receiptUrl ? `영수증: ${receiptUrl}\n` : "") +
-      `\n${first ? "확장 프로그램 패널을 열면 몇 초 안에 구독 개수 제한이 풀립니다. 반영되지 않으면 설정에서 'Plus 상태 다시 확인'을 눌러 주세요.\n\n결제 후 7일 이내에 네 번째 이상의 구독을 등록하지 않았다면 전액 환불받을 수 있습니다." : "다음 결제 7일 전과 3일 전에 다시 알려드립니다."}` + foot(manageUrl)),
+      `\n${first ? "확장 프로그램 패널을 열면 몇 초 안에 구독 개수 제한이 풀립니다. 반영되지 않으면 설정에서 'Plus 상태 다시 확인'을 눌러 주세요." : "다음 결제 7일 전과 3일 전에 다시 알려드립니다."}` +
+      `\n\n이번 결제는 결제일로부터 7일 이내에 전액 환불을 요청할 수 있습니다. 환불하면 Plus는 즉시 종료됩니다.` + foot(manageUrl)),
 
     reminder: (to, { days, periodEnd, amount, cardSummary, manageUrl }) => send(to,
       `${days}일 뒤 Donna Plus ${won(amount)}이 결제됩니다`,
@@ -52,6 +53,6 @@ export function makeMailer({ MAIL_API_KEY, MAIL_FROM = "Donna <no-reply@donna.co
 
     restore: (to, { restoreUrl }) => send(to,
       "Donna Plus 구매를 이 Chrome에 연결하세요",
-      `Donna Plus 구매 복원이 요청됐습니다. 아래 링크는 요청한 Chrome 설치에 이용권을 연결합니다.\n\n구매 복원: ${restoreUrl}\n\n본인이 요청하지 않았다면 링크를 열지 않아도 됩니다. 링크는 30일 동안 유효합니다.\n문의: stevejk911@gmail.com`)
+      `Donna Plus 구매 복원이 요청됐습니다. 아래 링크는 복원을 요청한 Chrome 설치 한 곳에만 이용권을 연결합니다. 해지·환불·결제수단 변경 권한은 포함하지 않습니다.\n\n구매 복원: ${restoreUrl}\n\n본인이 요청하지 않았다면 링크를 열지 않아도 됩니다. 링크는 24시간 동안 유효합니다.\n문의: stevejk911@gmail.com`)
   };
 }
