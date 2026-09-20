@@ -117,7 +117,7 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
       return { ok: true, redirect: ses.return_url || manageUrl(sub.id) };
     }
     const fresh = await db.one("SELECT * FROM subscriptions WHERE id=$1", [sub.id]);
-    const r = await charge(fresh, { reason: "first" });
+    const r = await charge(fresh, { reason: "first", connectRequired: !ses.install_id });
     if (!r.ok) {
       if (toss.deleteBillingKey) {
         try { await toss.deleteBillingKey({ billingKey: issued.billingKey }); }
@@ -141,7 +141,7 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
   }
 
   /* 3. 승인 한 번. 첫 결제·갱신·재시도 모두 여기로. */
-  async function charge(sub, { reason }) {
+  async function charge(sub, { reason, connectRequired = false }) {
     const cust = await db.one("SELECT * FROM customers WHERE id=$1", [sub.customer_id]);
     const no = (sub.period_no || 0) + 1;
     const oid = orderId(sub.id, no);
@@ -168,7 +168,8 @@ export function makeService({ db, toss, mail, crypto, env, log = console, now = 
       });
       await audit(`sub:${sub.id}`, "charged", { orderId: oid, reason, paymentKey: p.paymentKey });
       await mail.receipt(cust.email, { amount: PLAN.amount, approvedAt, periodEnd: next.current_period_end,
-                                       receiptUrl: p.receipt && p.receipt.url, manageUrl: manageUrl(sub.id), first: no === 1 }).catch(logMail);
+                                       receiptUrl: p.receipt && p.receipt.url, manageUrl: manageUrl(sub.id), first: no === 1,
+                                       connectRequired }).catch(logMail);
       return { ok: true, payment: p };
     } catch (e) {
       return await onFailure(sub, cust, e, no, oid);

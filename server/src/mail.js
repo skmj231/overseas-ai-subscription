@@ -19,12 +19,16 @@ export function makeMailer({ MAIL_API_KEY, MAIL_FROM = "Donna <no-reply@donna.co
 
   return {
     send,
-    receipt: (to, { amount, approvedAt, periodEnd, receiptUrl, manageUrl, first }) => send(to,
+    receipt: (to, { amount, approvedAt, periodEnd, receiptUrl, manageUrl, first, connectRequired = false }) => send(to,
       first ? "Donna Plus 결제가 완료됐습니다" : "Donna Plus가 갱신됐습니다",
       `${first ? "Donna Plus를 시작해 주셔서 감사합니다." : "Donna Plus가 3개월 더 이어집니다."}\n\n` +
       `상품: ${PLAN.name}\n결제 금액: ${won(amount)} (부가세 포함)\n결제일: ${fmtDate(approvedAt)}\n다음 결제일: ${fmtDate(periodEnd)}\n` +
       (receiptUrl ? `영수증: ${receiptUrl}\n` : "") +
-      `\n${first ? "확장 프로그램 패널을 열면 몇 초 안에 구독 개수 제한이 풀립니다. 반영되지 않으면 설정에서 'Plus 상태 다시 확인'을 눌러 주세요." : "다음 결제 7일 전과 3일 전에 다시 알려드립니다."}` +
+      `\n${first
+        ? connectRequired
+          ? "웹에서 결제하셨습니다. Donna 확장 프로그램을 설치한 뒤 설정의 '구매 복원'을 눌러 이 이메일 주소로 연결해 주세요. 복원 메일의 24시간·1회성 링크를 열면 현재 Chrome에만 Plus가 연결됩니다. 다시 결제할 필요는 없습니다."
+          : "확장 프로그램 패널을 열면 몇 초 안에 구독 개수 제한이 풀립니다. 반영되지 않으면 설정에서 'Plus 상태 다시 확인'을 눌러 주세요."
+        : "다음 결제 7일 전과 3일 전에 다시 알려드립니다."}` +
       `\n\n이번 결제는 결제일로부터 7일 이내에 전액 환불을 요청할 수 있습니다. 환불하면 Plus는 즉시 종료됩니다.` + foot(manageUrl)),
 
     reminder: (to, { days, periodEnd, amount, cardSummary, manageUrl }) => send(to,

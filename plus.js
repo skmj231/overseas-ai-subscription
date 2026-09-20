@@ -19,10 +19,7 @@
 
   function say(text, kind) { msg.textContent = text; msg.className = "msg" + (kind ? " " + kind : ""); }
 
-  if (!validInstall) {
-    pay.disabled = true;
-    say("결제할 Chrome과 안전하게 연결하기 위해 Donna 확장 프로그램에서 ‘Plus 시작하기’를 눌러 주세요. 연결 정보 없이 결제는 진행하지 않습니다.", "err");
-  }
+  if (!validInstall) say("확장 프로그램 없이도 결제할 수 있습니다. 결제 후 Donna를 설치하고 ‘구매 복원’에서 이 이메일로 안전하게 연결해 주세요.");
 
   const restoreOpen = document.getElementById("restore-open"), restoreBox = document.getElementById("restore-box");
   const restoreEmail = document.getElementById("restore-email"), restoreSend = document.getElementById("restore-send"), restoreMsg = document.getElementById("restore-msg");
@@ -58,7 +55,6 @@
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!validInstall) { say("Donna 확장 프로그램에서 Plus 시작하기를 눌러 주세요.", "err"); return; }
     if (!email.value || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value)) { say("이메일 주소를 확인해 주세요.", "err"); email.focus(); return; }
     if (!agreeRecurring.checked) { say("3개월마다 6,000원이 자동 결제되는 것에 동의해 주세요.", "err"); agreeRecurring.focus(); return; }
     if (!agreeTerms.checked) { say("이용약관과 개인정보처리방침을 확인하고 동의해 주세요.", "err"); agreeTerms.focus(); return; }
@@ -69,11 +65,20 @@
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.value.trim(), install_id: install.value || null, plan: "plus_3m",
                                consent_version: CONSENT_VERSION, recurring_accepted: true, terms_accepted: true,
-                               return_url: location.origin + "/plus-done.html", cancel_url: location.origin + "/plus.html" })
+                               return_url: location.origin + "/plus-done.html" + (validInstall ? "" : "?link=required"),
+                               cancel_url: location.origin + "/plus.html" })
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || ("HTTP " + r.status));
-      if (j.already && j.restore_sent) { say("이미 Plus를 이용 중인 이메일입니다. 받은 메일의 복원 링크를 열어 현재 Chrome에 안전하게 연결해 주세요.", "ok"); restoreBox.hidden = false; return; }
+      if (j.already) {
+        if (j.restore_sent) {
+          say("이미 Plus를 이용 중인 이메일입니다. 받은 메일의 복원 링크를 열어 현재 Chrome에 안전하게 연결해 주세요.", "ok");
+          restoreBox.hidden = false;
+        } else {
+          say("이미 Plus를 이용 중인 이메일입니다. 중복 결제하지 않습니다. Donna 확장 프로그램의 ‘구매 복원’에서 이 이메일로 연결해 주세요.", "ok");
+        }
+        return;
+      }
       say("토스페이먼츠 결제창을 엽니다.", "ok");
       const tp = TossPayments(j.client_key);
       const payment = tp.payment({ customerKey: j.customer_key });
