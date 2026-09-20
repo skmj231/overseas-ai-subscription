@@ -52,8 +52,8 @@ export function makeApp({ service, env, toss, db, log = console }) {
     if (!limit("checkout:" + ip(req), 10, 3600000)) return res.status(429).json({ error: "잠시 후 다시 시도해 주세요." });
     const { email, install_id, return_url, cancel_url, consent_version, recurring_accepted, terms_accepted } = req.body || {};
     if (!email || !EMAIL.test(String(email))) return res.status(400).json({ error: "이메일 주소를 확인해 주세요." });
-    if (!install_id || !/^[a-z0-9]{20,40}$/.test(String(install_id))) {
-      return res.status(400).json({ error: "Donna 확장 프로그램에서 Plus 시작을 눌러 주세요. 설치 연결 정보가 없는 결제는 진행하지 않습니다." });
+    if (install_id != null && !/^[a-z0-9]{20,40}$/.test(String(install_id))) {
+      return res.status(400).json({ error: "설치 연결 정보가 올바르지 않습니다. 확장 프로그램에서 다시 시작하거나 웹 결제를 이용해 주세요." });
     }
     if (consent_version !== CONSENT_VERSION || recurring_accepted !== true || terms_accepted !== true) {
       return res.status(400).json({ error: "3개월 자동 결제와 이용약관·개인정보처리방침에 각각 동의해 주세요." });
